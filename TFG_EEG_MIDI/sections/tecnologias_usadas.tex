@@ -1,0 +1,41 @@
+\documentclass[../main.tex]{subfiles}
+
+\begin{document}
+
+\section{Tecnologías utilizadas}
+
+A lo largo de este trabajo se han empleado distintas tecnologías hardware y software para el desarrollo del sistema propuesto. El proyecto integra adquisición de señales EEG, procesado digital, generación musical en tiempo real, comunicación MIDI, visualización gráfica y diseño electrónico. A continuación, se describen las principales tecnologías utilizadas.
+
+\begin{itemize}
+
+    \item \textbf{Arduino UNO Q:} placa de desarrollo utilizada como plataforma principal del sistema. Su arquitectura permite combinar tareas de bajo nivel, como la comunicación con el convertidor analógico-digital, con la ejecución de aplicaciones Python en el entorno Linux de la placa. En este proyecto se ha empleado para integrar la adquisición EEG, el procesado de datos, la interfaz web y la comunicación con periféricos externos.
+
+    \item \textbf{ADS1299-4PAG:} convertidor analógico-digital de Texas Instruments diseñado para la adquisición de biopotenciales. Se ha utilizado para captar la señal EEG mediante electrodos, trabajando en modo diferencial y con configuración adaptada a la adquisición de señales cerebrales de baja amplitud. Su correcta configuración y validación han sido fundamentales para garantizar la calidad de los datos utilizados por el sistema.
+
+    \item \textbf{Electrodos de gel y montaje EEG:} empleados para la adquisición real de la actividad eléctrica cerebral. Durante el desarrollo se probaron diferentes configuraciones de medida, incluyendo montajes frontales Fp1-Fp2 y configuraciones tipo ear-EEG/mastoides, así como distintas estrategias de referencia mediante BIAS/RLD para mejorar la estabilidad de la señal.
+
+    \item \textbf{C/C++:} lenguaje utilizado para el desarrollo del firmware ejecutado en el microcontrolador de la Arduino UNO Q. Este firmware se encarga de la configuración del ADS1299, la comunicación SPI, la lectura sincronizada mediante DRDY, la reconstrucción de las muestras de 24 bits, el acondicionamiento inicial de la señal y el envío de bloques de datos hacia el entorno Python.
+
+    \item \textbf{Python:} lenguaje empleado para el backend de la aplicación. En Python se realiza la recepción de los datos EEG, el almacenamiento temporal de la señal, el procesado digital, la extracción de características espectrales, la generación de eventos musicales, la comunicación con la interfaz web y la ejecución de herramientas de validación offline.
+
+    \item \textbf{Procesado digital de señal EEG:} conjunto de técnicas utilizadas para transformar la señal temporal en características útiles para la sonificación. Se han calculado métricas como RMS, potencia por bandas, potencia relativa, frecuencias pico y medidas de calidad espectral. Para la estimación espectral se ha empleado el método \textit{multitaper}, seleccionado por su mayor robustez frente a los efectos de borde de ventana y al \textit{spectral leakage}.
+
+    \item \textbf{HTML / Web UI:} tecnología utilizada para el desarrollo de la interfaz web de monitorización y control. La interfaz permite visualizar el estado de la adquisición, la calidad de la señal, las características espectrales, los eventos musicales generados y el piano scroll en tiempo real.
+
+    \item \textbf{MIDI:} protocolo utilizado para representar y transmitir los eventos musicales generados a partir de la señal EEG. Las características espectrales se transforman en notas y mensajes MIDI, como \textit{note on}, \textit{note off} y \textit{program change}, permitiendo la conexión del sistema con sintetizadores o dispositivos musicales externos.
+
+    \item \textbf{Matriz LED:} empleada como visualización física complementaria al piano scroll de la interfaz web. Las notas generadas por la sonificación se representan en la matriz mediante un desplazamiento temporal, facilitando una lectura visual directa de la actividad musical producida por el sistema.
+
+    \item \textbf{KiCad:} herramienta utilizada para el diseño de la PCB del sistema. Se ha empleado para el desarrollo del esquema electrónico y el trazado de la placa, integrando las conexiones entre la Arduino UNO Q, el ADS1299, los electrodos, la salida MIDI y los elementos auxiliares del circuito.
+
+    \item \textbf{Git y GitHub:} herramientas utilizadas para el control de versiones y la organización del desarrollo. El uso de ramas permitió separar fases como captura de datos, validación DSP, sonificación, piano scroll, matriz LED y firmware final, manteniendo trazabilidad sobre los cambios realizados.
+
+    \item \textbf{Buscadores bibliográficos y bases documentales:} se han utilizado herramientas como Google Académico, buscadores bibliográficos universitarios y recursos documentales de la Universidad de Málaga para la localización de artículos científicos, documentación técnica, hojas de datos y referencias relacionadas con electroencefalografía, sonificación, procesado digital de señal, interfaces cerebro-computador y MIDI.
+
+    \item \textbf{ChatGPT:} herramienta de apoyo basada en inteligencia artificial utilizada durante el desarrollo del proyecto para asistencia en la redacción técnica, estructuración de documentación, revisión conceptual, generación de prompts de trabajo, análisis de código, planificación de pruebas y apoyo en la interpretación de resultados. Su uso se ha limitado a tareas de asistencia y organización, manteniendo la validación técnica del sistema basada en pruebas reales, documentación oficial y datos experimentales obtenidos durante el proyecto.
+
+    \item \textbf{LaTeX:} sistema de composición utilizado para la redacción del TFG, permitiendo estructurar el documento, incluir figuras, tablas, ecuaciones, referencias y anexos técnicos de forma ordenada.
+
+\end{itemize}
+
+\end{document}
