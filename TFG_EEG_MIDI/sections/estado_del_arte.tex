@@ -1,0 +1,57 @@
+\documentclass[../main.tex]{subfiles}
+
+\begin{document}
+
+\section{Estado del arte}
+
+\subsection{Antecedentes de la música con señales biológicas y EEG}
+
+El uso de señales cerebrales y fisiológicas para la creación musical no es reciente. En el ámbito artístico, la utilización del electroencefalograma como fuente de sonido o de control musical se remonta al menos a la década de 1960, con compositores como Alvin Lucier, Richard Teitelbaum y David Rosenboom. Lucier empleó señales EEG amplificadas para excitar instrumentos de percusión, Teitelbaum utilizó señales biológicas como EEG y ECG para controlar sintetizadores, y Rosenboom exploró sistemas inspirados en cibernética y biofeedback aplicados a la creación musical en tiempo real \cite{MirandaCastet2014Preface}.
+
+No obstante, la idea de hacer audible la actividad EEG es incluso anterior. Fernandes et al. señalan que Adrian y Matthews propusieron ya en 1934 un método para escuchar el EEG, utilizando características simples de la señal, como la amplitud de las ondas alfa, como fuente sonora \cite{Fernandes2021BraiNSy}. Estos antecedentes muestran que la relación entre EEG y sonido ha evolucionado desde la exploración científica inicial hacia prácticas artísticas, sistemas interactivos y aplicaciones de sonificación.
+
+El desarrollo de estos sistemas estuvo limitado durante décadas por la baja disponibilidad de equipos EEG accesibles y por la falta de técnicas avanzadas de análisis de señal. La aparición de dispositivos como BioMuse en la década de 1990 permitió procesar digitalmente biosignales y convertirlas en datos MIDI, anticipando la posibilidad de usar señales fisiológicas como controladores musicales digitales \cite{MirandaCastet2014Preface}.
+
+\subsection{De la BCI a la Brain--Computer Music Interfacing}
+
+El desarrollo de las interfaces cerebro--computador, o \textit{Brain--Computer Interfaces} (BCI), proporcionó un marco técnico para emplear señales cerebrales como vía de comunicación o control. Tradicionalmente, la BCI se ha orientado a aplicaciones biomédicas y asistivas, especialmente para usuarios con alteraciones motoras severas, en las que el sistema interpreta patrones cerebrales como comandos para controlar dispositivos externos.
+
+A partir de este marco surge la \textit{Brain--Computer Music Interfacing} (BCMI), que aplica los principios de la BCI al ámbito musical. El avance de las técnicas de procesamiento EEG y la aparición de equipos más accesibles favorecieron la consolidación de sistemas capaces de utilizar actividad cerebral para generar, modificar o controlar procesos musicales \cite{MirandaCastet2014Preface}.
+
+Sin embargo, en aplicaciones musicales el concepto de control puede abordarse con mayor flexibilidad que en una BCI clásica. No siempre es necesario que el usuario controle voluntariamente cada evento sonoro; en algunos casos, la música puede adaptarse a características extraídas de la señal EEG o a estados cerebrales estimados. Esta idea resulta especialmente relevante para el presente Trabajo Fin de Grado, cuyo sistema no se plantea como una BCI activa de control explícito, sino como una BCMI pasiva en la que la música se genera a partir de características temporales y espectrales de la señal EEG.
+
+\subsection{Sonificación de señales biológicas y EEG}
+
+La sonificación puede entenderse como la representación auditiva no verbal de información. En el caso de las señales biológicas, esta práctica se relaciona con una tradición más amplia de escucha del cuerpo como fuente de información fisiológica. Aunque históricamente los datos científicos se han representado principalmente mediante gráficos, trazas o histogramas, el canal auditivo ofrece ventajas cuando la información es dinámica y cambia rápidamente.
+
+La sonificación EEG resulta especialmente adecuada porque la señal cerebral es compleja, no estacionaria y presenta variaciones temporales rápidas. Väljamäe et al. destacan que el sonido puede representar la complejidad y la dinámica temporal del EEG, aprovechando la elevada resolución temporal de la percepción auditiva humana \cite{Valjamae2013EEGSonification}. Además, en aplicaciones portables o \textit{wearable}, la salida sonora puede resultar más adecuada que una interfaz visual, al no requerir atención visual continua.
+
+El desarrollo de sensores fisiológicos inalámbricos, dispositivos EEG de bajo coste, computación \textit{wearable}, hardware de audio portátil y técnicas modernas de procesamiento de señal ha facilitado la aparición de nuevas aplicaciones de sonificación EEG en tiempo real. Sistemas comerciales como NeuroSky, Enobio, Emotiv o Nexus han contribuido a trasladar la monitorización cerebral fuera del laboratorio y a abrir aplicaciones en salud, neurofeedback, biofeedback, neuromarketing e interfaces implícitas \cite{Valjamae2013EEGSonification}.
+
+No obstante, la accesibilidad del hardware no elimina la necesidad de una adquisición fiable. Miranda y Castet advierten que muchos dispositivos EEG de bajo coste han ampliado el acceso a esta tecnología, pero pueden comprometer la calidad de la señal registrada. Por ello, incluso cuando no se busca control voluntario directo, resulta necesario asegurar que las características procesadas corresponden realmente a actividad EEG y no a artefactos, interferencias o ruido instrumental \cite{MirandaCastet2014Preface}.
+
+\subsection{De la audificación directa a la generación musical estructurada}
+
+La literatura sobre EEG y música muestra una evolución desde enfoques de audificación directa hacia sistemas de generación musical más estructurados. En los métodos más simples, la señal EEG o algunas de sus propiedades se transforman directamente en sonido. Sin embargo, trabajos posteriores incorporan análisis espectral, reglas musicales, estructuras simbólicas y procesos generativos.
+
+Fernandes et al. sitúan la sonificación dentro de una tradición más amplia de creación musical basada en datos extramusicales y defienden que las señales EEG son candidatas válidas para la sonificación tanto desde una perspectiva artística como científica \cite{Fernandes2021BraiNSy}. En su propuesta BraiNSy, los autores no convierten directamente la señal EEG en sonido, sino que separan la señal en bandas de frecuencia, la traducen a una representación simbólica, la organizan jerárquicamente y finalmente la codifican como música \cite{Fernandes2021BraiNSy}.
+
+Este cambio metodológico es relevante porque introduce niveles intermedios entre la señal fisiológica y la salida musical. En lugar de realizar una conversión directa EEG--sonido, la señal se analiza, se resume mediante características relevantes y se transforma en decisiones musicales. Esta aproximación permite generar resultados más estructurados, interpretables y musicalmente coherentes.
+
+\subsection{Mapeo de características EEG a parámetros musicales}
+
+Uno de los antecedentes más próximos al enfoque de este TFG es el trabajo de Wu et al., donde se propone traducir señales EEG en música para representar estados mentales. En dicho sistema, características como periodo, potencia y amplitud se emplean para generar parámetros musicales como nota, tempo, ritmo y tonalidad \cite{Wu2010}. Este tipo de aproximación muestra cómo las características temporales y espectrales de la señal pueden actuar como puente entre la actividad cerebral y la generación musical.
+
+El mapeo de parámetros permite evitar una conversión arbitraria de la señal EEG. En lugar de reproducir directamente la forma de onda cerebral, se extraen variables interpretables, como amplitud, frecuencia dominante, potencia relativa en bandas o estabilidad espectral, y se asignan a parámetros musicales como altura, registro, duración, volumen, densidad rítmica o timbre. Esta estrategia es especialmente adecuada para sistemas EEG-MIDI, ya que permite convertir la evolución de la señal en eventos musicales discretos y controlables.
+
+En este contexto, MIDI proporciona una capa de representación musical estandarizada. Las características EEG no generan audio directamente, sino eventos musicales que pueden codificarse como mensajes MIDI, por ejemplo mediante notas, velocidades, duraciones, canales o cambios de instrumento. Esto permite separar el procesamiento EEG de la síntesis sonora final y facilita una arquitectura modular.
+
+\subsection{Limitaciones del estado del arte y justificación del sistema propuesto}
+
+La literatura revisada muestra varias limitaciones recurrentes en los sistemas de EEG y música. En primer lugar, muchos trabajos históricos han utilizado conversiones directas o arbitrarias entre EEG y sonido, sin justificar suficientemente las reglas de mapeo. En segundo lugar, algunas propuestas no describen con detalle la adquisición fisiológica, el preprocesamiento o la síntesis sonora, lo que dificulta su replicación. En tercer lugar, ciertos sistemas dependen de configuraciones cerradas de hardware y software, limitando su reutilización y adaptación.
+
+Frente a estas limitaciones, el presente Trabajo Fin de Grado propone una arquitectura modular de sonificación EEG-MIDI. El sistema no realiza una audificación directa de la señal, sino que sigue una cadena estructurada basada en adquisición EEG, procesamiento temporal y espectral, extracción de características, segmentación musical, generación de compases, generación de notas y salida MIDI. De este modo, la señal cerebral se transforma progresivamente en información musical organizada.
+
+El sistema se sitúa dentro de una BCMI pasiva basada en EEG. La música generada no pretende representar comandos voluntarios explícitos del usuario, sino reflejar la evolución de características temporales y espectrales de la actividad EEG. Esta aproximación permite documentar cada etapa del proceso, reducir la arbitrariedad del mapeo y facilitar futuras modificaciones del sistema, como el ajuste de reglas musicales, la incorporación de nuevos métodos de análisis espectral o la adaptación de la salida MIDI a diferentes sintetizadores.
+
+\end{document}
