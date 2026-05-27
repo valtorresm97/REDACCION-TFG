@@ -46,3 +46,6 @@ papers/
 libros/
 referencias/pdf/
 bibliografia/pdf/
+
+# Carpeta heredada local bloqueada; no volver a subirla
+TFG___Miguel_Pancorbo/
