@@ -1,0 +1,54 @@
+\documentclass[../main.tex]{subfiles}
+
+\begin{document}
+
+\section{Diseño del sistema}
+
+\subsection{Requisitos del sistema}
+
+\subsubsection{Requisitos funcionales}
+
+% Pendiente de redacción propia.
+% Ejemplos: adquisición de señal EEG, envío de muestras al entorno Linux, cálculo de características espectrales, generación de eventos MIDI, visualización web y salida física MIDI.
+
+\subsubsection{Requisitos no funcionales}
+
+% Pendiente de redacción propia.
+% Ejemplos: baja latencia, modularidad, trazabilidad, robustez ante ruido, separación entre adquisición, procesamiento, sonificación y visualización.
+
+\subsection{Arquitectura general del sistema}
+
+% Pendiente de redacción propia.
+% Describir el flujo global: electrodos -> ADS1299 -> Arduino UNO Q -> backend Python -> sonificación -> salida MIDI / interfaz web.
+
+\subsection{Bloque de adquisición EEG}
+
+% Pendiente de redacción propia.
+% Describir electrodos, ADS1299-4PAG, canales, referencia, BIAS/RLD, ganancia, frecuencia de muestreo y lectura sincronizada.
+
+\subsection{Bloque de comunicación microcontrolador--Linux}
+
+% Pendiente de redacción propia.
+% Describir el envío de bloques desde el firmware hacia el entorno Python en la Arduino UNO Q.
+
+\subsection{Bloque de procesamiento digital}
+
+% Pendiente de redacción propia.
+% Describir filtrado, ventanas, buffer temporal, PSD, potencia por bandas, picos espectrales y métricas de calidad.
+
+\subsection{Bloque de sonificación EEG--MIDI}
+
+% Pendiente de redacción propia.
+% Describir segmentación EEG, construcción de segmentos musicales, generación de compases, notas y eventos MIDI.
+
+\subsection{Bloque de visualización e interacción}
+
+% Pendiente de redacción propia.
+% Describir interfaz web HTML, métricas mostradas, piano scroll, selección de canal activo y visualización en matriz LED.
+
+\subsection{Diseño electrónico y PCB}
+
+% Pendiente de redacción propia.
+% Describir conexiones principales: Arduino UNO Q, ADS1299, electrodos, salida MIDI, alimentación y consideraciones de seguridad.
+
+\end{document}
