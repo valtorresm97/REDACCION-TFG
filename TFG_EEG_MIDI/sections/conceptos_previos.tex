@@ -1,3 +1,4 @@
+% !TeX root = ../main.tex
 \documentclass[../main.tex]{subfiles}
 
 \begin{document}
@@ -8,21 +9,53 @@
 
 La electroencefalografía es una técnica electrofisiológica destinada al registro de la actividad eléctrica que surge del cerebro humano. Su mayor ventaja es la sensibilidad temporal, lo que permite detectar variaciones rápidas, convirtiéndola en una técnica adecuada para aplicaciones en tiempo real. Su principal función es evaluar el funcionamiento dinámico del cerebro.
 
+Como se muestra en la Figura~\ref{fig:eeg_normal_montaje}, un registro EEG representa la evolución temporal del voltaje medido entre pares de electrodos, organizado en canales o derivaciones que permiten analizar la actividad cerebral en distintas regiones del cuero cabelludo.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\textwidth]{IMAGENES/fig_eeg_normal_montaje.png}
+    \caption{Ejemplo de registro EEG normal en vigilia mediante un montaje típico. Fuente: reproducido de \cite{StLouisFrey2016}.}
+    \label{fig:eeg_normal_montaje}
+\end{figure}
+
 Fisiológicamente, la señal eléctrica registrada no corresponde a la actividad de neuronas individuales, sino a la actividad conjunta de grandes poblaciones neuronales. Principalmente, la contribución a la señal se da por las neuronas piramidales, situadas en la corteza cerebral y orientadas perpendicularmente a la superficie cortical. Esta disposición favorece la formación de campos eléctricos detectables desde el exterior mediante electrodos colocados sobre el cuero cabelludo.
 
 Los electrodos recogen la suma de potenciales postsinápticos excitatorios e inhibitorios generados por células piramidales que actúan de forma sincronizada. Por otra parte, los potenciales de acción de neuronas individuales no suelen detectarse mediante EEG debido a su corta amplitud y duración.
 
 Para que la señal sea detectable por los electrodos, un gran número de neuronas debe presentar actividad sincronizada. Por ello, la electroencefalografía constituye una herramienta especialmente útil para el estudio de los ritmos cerebrales. Estos ritmos son actividades oscilatorias asociadas a circuitos de comunicación entre la corteza y estructuras subcorticales.
 
-La actividad registrada en el EEG puede considerarse como el resultado de fuentes eléctricas distribuidas a lo largo del córtex, las cuales generan campos eléctricos con polos negativos y positivos, es decir, dipolos. El dipolo formado es paralelo a la orientación de las neuronas piramidales. Por tanto, la orientación de las neuronas, la localización cortical de la fuente y la posición del electrodo afectan a la señal medida.
+La actividad registrada en el EEG puede considerarse como el resultado de fuentes eléctricas distribuidas a lo largo del córtex, las cuales generan campos eléctricos con polos negativos y positivos, es decir, dipolos. El dipolo formado es paralelo a la orientación de las neuronas piramidales. Por tanto, la orientación de las neuronas, la localización cortical de la fuente y la posición del electrodo afectan a la señal medida. La Figura~\ref{fig:eeg_generacion_neuronal} resume esta relación entre la actividad neuronal sincronizada, la orientación cortical de las fuentes y la señal registrada en superficie.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{IMAGENES/fig_eeg_generacion_neuronal.png}
+    \caption{Generación de la señal EEG a partir de la actividad sincronizada de poblaciones neuronales corticales. Fuente: reproducido de \cite{StLouisFrey2016}.}
+    \label{fig:eeg_generacion_neuronal}
+\end{figure}
 
 \subsubsection{Adquisición de datos EEG}
 
 La primera etapa del sistema de procesamiento y sonificación es la adquisición de la señal EEG. Debido a que la amplitud del EEG es reducida, del orden de microvoltios (\si{\micro\volt}), el proceso de adquisición requiere instrumentación sensible, una adecuada colocación de electrodos, una correcta referencia eléctrica y un sistema de amplificación y digitalización con bajo ruido \cite{Palaniappan2014,StLouisFrey2016}.
 
-La colocación de los electrodos suele realizarse mediante el sistema internacional 10--20, que establece posiciones normalizadas a partir de referencias anatómicas craneales \cite{StLouisFrey2016}. Cada electrodo se identifica con una letra asociada a la región cortical aproximada ---frontal, central, temporal, parietal u occipital--- y con un número que indica el hemisferio: impar para el izquierdo, par para el derecho y z para la línea media \cite{Palaniappan2014,StLouisFrey2016}. Este sistema relaciona cada canal con una zona cerebral concreta.
+La colocación de los electrodos suele realizarse mediante el sistema internacional 10--20, que establece posiciones normalizadas a partir de referencias anatómicas craneales \cite{StLouisFrey2016}. Cada electrodo se identifica con una letra asociada a la región cortical aproximada ---frontal, central, temporal, parietal u occipital--- y con un número que indica el hemisferio: impar para el izquierdo, par para el derecho y z para la línea media \cite{Palaniappan2014,StLouisFrey2016}. Este sistema relaciona cada canal con una zona cerebral concreta. La Figura~\ref{fig:eeg_sistema_10_20} muestra la disposición normalizada de los electrodos según el sistema internacional 10--20, utilizado para relacionar cada canal EEG con una región aproximada del cuero cabelludo.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.78\textwidth]{IMAGENES/fig_eeg_sistema_10_20.png}
+    \caption{Sistema internacional 10--20 para la colocación normalizada de electrodos EEG. Fuente: reproducido de \cite{StLouisFrey2016}.}
+    \label{fig:eeg_sistema_10_20}
+\end{figure}
 
 Una vez colocados los electrodos, se procede a registrar la actividad eléctrica. El EEG se basa en el principio de amplificación diferencial. El sistema registra la diferencia de voltaje entre un electrodo activo y una referencia \cite{StLouisFrey2016}. Los montajes pueden ser bipolares, cuando se comparan electrodos vecinos, o referenciales, cuando cada electrodo activo se compara con una referencia común o distante \cite{Palaniappan2014,StLouisFrey2016}. La elección del montaje y de la referencia es un aspecto fundamental en la adquisición.
+
+La Figura~\ref{fig:eeg_polaridad_localizacion} ilustra cómo la polaridad observada en una derivación EEG depende de la diferencia de potencial entre los electrodos que forman el canal, aspecto fundamental para interpretar correctamente la morfología de la señal registrada.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.88\textwidth]{IMAGENES/fig_eeg_polaridad_localizacion.png}
+    \caption{Convenciones de polaridad y localización de potenciales en EEG mediante amplificación diferencial. Fuente: reproducido de \cite{StLouisFrey2016}.}
+    \label{fig:eeg_polaridad_localizacion}
+\end{figure}
 
 Cuando la señal es registrada por los electrodos, debe amplificarse y convertirse a formato digital mediante un convertidor analógico-digital \cite{Palaniappan2014}. La frecuencia de muestreo determina el número de muestras adquiridas por segundo. En aplicaciones EEG y BCI son habituales frecuencias próximas a \SI{250}{\hertz} o \SI{256}{\hertz}, suficientes para estudiar las bandas cerebrales clásicas empleadas en este trabajo, como delta, theta, alfa, beta y gamma \cite{Palaniappan2014,Wu2010}.
 
@@ -40,7 +73,25 @@ Desde el punto de vista temporal, la amplitud representa la magnitud de las vari
 
 Desde el punto de vista frecuencial, la señal EEG se organiza en bandas. Estas bandas agrupan rangos de frecuencia que reciben nombres convencionales: delta, theta, alfa, beta y gamma. La banda delta corresponde a las oscilaciones más lentas, aproximadamente entre \SI{1}{\hertz} y \SI{3}{\hertz}--\SI{3.5}{\hertz}; theta se sitúa alrededor de \SI{4}{\hertz} a \SI{7}{\hertz}--\SI{8}{\hertz}; alfa se encuentra entre \SI{8}{\hertz} y \SI{12}{\hertz}; beta comprende frecuencias superiores, aproximadamente desde \SI{12}{\hertz}--\SI{13}{\hertz} hasta \SI{30}{\hertz}; y gamma agrupa frecuencias todavía más altas. Aunque los límites exactos pueden variar ligeramente entre autores, esta clasificación permite describir de forma ordenada el contenido espectral de la señal EEG.
 
+La Figura~\ref{fig:eeg_ritmo_alfa_posterior} muestra un ejemplo de ritmo alfa posterior dominante, característico de la vigilia relajada con ojos cerrados y relevante para comprender la relación entre actividad oscilatoria cerebral y estado funcional.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\textwidth]{IMAGENES/fig_eeg_ritmo_alfa_posterior.png}
+    \caption{Ritmo alfa posterior dominante en un EEG normal durante vigilia relajada. Fuente: reproducido de \cite{StLouisFrey2016}.}
+    \label{fig:eeg_ritmo_alfa_posterior}
+\end{figure}
+
 Otra característica esencial de la señal EEG es su carácter no estacionario. Esto implica que su contenido frecuencial cambia con el tiempo, por lo que el análisis debe realizarse habitualmente sobre ventanas, épocas o segmentos temporales \cite{Sawa2022}. Esta división permite actualizar las características extraídas y seguir la evolución dinámica de la actividad cerebral. En aplicaciones de interfaz cerebro-computador y sonificación en tiempo real, esta propiedad es especialmente importante, ya que la salida del sistema debe adaptarse de forma continua a los cambios de la señal. Para analizar estas características se emplean métodos de procesamiento espectral y tiempo-frecuencia.
+
+La Figura~\ref{fig:eeg_wavelet_sueno} ilustra cómo distintos estados fisiológicos presentan patrones EEG diferenciados tanto en amplitud como en contenido frecuencial.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\textwidth]{IMAGENES/fig_eeg_wavelet_sueno.png}
+    \caption{Ejemplos de señal EEG y análisis tiempo--frecuencia en distintos estados de sueño: REM, NREM y sueño de ondas lentas. Fuente: reproducido de \cite{Wu2010}.}
+    \label{fig:eeg_wavelet_sueno}
+\end{figure}
 
 En este Trabajo Fin de Grado, las características de la señal EEG constituyen la base para la sonificación EEG-MIDI. La amplitud puede relacionarse con parámetros de intensidad o volumen; la frecuencia dominante puede utilizarse como indicador de registro o altura relativa; y la potencia en bandas como delta, theta, alfa, beta y gamma puede emplearse para modular ritmo, densidad de notas, estabilidad armónica o tensión musical. Esta estrategia se relaciona con propuestas de conversión EEG-música en las que características como frecuencia principal, energía media, tasa alfa, varianza y amplitud se transforman en parámetros musicales como nota principal, tonalidad, ritmo, acorde, duración, volumen y timbre \cite{Wu2010}.
 
@@ -264,6 +315,15 @@ Por último, la ventana Blackman se define como:
 
 Estas ventanas reducen la contribución de los extremos de la señal y disminuyen los lóbulos laterales del espectro. Sin embargo, existe un compromiso entre resolución frecuencial y rango dinámico: algunas ventanas conservan mejor la separación entre frecuencias próximas, mientras que otras reducen con mayor eficacia las componentes espectrales artificiales.
 
+Como se observa en la Figura~\ref{fig:psd_ventanas}, la elección de la función ventana influye en la estimación espectral y permite reducir parte de los efectos asociados al recorte temporal de la señal.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\textwidth]{IMAGENES/fig_psd_ventanas.png}
+    \caption{Efecto de distintas funciones ventana sobre la estimación de la densidad espectral de potencia de una señal EEG. Fuente: reproducido de \cite{Sawa2022}.}
+    \label{fig:psd_ventanas}
+\end{figure}
+
 Como alternativa más robusta, el método Welch mejora la estimación espectral dividiendo la señal en ventanas, normalmente solapadas, calculando un periodograma en cada una y promediando los resultados. Puede expresarse como:
 
 \begin{equation}
@@ -302,7 +362,14 @@ donde cada estimación individual se calcula como:
     \label{eq:multitaper_individual}
 \end{equation}
 
-En estas expresiones, \(K\) es el número de tapers, \(h_{k,t}\) representa el taper \(k\)-ésimo, \(X_t\) es la muestra EEG en el instante \(t\), \(\Delta t\) es el intervalo de muestreo y \(N\) el número de muestras del segmento. En el método multitaper suelen emplearse secuencias DPSS o de Slepian, que permiten obtener estimaciones más estables de la PSD.
+En estas expresiones, \(K\) es el número de tapers, \(h_{k,t}\) representa el taper \(k\)-ésimo, \(X_t\) es la muestra EEG en el instante \(t\), \(\Delta t\) es el intervalo de muestreo y \(N\) el número de muestras del segmento. En el método multitaper suelen emplearse secuencias DPSS o de Slepian, que permiten obtener estimaciones más estables de la PSD. La Figura~\ref{fig:multitaper_psd} muestra un ejemplo de estimación espectral mediante multitaper y permite visualizar su utilidad para obtener una representación más estable del contenido frecuencial.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\textwidth]{IMAGENES/fig_multitaper_psd.png}
+    \caption{Estimación de la densidad espectral de potencia mediante el método multitaper. Fuente: reproducido de \cite{Sawa2022}.}
+    \label{fig:multitaper_psd}
+\end{figure}
 
 Finalmente, el espectrograma permite representar la evolución temporal del contenido frecuencial de la señal. Para ello se calculan espectros sucesivos sobre ventanas temporales desplazadas, generando una representación tiempo-frecuencia. De forma general, puede escribirse como:
 
@@ -318,13 +385,40 @@ Finalmente, el espectrograma permite representar la evolución temporal del cont
 
 donde \(S(t_m,f)\) representa la potencia en la frecuencia \(f\) y en la ventana temporal \(t_m\), \(H\) es el salto entre ventanas, \(w[n]\) es la función ventana y \(N\) el tamaño de la ventana. Esta representación resulta especialmente importante en EEG, ya que la señal es no estacionaria y sus componentes espectrales cambian con el tiempo.
 
+La Figura~\ref{fig:espectrograma_eeg} muestra cómo el espectrograma permite observar la evolución temporal de las componentes frecuenciales de una señal EEG, lo que resulta especialmente relevante al tratarse de una señal no estacionaria.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\textwidth]{IMAGENES/fig_espectrograma_eeg.png}
+    \caption{Análisis de espectrograma EEG mediante distintos métodos de estimación tiempo--frecuencia. Fuente: reproducido de \cite{Sawa2022}.}
+    \label{fig:espectrograma_eeg}
+\end{figure}
+
 En el contexto de este Trabajo Fin de Grado, el análisis espectral permite transformar la señal EEG digitalizada en variables cuantificables, como potencia absoluta y relativa por bandas, frecuencia dominante o estabilidad espectral. Estas características constituyen la entrada del sistema de sonificación EEG-MIDI, donde pueden emplearse para modular parámetros musicales como el registro, la densidad rítmica, el volumen, la estabilidad armónica o la generación de eventos MIDI. Por tanto, las expresiones matemáticas anteriores no solo describen el procesamiento de la señal, sino que justifican el paso desde la actividad cerebral registrada hasta su representación musical.
 
 \subsection{Brain--Computer Music Interfacing (BCMI)}
 
 Las interfaces cerebro--computador, conocidas como \textit{Brain--Computer Interfaces} (BCI), constituyen sistemas que permiten establecer una vía de comunicación entre la actividad cerebral del usuario y una aplicación externa. En su planteamiento clásico, una BCI permite controlar dispositivos o sistemas mediante señales procedentes del cerebro, evitando el uso directo de músculos periféricos o extremidades. Este enfoque resulta especialmente relevante en usuarios con alteraciones motoras severas, aunque en los últimos años también se ha extendido a aplicaciones en videojuegos, biometría, realidad virtual y música \cite{Palaniappan2014}.
 
+La Figura~\ref{fig:procesamiento_bci_eeg} resume la cadena típica de una BCI basada en EEG, desde la adquisición de la señal hasta la extracción de características y la generación de una salida externa.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.88\textwidth]{IMAGENES/fig_procesamiento_bci_eeg.png}
+    \caption{Cadena general de procesamiento en una interfaz cerebro--computador basada en EEG. Fuente: adaptado de \cite{Palaniappan2014}.}
+    \label{fig:procesamiento_bci_eeg}
+\end{figure}
+
 Dentro de este marco surge el concepto de \textit{Brain--Computer Music Interfacing} (BCMI), que puede entenderse como la aplicación de las interfaces cerebro--computador al ámbito musical. La investigación en BCMI se sitúa en la intersección entre música, ciencia e ingeniería biomédica, y aborda tres retos principales: la extracción de información significativa a partir de señales cerebrales, el diseño de técnicas musicales capaces de responder a dicha información y la definición de aplicaciones que puedan tener utilidad artística, terapéutica, asistiva o experimental \cite{Miranda2014BCMI}. Por tanto, una BCMI no se limita a registrar actividad cerebral, sino que transforma dicha actividad en información útil para generar, modificar o controlar procesos musicales.
+
+La Figura~\ref{fig:bcmi_sistema} representa de forma esquemática la idea general de una BCMI: la actividad EEG se procesa y se transforma en información musical capaz de controlar o modificar un sistema sonoro.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.88\textwidth]{IMAGENES/fig_bcmi_sistema.png}
+    \caption{Esquema conceptual de un sistema \textit{Brain--Computer Music Interfacing}. Fuente: adaptado de \cite{Miranda2014BCMI}.}
+    \label{fig:bcmi_sistema}
+\end{figure}
 
 El EEG es una de las señales más utilizadas en BCI y BCMI debido a su carácter no invasivo, su portabilidad y su coste relativamente bajo frente a otras técnicas de registro cerebral. En una BCI basada en EEG, la señal se adquiere mediante electrodos colocados sobre el cuero cabelludo, se amplifica, se digitaliza y se procesa para extraer características que posteriormente pueden emplearse como entrada de control \cite{Palaniappan2014}. En el caso de una BCMI, estas características no se utilizan necesariamente para controlar un dispositivo físico, sino para influir en parámetros musicales como la altura, el ritmo, la intensidad, la textura, la tonalidad o la estructura temporal de la música.
 
