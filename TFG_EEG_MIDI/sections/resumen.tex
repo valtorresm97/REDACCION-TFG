@@ -1,54 +1,14 @@
 \documentclass[../main.tex]{subfiles}
 
 \begin{document}
-%% begin abstract format
-\makeatletter
-\renewenvironment{abstract}{%
-    \if@twocolumn
-      \section*{Resumen \\}%
-    \else %% <- here I've removed \small
-    \begin{flushright}
-        {\filleft\Huge\bfseries\fontsize{48pt}{12}\selectfont Resumen\vspace{\z@}}%  %% <- here I've added the format
-        \end{flushright}
-      \quotation
-    \fi}
-    {\if@twocolumn\else\endquotation\fi}
-\makeatother
-%% end abstract format
-%% begin abstract format
-\makeatletter
-\renewenvironment{abstract}{%
-    \if@twocolumn
-      \section*{Resumen \\}%
-    \else %% <- here I've removed \small
-    \begin{flushright}
-        {\filleft\Huge\bfseries\fontsize{48pt}{12}\selectfont Resumen\vspace{\z@}}%  %% <- here I've added the format
-        \end{flushright}
-      \quotation
-    \fi}
-    {\if@twocolumn\else\endquotation\fi}
-\makeatother
-%% end abstract format
 
-\begin{abstract}
+\section*{Resumen}
 
-\vspace{30pt}
-
-Este Trabajo de Fin de Grado aborda el diseño, implementación y validación experimental de un prototipo de casco inteligente orientado a la monitorización de impactos craneales en deportes de combate. La motivación del proyecto se fundamenta en la creciente preocupación por las lesiones cerebrales traumáticas asociadas a impactos repetidos en la cabeza y en la necesidad de herramientas tecnológicas que permitan cuantificar objetivamente la exposición al riesgo.
-
-El sistema desarrollado integra una plataforma embebida portable con comunicación Bluetooth Low Energy (BLE) y una unidad de medición inercial (IMU) capaz de registrar aceleraciones lineales y velocidades angulares. Mediante una arquitectura software basada en adquisición por eventos, el dispositivo detecta impactos, estima la aceleración rotacional máxima y clasifica cada evento en rangos de severidad biomecánica definidos a partir de la literatura científica.
-
-El prototipo se integró en un casco de protección mediante un encapsulado diseñado en CAD e impreso en 3D, y fue evaluado en sesiones reales de entrenamiento con varios deportistas. Los resultados muestran una detección consistente bajo condiciones adecuadas de fijación mecánica y evidencian la importancia del acoplamiento sensor--casco para garantizar la fiabilidad de la medida.
-
-El sistema no constituye una herramienta diagnóstica clínica, sino una solución orientada a la monitorización preventiva y a la gestión prudente de la exposición acumulada a impactos craneales en el ámbito deportivo.
+% Pendiente de redacción propia.
+% Este apartado resumirá el sistema de sonificación EEG--MIDI desarrollado, incluyendo adquisición EEG, procesamiento digital, extracción de características, mapeo musical, generación MIDI y validación.
 
 \vspace{12pt}
 
-\bfseries{\large{Palabras clave:}} lesión cerebral traumática, aceleración rotacional, monitorización de impactos craneales, dispositivos wearables, sistemas embebidos.
-
-\end{abstract}
-
+\textbf{Palabras clave:} EEG, interfaz cerebro--computador musical, sonificación, MIDI, procesado digital de señal.
 
 \end{document}
-
-
