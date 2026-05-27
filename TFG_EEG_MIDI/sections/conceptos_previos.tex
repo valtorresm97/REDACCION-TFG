@@ -61,6 +61,28 @@ Cuando la señal es registrada por los electrodos, debe amplificarse y convertir
 
 Durante la adquisición, la señal puede verse afectada por diversas fuentes de ruido y artefactos. Por ello, se lleva a cabo un preprocesado de las señales recogidas, con el objetivo de reducir el ruido sin distorsionar la información fisiológica relevante de la señal EEG. Entre las fuentes comunes de ruido y artefactos se encuentran la actividad muscular, los movimientos oculares, el mal contacto electrodo-piel, el ruido electrónico y la interferencia de la red eléctrica, generalmente a \SI{50}{\hertz} \cite{Palaniappan2014}.
 
+\IfFileExists{IMAGENES/fig_eeg_artefacto_ocular.png}{%
+La Figura~\ref{fig:eeg_artefacto_ocular} muestra un ejemplo de contaminación por actividad ocular, uno de los artefactos fisiológicos más frecuentes en registros EEG.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{IMAGENES/fig_eeg_artefacto_ocular.png}
+    \caption{Artefacto ocular registrado en derivaciones frontopolares y anteriores durante EEG. Fuente: reproducido de \cite{StLouisFrey2016}.}
+    \label{fig:eeg_artefacto_ocular}
+\end{figure}
+}{}
+
+\IfFileExists{IMAGENES/fig_eeg_artefacto_electrodo.png}{%
+La Figura~\ref{fig:eeg_artefacto_electrodo} muestra cómo un mal contacto o una desconexión transitoria del electrodo puede introducir artefactos que degradan la calidad del registro.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{IMAGENES/fig_eeg_artefacto_electrodo.png}
+    \caption{Artefacto por desconexión o mal contacto de electrodo durante un registro EEG. Fuente: reproducido de \cite{StLouisFrey2016}.}
+    \label{fig:eeg_artefacto_electrodo}
+\end{figure}
+}{}
+
 Antes de analizar o hacer uso de las señales obtenidas, debe comprobarse que el sistema de adquisición funciona correctamente. Para ello se puede realizar una calibración con una señal conocida, verificando que los amplificadores y canales responden de forma homogénea \cite{StLouisFrey2016}. Además, la biocalibración, por ejemplo mediante apertura y cierre de ojos, permite confirmar que el registro refleja respuestas fisiológicas reales y esperadas, como variaciones en la actividad alfa posterior \cite{StLouisFrey2016}.
 
 En el contexto de este Trabajo Fin de Grado, la adquisición EEG es la base sobre la que se construye la sonificación. La señal registrada se digitaliza y procesa para extraer características temporales y espectrales, como la amplitud, la frecuencia dominante o la potencia relativa en bandas EEG. Posteriormente, dichas características se utilizan para generar parámetros musicales y eventos MIDI. Esta estructura sigue la lógica general de los sistemas BCI, donde tras la adquisición y limpieza de la señal se realiza una extracción de características que permite controlar una salida externa \cite{Palaniappan2014}. En este trabajo, dicha salida no se orienta al control clásico de un cursor o dispositivo físico, sino a la generación musical mediante eventos MIDI. Esta idea se relaciona con propuestas de conversión EEG-música, donde características cerebrales como frecuencia principal, energía, tasa alfa, varianza o amplitud se traducen en parámetros musicales como nota principal, tonalidad, ritmo, acorde, duración, volumen o timbre \cite{Wu2010}.
@@ -448,6 +470,17 @@ Väljamäe et al. distinguen varias estrategias de sonificación EEG. La primera
 
 En el contexto de este Trabajo Fin de Grado, la sonificación EEG se plantea como una estrategia para transformar características temporales y espectrales de la señal cerebral en información musical. El sistema desarrollado no realiza una audificación directa de la señal EEG, ya que no convierte la forma de onda cruda en sonido. En su lugar, extrae características como amplitud, frecuencia dominante y potencia relativa en bandas EEG, y las utiliza para modificar parámetros musicales. Por tanto, el enfoque adoptado se corresponde principalmente con una sonificación mediante mapeo de parámetros.
 
+\IfFileExists{IMAGENES/fig_mapeo_eeg_musica.png}{%
+Como se muestra en la Figura~\ref{fig:mapeo_eeg_musica}, la sonificación EEG puede plantearse como una cadena jerárquica EEG $\rightarrow$ características $\rightarrow$ segmento $\rightarrow$ compás $\rightarrow$ nota $\rightarrow$ melodía.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\textwidth]{IMAGENES/fig_mapeo_eeg_musica.png}
+    \caption{Reglas de mapeo entre características EEG y parámetros musicales para la generación de una melodía. Fuente: reproducido de \cite{Wu2010}.}
+    \label{fig:mapeo_eeg_musica}
+\end{figure}
+}{}
+
 Esta elección resulta coherente con el objetivo del sistema EEG-MIDI. A diferencia de una audificación directa, el mapeo de parámetros permite definir relaciones interpretables entre características EEG y elementos musicales. Por ejemplo, la amplitud de la señal puede asociarse a la intensidad o velocidad MIDI, la potencia relativa en la banda alfa puede influir en la densidad rítmica o estabilidad musical, y la frecuencia dominante puede emplearse como indicio para modificar el registro o la altura relativa. De este modo, la sonificación no se limita a hacer audible la señal, sino que traduce sus propiedades relevantes en una estructura musical organizada.
 
 Así, la sonificación EEG desarrollada en este TFG se integra dentro de una BCMI pasiva basada en EEG. El usuario no genera comandos cerebrales voluntarios, sino que el sistema analiza la actividad EEG registrada y adapta la generación musical a sus características. La salida se materializa mediante eventos MIDI, lo que permite controlar sintetizadores, instrumentos virtuales o dispositivos musicales externos. En consecuencia, la sonificación actúa como el puente entre el análisis de la señal EEG y la representación musical de la actividad cerebral.
@@ -478,6 +511,17 @@ La arquitectura general de un sistema BCMI puede describirse mediante varios blo
 MIDI, acrónimo de \textit{Musical Instrument Digital Interface}, es un protocolo estándar diseñado para transmitir información de interpretación musical en forma de datos electrónicos. A diferencia del audio digital, MIDI no almacena ni transmite directamente una forma de onda sonora, sino instrucciones que indican a un sintetizador o generador de sonido qué eventos musicales debe ejecutar. Por tanto, el dispositivo receptor es el encargado de producir el sonido final a partir de los mensajes recibidos \cite{Heckroth1995}.
 
 Esta diferencia entre MIDI y audio digital resulta especialmente importante en el contexto de este Trabajo Fin de Grado. Mientras que una señal de audio contiene muestras de presión sonora o amplitud en el tiempo, un mensaje MIDI contiene información simbólica de alto nivel, como qué nota debe sonar, en qué canal, con qué intensidad y durante cuánto tiempo. Esta representación hace que MIDI sea especialmente adecuado para sistemas de generación musical, ya que permite separar la lógica de composición o control de la síntesis sonora final.
+
+\IfFileExists{IMAGENES/fig_midi_pc_based.png}{%
+La Figura~\ref{fig:midi_pc_based} ilustra un sistema MIDI basado en ordenador, donde el software genera información musical que se transmite mediante una interfaz MIDI hacia un sintetizador encargado de producir el sonido.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\textwidth]{IMAGENES/fig_midi_pc_based.png}
+    \caption{Sistema MIDI basado en ordenador, interfaz MIDI y módulo sintetizador externo. Fuente: reproducido de \cite{Heckroth1995}.}
+    \label{fig:midi_pc_based}
+\end{figure}
+}{}
 
 El protocolo MIDI transmite la información mediante mensajes. Un mensaje MIDI está formado por un byte de estado, que identifica el tipo de mensaje y, en muchos casos, el canal MIDI asociado, seguido normalmente por uno o dos bytes de datos \cite{Heckroth1995}. Los mensajes pueden clasificarse de forma general en mensajes de canal y mensajes de sistema. Los mensajes de canal afectan a un canal MIDI concreto, mientras que los mensajes de sistema no están asociados a un canal específico. Dentro de los mensajes de canal, los más relevantes para la interpretación musical son los \textit{Channel Voice Messages}, entre los que se encuentran \textit{Note On}, \textit{Note Off}, \textit{Program Change}, \textit{Control Change}, \textit{Pitch Bend} y mensajes de presión o \textit{aftertouch} \cite{Heckroth1995}.
 
