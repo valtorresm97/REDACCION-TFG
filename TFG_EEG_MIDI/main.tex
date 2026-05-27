@@ -2,106 +2,109 @@
 
 %% Preamble
 \usepackage{minted}
-\usepackage{xcolor} % Para los colores
-
-\usepackage{umatfgspanish}
-\usepackage{blindtext}
+\usepackage{xcolor}
 \usepackage{float}
 \usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{subfigure}
+
+\usepackage{umatfgspanish}
 \raggedbottom
 
-
-\graphicspath{{images/}{../images/}}
+\graphicspath{{images/}{../images/}{../}}
 
 \usepackage{subfiles} % Best loaded last in the preamble
 
 \usepackage[backend=biber,style=numeric]{biblatex}
 \addbibresource{referencias.bib}
 
-\usepackage{enumitem} % Para ajustar la separación en listas
-\usepackage{subfigure} % Para poner subfiguras
-\usepackage{graphicx}
-
-\renewcommand{\tablename}{Tabla} 
+\renewcommand{\tablename}{Tabla}
 
 \begin{document}
 
-%% Cover
-\includepdf[noautoscale=true, width=\paperwidth]{cover_miguel.pdf}
+%% Portada provisional
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Large Trabajo Fin de Grado\par}
+    \vspace{1.5cm}
+    {\Huge\bfseries Diseño de interfaz cerebro--computador para sonificación de ondas cerebrales\par}
+    \vspace{1cm}
+    {\LARGE Sonificación EEG--MIDI\par}
+    \vfill
+    {\large Autor: pendiente de completar\par}
+    {\large Tutor/a: pendiente de completar\par}
+    \vspace{1cm}
+    {\large Universidad de Málaga\par}
+    {\large Curso académico: pendiente de completar\par}
+\end{titlepage}
 
-%pagina en blanco
 \newpage
 \thispagestyle{empty}
 \mbox{}
 \newpage
 
-%% Title
-\clearpage
 \setcounter{page}{1}
 
-\includepdf[noautoscale=true, width=\paperwidth]{portada_tfg_miguel.pdf}
-
-%pagina en blanco
-\newpage
-\thispagestyle{empty}
-\mbox{}
-\newpage
-
-% Agradecimientos
+%% Agradecimientos
 \subfile{sections/agradecimientos}
 \newpage
 
 %% Abstract
 \subfile{sections/abstract}
 
-%Página en blanco
 \newpage
 \thispagestyle{empty}
 \mbox{}
 \newpage
 
-%Resumen
+%% Resumen
 \subfile{sections/resumen}
+\newpage
 
-%Indice
+%% Índices
 \tableofcontents
-
-%Figuras
+\newpage
 \listoffigures
 
-%\chapterend
-
-%Página en blanco
 \newpage
 \thispagestyle{empty}
 \mbox{}
 \newpage
 
-%% Sections
+%% Cuerpo de la memoria
 \subfile{sections/introduccion}
+\newpage
 
-\subfile{sections/conceptos_previos.tex}
+\subfile{sections/conceptos_previos}
+\newpage
 
-\subfile{sections/diseño}
+\subfile{sections/estado_del_arte}
+\newpage
 
-\subfile{sections/resultados}
+\subfile{sections/tecnologias_usadas}
+\newpage
+
+\subfile{sections/diseno_sistema}
+\newpage
+
+\subfile{sections/implementacion}
+\newpage
+
+\subfile{sections/validacion_resultados}
+\newpage
 
 \subfile{sections/conclusiones}
 
-%% Bibliography
-% Incluir las referencias usadas en la memoria aunque no estén citadas en el texto
-\nocite{StLouisFrey2016,Palaniappan2014,Legrand2014,Wu2010,Sawa2022}
+%% Bibliografía
+\newpage
 \printbibliography
 
-\newpage
-
 %% Anexos
+\newpage
 \begin{umaappendices}
-
 \subfile{sections/anexos}
-
 \end{umaappendices}
 
-%% Back Cover
-\includepdf[noautoscale=true, width=\paperwidth]{backcover.pdf}
 \end{document}
