@@ -1,37 +1,14 @@
 \documentclass[../main.tex]{subfiles}
 
 \begin{document}
-%% begin abstract format
-\makeatletter
-\renewenvironment{abstract}{%
-    \if@twocolumn
-      \section*{Abstract \\}%
-    \else %% <- here I've removed \small
-    \begin{flushright}
-        {\filleft\Huge\bfseries\fontsize{48pt}{12}\selectfont Abstract\vspace{\z@}}%  %% <- here I've added the format
-        \end{flushright}
-      \quotation
-    \fi}
-    {\if@twocolumn\else\endquotation\fi}
-\makeatother
-%% end abstract format
-\begin{abstract}
 
-\vspace{40pt}
+\section*{Abstract}
 
-This Bachelor’s Thesis presents the design, implementation, and experimental validation of a smart helmet prototype intended for monitoring head impacts in combat sports. The project is motivated by the growing concern regarding traumatic brain injuries associated with repetitive head impacts and the need for technological tools capable of objectively quantifying exposure to biomechanical risk.
-
-The developed system integrates a portable embedded platform with Bluetooth Low Energy (BLE) connectivity and a six-degree-of-freedom inertial measurement unit (IMU) capable of recording linear acceleration and angular velocity. Through an event-based software architecture, the device detects impact events, estimates peak rotational acceleration, and classifies each event into biomechanical severity ranges derived from values reported in the scientific literature.
-
-The prototype was integrated into protective headgear using a custom-designed 3D-printed enclosure and evaluated during real training sessions with multiple athletes. Experimental results show consistent impact detection under adequate mechanical fixation conditions and highlight the critical role of sensor–helmet coupling in ensuring measurement reliability.
-
-The proposed system is not intended as a clinical diagnostic tool but as a preventive monitoring solution aimed at supporting informed management of cumulative head impact exposure in combat sports.
+% Pending original writing.
+% This section will summarize the EEG--MIDI sonification system, including EEG acquisition, signal processing, feature extraction, musical mapping, MIDI generation and validation.
 
 \vspace{12pt}
 
-\bfseries{\large{Keywords:}} traumatic brain injury, rotational acceleration, head impact monitoring, wearable devices, embedded systems.
-
-\end{abstract}
-
+\textbf{Keywords:} EEG, brain--computer music interfacing, sonification, MIDI, digital signal processing.
 
 \end{document}
