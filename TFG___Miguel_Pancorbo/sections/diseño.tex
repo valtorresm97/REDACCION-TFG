@@ -1,0 +1,804 @@
+\section{Diseño e implementación}
+
+\subsection{Instrumentación de impactos craneales en deportes de contacto}
+\label{sec:instrumentacion}
+
+La instrumentación de impactos craneales en deportes de contacto se basa en la medición \textit{in vivo} de la cinemática de la cabeza mediante dispositivos portables. Dado que no es posible medir directamente la deformación o las tensiones internas del tejido cerebral en sujetos humanos, los sistemas instrumentados registran la aceleración lineal y la aceleración rotacional del cráneo como variables mecánicas representativas del estímulo asociado al impacto \cite{OConnor2017}. 
+
+La revisión sistemática de O’Connor et al. \cite{OConnor2017}, que analiza 61 estudios \textit{in vivo}, concluye que estos dispositivos permiten estimar la exposición a impactos en tiempo real, pero presentan limitaciones relevantes en sensibilidad y especificidad para la identificación de conmoción. Por tanto, su utilidad principal radica en la cuantificación objetiva de la exposición y no en el diagnóstico clínico.
+
+A continuación, se describen las principales aproximaciones tecnológicas identificadas en la literatura.
+
+\subsubsection{Sistemas integrados en casco}
+
+Los sistemas integrados en casco han sido históricamente los más utilizados en deportes como el fútbol americano o el hockey sobre hielo. El ejemplo más extendido es el \textit{Head Impact Telemetry System} (HITS) \cite{OConnor2017}.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/HITS.pdf}
+    \caption{Sistema Head Impact Telemetry System (HITS) integrado en casco de fútbol americano. Fuente: \cite{Guskiewicz2011}.}
+    \label{fig:hits_system}
+\end{figure}
+
+
+Sus principales características técnicas son:
+
+\begin{itemize}
+    \item Integración de múltiples acelerómetros en el interior del casco.
+    \item Umbral de activación por acelerómetro individual de 14.4 g.
+    \item Filtrado posterior habitual de impactos por debajo de 10 g.
+    \item Frecuencia de muestreo típica de 1 kHz.
+    \item Ventana temporal aproximada de 40 ms (8 ms preimpacto y 32 ms postimpacto).
+    \item Estimación de la aceleración rotacional a partir de modelos basados en aceleración lineal.
+\end{itemize}
+
+Este tipo de sistema asume un comportamiento solidario casco–cráneo. Sin embargo, la literatura señala que la precisión depende críticamente del ajuste del casco, ya que un desacoplamiento puede afectar a las magnitudes registradas \cite{OConnor2017}. Asimismo, se han documentado variaciones en el error en función de la localización del impacto y del modelo de casco empleado.
+
+\subsubsection{Sensores adhesivos o parches cutáneos}
+
+Los sensores tipo \textit{patch} incorporan acelerómetros triaxiales y giróscopos y se fijan sobre la piel (habitualmente en región mastoidea) o sobre el propio casco.
+
+De acuerdo con O’Connor et al. \cite{OConnor2017}, en determinadas configuraciones se han documentado errores elevados, incluyendo tasas de error de hasta el 50\% en aceleración lineal y rotacional en estudios de validación.
+
+Un estudio reciente en boxeo realizado por Le Flao et al. \cite{LeFlao2024} comparó simultáneamente tres dispositivos: un protector bucal instrumentado, un parche cutáneo y un parche fijado al casco. 
+
+Las sensibilidades obtenidas fueron del 35\% para el protector bucal, 86\% para el parche cutáneo y 78\% para el parche en casco. No obstante, el valor predictivo positivo para impactos craneales fue superior al 96\% en los tres dispositivos \cite{LeFlao2024}. 
+
+Los autores observaron además que la probabilidad de activación dependía de la localización del impacto, siendo mayor cuando el golpe se producía en las proximidades del sensor.
+
+\subsubsection{Protectores bucales instrumentados}
+
+Los protectores bucales instrumentados buscan mejorar el acoplamiento mecánico al cráneo mediante su fijación a la dentición superior.
+
+En la validación en laboratorio del dispositivo HitIQ Nexus A9, Stitt et al. \cite{Stitt2021} evaluaron la aceleración lineal pico (PLA) y la aceleración rotacional pico (PRA) frente a sensores de referencia integrados en un modelo de cabeza instrumentado. Los resultados obtenidos fueron:
+
+\begin{itemize}
+    \item Correlación R\textsuperscript{2} = 0.996 para PLA.
+    \item Correlación R\textsuperscript{2} = 0.994 para PRA.
+    \item Error cuadrático medio de 1 $\pm$ 0.6 g para aceleración lineal.
+    \item Error cuadrático medio de 47.4 $\pm$ 35 rad/s\textsuperscript{2} para aceleración rotacional.
+    \item Sesgo no significativo para PLA y sesgo sistemático del 1\% para PRA.
+\end{itemize}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/parche.pdf}
+    \caption{Dispositivos instrumentados evaluados en boxeo: parche cutáneo CSx y protector bucal instrumentado, junto con ejemplos de colocación en región mastoidea y casco. Fuente: \cite{LeFlao2024}.}
+    \label{fig:leflao_devices}
+\end{figure}
+
+
+
+\subsubsection{Parámetros operativos y configuración de adquisición}
+
+Los sistemas descritos registran típicamente:
+
+\begin{itemize}
+    \item Aceleración lineal resultante (g).
+    \item Velocidad angular (rad/s).
+    \item Aceleración rotacional (rad/s\textsuperscript{2}).
+    \item Ventana temporal completa del impacto.
+\end{itemize}
+
+En cuanto a la configuración de adquisición:
+
+\begin{itemize}
+    \item Los umbrales de activación reportados en la literatura oscilan entre 9.6 g y 15 g \cite{OConnor2017}.
+    \item Incrementar el umbral de 10 g a 15 g puede reducir el número de impactos registrados en un 45\% \cite{OConnor2017}.
+    \item Las frecuencias de muestreo habituales se sitúan en torno a 1 kHz en sistemas integrados en casco \cite{OConnor2017}.
+    \item En la validación de Stitt et al. \cite{Stitt2021}, los acelerómetros muestrearon a 3200 Hz y el giróscopo a 800 Hz.
+\end{itemize}
+
+
+\subsubsection{Limitaciones comunes identificadas}
+
+De forma transversal, la literatura identifica las siguientes limitaciones:
+
+\begin{itemize}
+    \item Dependencia crítica del acoplamiento mecánico al cráneo.
+    \item Variabilidad en el número de eventos registrados según umbral de activación.
+    \item Errores individuales de medida.
+    \item Utilidad limitada para la identificación específica de conmoción \cite{OConnor2017}.
+\end{itemize}
+
+En conjunto, el estado del arte muestra que la medición portátil de aceleraciones lineales y rotacionales es técnicamente viable y puede alcanzar alta precisión en condiciones controladas. No obstante, la arquitectura de fijación, la localización del sensor y la configuración de adquisición influyen de forma determinante en los eventos registrados. Este marco tecnológico constituye la base para la definición de requisitos de diseño que se abordará en el siguiente apartado.
+
+
+
+\subsection{Objetivo del diseño y requisitos}
+\label{sec:requisitos}
+
+A partir del análisis del estado del arte, se desprende que los sistemas de monitorización de impactos craneales deben abordar tres aspectos fundamentales: (i) la medición fiable de la cinemática rotacional, (ii) la detección consistente de eventos de impacto y (iii) la generación de información útil sobre la exposición del deportista, sin pretender sustituir el juicio clínico \cite{OConnor2017,LeFlao2024}.
+
+En este contexto, el objetivo del diseño desarrollado en el presente trabajo es implementar un sistema embebido portable capaz de detectar impactos craneales, estimar su severidad biomecánica en función de la aceleración rotacional y generar alertas clasificadas por nivel de riesgo, así como resumenes por sesión orientadas a la gestión preventiva de la exposición.
+
+Para garantizar la trazabilidad entre el diseño y su validación, se establecen a continuación los requisitos funcionales y no funcionales del sistema.
+
+\subsubsection{Requisitos funcionales}
+
+\begin{description}
+  \item[RF-1 (Control de sesión).] El sistema debe permitir iniciar y detener una sesión de monitorización mediante comandos \texttt{START} y \texttt{STOP} recibidos por Bluetooth.
+
+  \item[RF-2 (Monitorización continua).] El sistema debe adquirir muestras de la IMU durante la sesión activa, manteniendo un modo de monitorización continua mientras no exista evento.
+
+  \item[RF-3 (Detección de evento por umbral).] El sistema debe detectar el inicio de un evento cuando la aceleración lineal resultante supere un umbral configurable.
+  
+
+  \item[RF-4 (Muestreo de alta frecuencia durante el evento).] 
+El sistema debe muestrear a alta frecuencia durante el estado \texttt{EVENT} para capturar adecuadamente la evolución temporal del impacto y permitir el cálculo posterior de métricas rotacionales.
+
+\begin{itemize}
+    \item \textbf{Requisito cuantitativo (prototipo):} durante \texttt{EVENT}, la frecuencia efectiva de muestreo debe ser \(\ge 400\)~Hz.
+\end{itemize}
+
+
+  \item[RF-5 (Registro de señales por muestra).] Durante \texttt{EVENT}, el sistema debe almacenar para cada muestra, como mínimo:
+  \begin{itemize}
+    \item \textit{timestamp} \(t[k]\),
+    \item velocidad angular resultante \(\omega_{\mathrm{res}}[k]\) (o componentes equivalentes).
+  \end{itemize}
+
+  \item[RF-6 (Cálculo de aceleración rotacional).] Al finalizar cada evento, el sistema debe calcular la aceleración angular \(\alpha_{\mathrm{res}}[k]\) a partir de \(\omega_{\mathrm{res}}[k]\) y \(t[k]\) (mediante derivación numérica).
+
+  \item[RF-7 (Extracción de métricas por evento).] Para cada evento, el sistema debe extraer al menos el pico de aceleración rotacional \(\alpha_{\max}\) 
+
+  \item[RF-8 (Clasificación del evento 1--4).] El sistema debe clasificar cada evento en uno de cuatro tipos \(\{1,2,3,4\}\) en función de \(\alpha_{\max}\) y umbrales configurables:
+  \[
+    \text{Tipo}=
+    \begin{cases}
+      1, & \alpha_{\max} < T_1\\
+      2, & T_1 \le \alpha_{\max} < T_2\\
+      3, & T_2 \le \alpha_{\max} < T_3\\
+      4, & \alpha_{\max} \ge T_3
+    \end{cases}
+  \]
+  donde \(T_1, T_2, T_3\) se fijan a partir del criterio de riesgo seleccionado.
+
+  \item[RF-9 (Recomendación por tipo).] El sistema debe asociar a cada tipo (1--4) una recomendación codificada (un entero o código corto) para su interpretación por el receptor.
+
+  \item[RF-10 (Notificación por Bluetooth por evento).] Para cada evento clasificado, el sistema debe enviar al receptor una notificación Bluetooth que contenga, como mínimo, el tipo (1--4) y el código de recomendación.
+
+  \item[RF-11 (Resumen al finalizar la sesión).] Tras recibir \texttt{STOP}, el sistema debe generar y transmitir un resumen de sesión con:
+  \begin{itemize}
+    \item número total de impactos detectados,
+    \item número de impactos por tipo (1--4),
+    \item recomendaciones agregadas de sesión (según criterio del diseño).
+  \end{itemize}
+\end{description}
+
+\subsubsection{Requisitos no funcionales}
+Se recogen requisitos no funcionales (RNF) orientados a la operación en campo y utilidad práctica, evitando imponer decisiones internas de implementación.
+
+\begin{description}
+  \item[RNF-1 (Latencia de aviso).] El sistema debe proporcionar la notificación del evento al receptor con una latencia \(\le 1\)~s desde el fin del evento.
+
+  \item[RNF-2 (Autonomía mínima).] El sistema debe operar de forma continua durante una sesión completa (objetivo mínimo: \(\ge 2\)~h) sin recarga.
+
+  \item[RNF-3 (Portabilidad y no interferencia).] El sistema debe ser portable y no interferir de forma apreciable con la práctica deportiva.
+  
+ \item[RNF-4 (Alcance de comunicación).] El sistema debe mantener una comunicación Bluetooth estable con el dispositivo receptor a una distancia mínima de 5 m en entorno abierto.
+
+  \item[RNF-5 (Fijación mecánica).] El sistema debe estar firmemente anclado al casco para minimizar el movimiento relativo entre el sensor y la cabeza, garantizando la correcta adquisición de la señal cinemática.
+  
+  
+\end{description}
+
+
+\subsection{Selección de componentes}
+\label{subsec:seleccion_componentes}
+
+Una vez definidos los objetivos de diseño y los requisitos funcionales y no funcionales del sistema, el siguiente paso consiste en seleccionar los componentes hardware que permitan materializar la arquitectura propuesta.
+
+El prototipo desarrollado se estructura en tres bloques principales:
+
+\begin{itemize}
+    \item Unidad de procesamiento y comunicación inalámbrica.
+    \item Unidad de medida inercial (IMU) para la adquisición de la cinemática.
+    \item Sistema de alimentación autónomo.
+\end{itemize}
+
+
+El enfoque adoptado prioriza una arquitectura basada en eventos, donde la adquisición de alta frecuencia y el procesamiento asociado al impacto se activan únicamente cuando se detecta un evento significativo. Este planteamiento condiciona directamente la elección del microcontrolador, del sensor inercial y del sistema de alimentación.
+
+
+
+
+\subsubsection{Microcontrolador y plataforma de procesamiento}
+
+El sistema se basa en el microcontrolador nRF51822 de Nordic Semiconductor, integrado en la placa TinyBLE \cite{NordicnRF51822}. Este dispositivo pertenece a la familia nRF51 e integra en un único chip una CPU ARM Cortex-M0 de 32 bits y un transceptor de radio de 2.4 GHz compatible con Bluetooth Low Energy (BLE), lo que permite combinar procesamiento embebido y comunicación inalámbrica en una arquitectura compacta.
+
+\paragraph{Especificaciones técnicas relevantes}
+
+Según la especificación oficial del fabricante \cite{NordicnRF51822}, las características principales del nRF51822 son:
+
+\begin{itemize}
+    \item Arquitectura ARM Cortex-M0 de 32 bits.
+    \item Frecuencia máxima de CPU: 16 MHz.
+    \item Memoria Flash: hasta 256 kB.
+    \item Memoria RAM: hasta 16 kB.
+    \item Transceptor BLE integrado en banda ISM 2.4 GHz.
+    \item Interfaces digitales SPI y TWI (I\textsuperscript{2}C).
+    \item Temporizadores hardware y sistema de interrupciones.
+    \item ADC de 10 bits.
+    \item Modos de bajo consumo con corrientes reducidas en reposo.
+\end{itemize}
+
+Estas características permiten la adquisición digital de datos desde la IMU, el procesamiento local de señales y la transmisión inalámbrica sin necesidad de circuitería adicional dedicada a comunicaciones.
+
+\paragraph{Relación con los requisitos del sistema}
+
+La elección del nRF51822 resulta coherente con los requisitos definidos previamente por las siguientes razones:
+
+\begin{itemize}
+    \item \textbf{Arquitectura basada en eventos:} la presencia de temporizadores e interrupciones hardware permite implementar el cambio dinámico entre modo de monitorización y modo de evento (RF-2 y RF-4).
+    
+    \item \textbf{Procesamiento local ligero:} la capacidad de cálculo a 16 MHz es suficiente para realizar derivación numérica de la velocidad angular y obtener el pico de aceleración rotacional al finalizar cada evento (RF-6 y RF-7).
+    
+    \item \textbf{Clasificación discreta:} la memoria disponible permite almacenar buffers temporales de evento y ejecutar la lógica de clasificación en cuatro niveles (RF-8).
+    
+    \item \textbf{Comunicación inalámbrica integrada:} el soporte nativo de BLE satisface el requisito de notificación por evento y transmisión de resumen de sesión sin necesidad de módulos externos (RF-10 y RF-11).
+    
+    \item \textbf{Bajo consumo energético:} los modos de bajo consumo favorecen el cumplimiento del requisito de autonomía mínima durante una sesión completa (RNF-2).
+\end{itemize}
+
+\paragraph{Limitaciones}
+
+El microcontrolador presenta, no obstante, limitaciones inherentes a su arquitectura:
+
+\begin{itemize}
+    \item La frecuencia de 16 MHz y la memoria RAM limitada restringen la posibilidad de realizar procesamiento complejo o almacenamiento prolongado de señales completas.
+    
+    \item No resulta adecuado para adquisición continua a frecuencias muy elevadas durante periodos largos.
+    
+    \item La arquitectura está optimizada para transmisión de datos resumidos más que para registro masivo de información cruda.
+\end{itemize}
+
+Estas limitaciones justifican el enfoque adoptado en el prototipo, basado en procesamiento local simplificado y transmisión de información ya clasificada en lugar de señal completa.
+
+
+\subsubsection{Unidad de Medición Inercial}
+
+La unidad de medición inercial empleada en el prototipo es el dispositivo MPU-6050, fabricado por InvenSense \cite{InvenSenseMPU6050}. Se trata de una IMU de 6 grados de libertad que integra en un único encapsulado un acelerómetro triaxial y un giróscopo triaxial digital, permitiendo medir directamente la aceleración lineal y la velocidad angular del sistema al que se encuentra solidariamente acoplada.
+
+En el marco del presente diseño, la variable de mayor interés es la velocidad angular, ya que la aceleración rotacional, empleada como descriptor principal de severidad del impacto en el contexto del trabajo, se obtiene mediante derivación temporal de dicha magnitud. Por tanto, el rango dinámico del giróscopo constituye un factor determinante en la selección del sensor.
+
+Según la especificación oficial del fabricante \cite{InvenSenseMPU6050}, el MPU-6050 presenta las siguientes características técnicas relevantes:
+
+\begin{itemize}
+    \item Acelerómetro triaxial programable con rangos seleccionables de $\pm 2$, $\pm 4$, $\pm 8$ y $\pm 16$ g.
+    
+    \item Giróscopo triaxial programable con rangos seleccionables de $\pm 250$, $\pm 500$, $\pm 1000$ y $\pm 2000$ °/s.
+    
+    \item Conversión analógico-digital interna de 16 bits para ambos sensores.
+    
+    \item Frecuencia de salida máxima de 1 kHz con el filtro digital interno habilitado.
+    
+    \item Comunicación digital mediante interfaz I\textsuperscript{2}C.
+    
+    \item Tensión de alimentación típica de 3.3 V.
+    
+    \item Consumo típico aproximado de 3.9 mA en operación normal.
+\end{itemize}
+
+El rango máximo del giróscopo ($\pm 2000$ °/s) permite registrar velocidades angulares elevadas asociadas a impactos en deportes de combate. A partir de estas medidas el sistema estima la aceleración rotacional mediante derivación temporal, magnitud empleada como variable principal de clasificación (RF-6 y RF-8). La frecuencia máxima de salida de 1 kHz proporciona margen suficiente para implementar un muestreo elevado durante evento (RF-4), necesario para capturar fenómenos de corta duración del orden de milisegundos.
+
+La integración de acelerómetro y giróscopo en un único encapsulado, junto con su bajo consumo y reducido tamaño, favorece el cumplimiento de los requisitos de portabilidad y autonomía (RNF-1 y RNF-2).
+
+Como limitación, el rango máximo del acelerómetro ($\pm 16$ g) puede saturarse ante impactos de elevada severidad. Esta restriccion justifica el enfoque adoptado, priorizando la cinemática rotacional frente a la lineal como variable de decisión.
+
+
+\subsubsection{La placa Tiny-BLE de Seeed Studio}
+
+
+La plataforma hardware empleada en el prototipo es la placa TinyBLE de Seeed Studio \cite{SeeedTinyBLE}, basada en el microcontrolador nRF51822-QFAA. Esta placa integra en un formato compacto tanto el microcontrolador como la circuitería auxiliar necesaria para su funcionamiento autónomo en aplicaciones embebidas con comunicación Bluetooth Low Energy (BLE 4.0).
+
+Según la documentación oficial del fabricante \cite{SeeedTinyBLE}, la TinyBLE incorpora regulador de tensión, circuito de gestión para batería LiPo de 3.7 V, antena PCB integrada para comunicación inalámbrica y acceso a las principales interfaces digitales del microcontrolador, incluyendo I\textsuperscript{2}C, utilizada en este proyecto para la comunicación con la IMU.
+
+Entre las características físicas y funcionales más relevantes se encuentran:
+
+\begin{itemize}
+    \item Microcontrolador nRF51822-QFAA integrado.
+    \item Soporte para Bluetooth Low Energy (BLE 4.0).
+    \item Regulador de tensión y gestión de batería LiPo.
+    \item Antena PCB integrada.
+    \item Interfaz USB para programación y depuración.
+    \item Dimensiones reducidas adecuadas para integración en sistemas portables.
+\end{itemize}
+
+Desde el punto de vista de los requisitos definidos, la TinyBLE facilita directamente el cumplimiento del requisito de comunicación inalámbrica por evento (RF-10), Además su reducido tamaño favorece el cumplimiento del requisito de portabilidad (RNF-1).
+
+Como limitación, al tratarse de una placa de desarrollo orientada a prototipado rápido, su diseño no está optimizado específicamente para integración estructural en un casco deportivo. El tamaño y la disposición de componentes responden a criterios de accesibilidad y versatilidad más que a miniaturización extrema, lo que condiciona parcialmente la integración mecánica final del sistema.
+
+\subsubsection{Alimentación}
+
+El sistema de alimentación del prototipo se basa en una batería recargable de polímero de litio (LiPo) modelo 6SP452030, con una capacidad nominal de 200 mAh y una tensión nominal de 3.7 V, lo que corresponde a una energía almacenada aproximada de 0.74 Wh.
+
+Las características principales de la batería empleada son:
+
+\begin{itemize}
+    \item Tecnología: Litio-polímero (LiPo).
+    \item Tensión nominal: 3.7 V.
+    \item Capacidad nominal: 200 mAh.
+    \item Energía nominal: 0.74 Wh.
+    \item Formato compacto y reducido espesor.
+\end{itemize}
+
+La elección de una batería LiPo de pequeña capacidad responde a los requisitos de portabilidad y autonomía definidos previamente (RNF-1 y RNF-2). Su reducido tamaño y peso facilitan la integración del sistema en un dispositivo wearable sin comprometer la comodidad del usuario.
+
+En conjunto, los componentes descritos conforman la arquitectura electrónica del sistema embebido desarrollado. La Figura~\ref{fig:hardware_system} muestra el prototipo en su configuración electrónica antes del encapsulado.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/Hardware.pdf}
+    \caption{Componentes electrónicos principales del prototipo}
+    \label{fig:hardware_system}
+\end{figure}
+
+
+\subsection{Descripción del diseño software}
+
+\subsubsection{Objetivos del firmware y trazabilidad con requisitos}
+\label{subsubsec:fw_objetivos_trazabilidad}
+
+El firmware desarrollado implementa la lógica embebida necesaria para: (i) iniciar y detener sesiones de monitorización bajo control remoto, (ii) adquirir medidas inerciales desde el MPU-6050, (iii) detectar eventos de impacto mediante un criterio por umbral, (iv) procesar la señal registrada durante el evento para estimar una métrica rotacional de severidad, y (v) comunicar al receptor tanto los eventos individuales como un resumen acumulado de la sesión mediante Bluetooth Low Energy (BLE).
+
+El desarrollo, compilación y depuración del firmware se ha realizado en el entorno ARM Keil Studio, habitual en sistemas embebidos basados en microcontroladores ARM Cortex-M.
+
+El diseño implementado satisface los requisitos funcionales definidos previamente: control de sesión por comandos (\textbf{RF-1}), monitorización durante sesión activa (\textbf{RF-2}), detección de evento por umbral (\textbf{RF-3}), muestreo intensivo durante evento (\textbf{RF-4}), registro de magnitudes por muestra (\textbf{RF-5}), cálculo de aceleración rotacional por derivación (\textbf{RF-6}), extracción de picos por evento (\textbf{RF-7}), clasificación discreta en niveles (\textbf{RF-8}) y notificación al receptor (\textbf{RF-10}), además del resumen de sesión al finalizar (\textbf{RF-11}).
+
+La arquitectura orientada a eventos, con muestreo intensivo únicamente durante el estado \texttt{EVENT} y transmisión de información resumida en lugar de señal cruda continua, contribuye a cumplir los requisitos no funcionales de latencia de aviso (\textbf{RNF-1}) y autonomía (\textbf{RNF-2}).
+
+
+
+\subsubsection{Arquitectura general y máquina de estados}
+\label{subsubsec:fw_estados}
+
+El firmware se estructura como una máquina de estados con tres modos operativos principales:
+
+\begin{itemize}
+    \item \textbf{IDLE}: el dispositivo anuncia por BLE y permanece a la espera de comandos. No se realiza análisis.
+    \item \textbf{RUN}: sesión activa tras recibir el comando \texttt{start}. Se evalúa continuamente el criterio de disparo del impacto.
+    \item \textbf{EVENT}: se detecta un impacto y se activa un muestreo intensivo para registrar la señal rotacional y calcular métricas de severidad.
+\end{itemize}
+
+El comando \texttt{start} activa directamente el análisis, reinicia los contadores de sesión y habilita la monitorización. El comando \texttt{stop} finaliza la sesión y desencadena el envío del resumen acumulado.
+
+La transición entre \texttt{RUN} y \texttt{EVENT} depende exclusivamente de la superación de umbrales cinemáticos, mientras que el cierre del evento requiere estabilidad temporal por debajo del criterio de peligro y un periodo de \textit{cooldown} para evitar detecciones consecutivas espurias.
+
+Esta separación clara entre estados permite concentrar el procesamiento intensivo únicamente durante ventanas breves de interés, optimizando recursos en un microcontrolador con memoria limitada.
+
+\subsubsection{Adquisición IMU y temporización}
+\label{subsubsec:fw_adquisicion}
+
+La adquisición de datos se realiza mediante el acelerómetro y giróscopo integrados en el MPU-6050, comunicados por bus I\textsuperscript{2}C. El sensor se configura con rangos máximos de medida (\(\pm16g\) y \(\pm2000~^\circ/\mathrm{s}\)) para minimizar saturación durante impactos de alta intensidad, y con una tasa nominal de muestreo de 500~Hz.
+
+Durante el estado \texttt{EVENT}, el firmware impone un intervalo mínimo de 2000~\(\mu s\) entre muestras (aproximadamente 500~Hz efectivos), utilizando el contador interno de microsegundos.
+
+
+\subsubsection{Detección de evento de impacto}
+\label{subsubsec:fw_deteccion}
+
+\paragraph{Criterio de disparo por umbral}
+\label{par:fw_trigger}
+
+La detección del inicio de un evento de impacto se basa en la superación de un criterio por umbral aplicado al módulo de la aceleración lineal y/o de la velocidad angular. En cada muestra adquirida se calculan:
+
+\[
+\| \mathbf{a} \| = \sqrt{a_x^2 + a_y^2 + a_z^2}, 
+\qquad
+\| \boldsymbol{\omega} \| = \sqrt{\omega_x^2 + \omega_y^2 + \omega_z^2}
+\]
+
+El evento se considera potencialmente relevante cuando:
+
+\[
+\| \mathbf{a} \| > a_{\mathrm{th}} 
+\quad \text{o} \quad
+\| \boldsymbol{\omega} \| > \omega_{\mathrm{th}}
+\]
+
+donde, en el prototipo actual, se emplean valores nominales de:
+
+\[
+a_{\mathrm{th}} = 10g,
+\qquad
+\omega_{\mathrm{th}} = 30~\mathrm{rad/s}
+\]
+
+Estos valores no se interpretan como umbrales diagnósticos de lesión, sino como criterios operativos de activación del registro de evento. Su elección busca un compromiso entre sensibilidad y robustez: umbrales demasiado bajos incrementarían falsos positivos y consumo, mientras que umbrales excesivamente altos podrían omitir eventos de interés preventivo. En este diseño, el acelerómetro se emplea principalmente como disparador del evento, mientras que la severidad biomecánica se evalúa posteriormente a partir de la dinámica rotacional.
+
+\paragraph{Histéresis, cierre estable y \textit{cooldown}}
+\label{par:fw_histeresis}
+
+Para evitar detecciones espurias debidas a oscilaciones puntuales alrededor del umbral, el cierre del evento no se produce ante una única muestra por debajo del criterio de peligro. En su lugar, se requiere que la condición de no peligro se mantenga durante un número mínimo de muestras consecutivas (en el prototipo, tres muestras). Este mecanismo introduce una histéresis temporal que estabiliza la delimitación del evento.
+
+Adicionalmente, tras finalizar un impacto se impone un periodo de \textit{cooldown} (300~ms en la implementación actual), durante el cual no se permite iniciar un nuevo evento. Este intervalo reduce la probabilidad de fragmentar un mismo impacto en múltiples eventos consecutivos debido a rebotes mecánicos o vibraciones residuales del sistema casco–sensor.
+
+\subsubsection{Procesado por evento y extracción de métricas}
+\label{subsubsec:fw_procesado}
+
+Una vez detectado el inicio del impacto y activado el estado \texttt{EVENT}, el firmware registra temporalmente la señal necesaria para estimar la severidad rotacional del evento. El objetivo de esta fase no es almacenar la señal completa de forma permanente, sino extraer una métrica representativa que permita clasificar el impacto de acuerdo con criterios biomecánicos.
+
+\paragraph{Buffer de evento y variables registradas}
+\label{par:fw_buffer}
+
+Durante el evento se almacenan, para cada muestra, dos magnitudes principales:
+
+\begin{itemize}
+    \item Marca temporal relativa al inicio del evento en microsegundos.
+    \item Módulo de la velocidad angular \(\|\boldsymbol{\omega}\|\).
+\end{itemize}
+
+La elección de registrar únicamente el módulo de la velocidad angular, en lugar de los tres ejes completos, responde a criterios de eficiencia en memoria y simplicidad de cálculo, adecuados para el microcontrolador empleado. 
+
+El tamaño máximo del buffer limita la duración máxima registrable del evento (del orden de medio segundo a la frecuencia objetivo), lo que resulta suficiente para impactos deportivos típicos de corta duración. Esta decisión representa un compromiso entre resolución temporal y restricciones de memoria del sistema embebido.
+
+\paragraph{Filtrado de \texorpdfstring{$\|\boldsymbol{\omega}\|$}{|w|} y cálculo de \texorpdfstring{$\alpha$}{alpha}}
+\label{par:fw_alpha}
+
+El MPU-6050 incorpora un filtro digital paso bajo (Digital Low Pass Filter, DLPF) configurable a nivel de hardware, que limita el ancho de banda efectivo del acelerómetro y del giróscopo \cite{InvenSenseMPU6050}. En el prototipo se configura un corte nominal del orden de 100~Hz, valor coherente con la práctica habitual en estudios experimentales de impactos craneales deportivos, donde las señales cinemáticas se filtran típicamente en el rango 100–165~Hz antes del cálculo de métricas derivadas \cite{Hoshizaki2017,Guskiewicz2011}.
+
+La limitación del ancho de banda responde a dos consideraciones principales. Por un lado, los impactos deportivos presentan duraciones características del orden de 5–15~ms, concentrando la energía relevante del movimiento en frecuencias inferiores a aproximadamente 100–200~Hz. Por otro, la estimación de la aceleración rotacional se realiza mediante derivación discreta de la velocidad angular, operación que amplifica componentes de alta frecuencia; el filtrado previo atenúa ruido electrónico y vibraciones estructurales no asociadas a la dinámica global del impacto.
+
+Una vez filtrada la señal por el DLPF interno del sensor, la aceleración rotacional se estima mediante:
+
+\[
+\alpha[k] \approx 
+\frac{|\omega[k] - \omega[k-1]|}{\Delta t_{us}} \cdot 10^6
+\]
+
+donde \(\Delta t_{us}\) es el intervalo temporal entre muestras consecutivas expresado en microsegundos.
+
+El factor \(10^6\) permite convertir el incremento temporal desde microsegundos a segundos. El valor resultante (\(\alpha_{\text{raw}}\)) se escala posteriormente mediante un divisor constante (\texttt{ALPHA\_SCALE\_DIV}) para reducir el rango dinámico y permitir su almacenamiento en formato \texttt{uint16\_t}, evitando desbordamientos y optimizando el uso de memoria.
+
+
+
+\paragraph{Métrica de severidad por evento}
+\label{par:fw_metricas}
+
+A partir de la secuencia de aceleraciones rotacionales estimadas, se extrae como descriptor principal el valor máximo del evento:
+
+\[
+\alpha_{\max} = \max_k \alpha[k]
+\]
+
+Este valor representa la severidad cinemática del impacto en términos rotacionales y se emplea posteriormente para clasificar el evento en diferentes zonas de riesgo relativo.
+
+Es importante destacar que \(\alpha_{\max}\) no se interpreta como indicador diagnóstico directo de lesión, sino como una métrica de severidad biomecánica relativa, utilizada con fines preventivos y de monitorización de la exposición.
+
+
+\subsubsection{Clasificación biomecánica del impacto}
+\label{subsubsec:fw_clasificacion}
+
+\paragraph{Zonas Z0--Z3 y umbrales}
+\label{par:fw_umbrales}
+
+Dado que la literatura no establece un umbral clínico único y universal de conmoción, este trabajo adopta una clasificación por rangos de aceleración rotacional, interpretados como indicadores de severidad relativa y no como criterios diagnósticos \cite{Guskiewicz2011}. La discretización se define en cuatro zonas (Z0--Z3) en función del valor máximo de aceleración rotacional estimada durante el evento:
+
+\[
+\text{Z0: } \alpha_{\max} < 3000~\mathrm{rad/s^2}
+\]
+\[
+\text{Z1: } 3000 \le \alpha_{\max} < 4600~\mathrm{rad/s^2}
+\]
+\[
+\text{Z2: } 4600 \le \alpha_{\max} < 8000~\mathrm{rad/s^2}
+\]
+\[
+\text{Z3: } \alpha_{\max} \ge 8000~\mathrm{rad/s^2}
+\]
+
+La selección de estos puntos de corte se basa en resultados publicados en reconstrucciones experimentales y modelos biomecánicos de acuerdo con \ref{tab:rangos_rotacionales}:
+
+\begin{itemize}
+    \item \textbf{Límite inferior (3000~rad/s$^2$).} En reconstrucciones deportivas, Hoshizaki et al. sitúan impactos sin lesión alrededor de \(2.7\)~krad/s$^2$ y eventos con mTBI alrededor de \(3.3\)~krad/s$^2$, lo que posiciona la transición en torno a \(3\)~krad/s$^2$ \cite{Hoshizaki2017}. Resultados en poblaciones jóvenes también muestran magnitudes concusivas del orden de \(2.5\)–\(3\)~krad/s$^2$ (con alta variabilidad), reforzando este valor como límite superior prudente para una zona baja \cite{article}.
+    
+    \item \textbf{Punto intermedio (4600~rad/s$^2$).} Modelos de elementos finitos y curvas de riesgo han reportado probabilidades de lesión crecientes con la aceleración rotacional; en particular, se han publicado valores en torno a \(4600\)~rad/s$^2$ como referencia de probabilidad significativa ( \(\sim\)25\%) de mTBI, con un 50\% alrededor de valores superiores. Revisiones posteriores sitúan el promedio concusivo agregado por encima de este valor, lo que permite usar 4600~rad/s$^2$ como umbral conservador de entrada en zona de riesgo biomecánico \cite{Tierney2024}.
+    
+    \item \textbf{Límite alto (8000~rad/s$^2$).} En reconstrucciones de impactos más severos se han observado magnitudes del orden de \(7.6\)~krad/s$^2$ en caídas y valores cercanos a \(10\)~krad/s$^2$ en golpes directos en deportes de combate, situando 8000~rad/s$^2$ dentro de un rango de severidad claramente elevada \cite{Hoshizaki2017,Lota2022}.
+\end{itemize}
+
+En conjunto, las zonas implementadas proporcionan una partición operativa de una relación continua entre cinemática y riesgo, útil para monitorización preventiva sin pretensión diagnóstica.
+
+\paragraph{Códigos de recomendación por evento}
+\label{par:fw_event_advice}
+
+Cada evento clasificado se asocia a un código discreto transmitido al receptor junto con la zona \(Z\). Estos códigos se emplean como interfaz simple para que el receptor pueda mostrar mensajes o recomendaciones de forma consistente, sin que el firmware realice diagnóstico ni decisiones clínicas. En el prototipo, la salida por evento se codifica como \texttt{HIT:Z,E}, donde \(E\) representa una recomendación asociada a la severidad relativa de la zona detectada.
+
+\begin{table}[h]
+\centering
+\caption{Códigos por evento (HIT:Z,E) basado en el Consenso Amsterdam 2022}
+\label{tab:event_codes}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Zona & Código E & Recomendación \\
+\hline
+Z0  & 0 & Evento registrado. Sin acción específica. \\
+\hline
+Z1  & 10 & Reducir intensidad y monitorizar síntomas. \\
+\hline
+Z2  & 20 & Detener sparring intenso y evaluar síntomas. \\
+\hline
+Z3  & 30 & Cese inmediato. Evaluación clínica si síntomas. \\
+\hline
+\end{tabular}
+\end{table}
+
+
+\subsubsection{Modelo de sesión y exposición acumulativa}
+\label{subsubsec:fw_sesion}
+
+La clasificación global de sesión se determina por la zona máxima alcanzada durante la sesión, dado que los impactos de mayor magnitud son los más consistentemente asociados a mTBI en reconstrucciones experimentales \cite{Hoshizaki2017}.
+
+Este criterio es coherente con el consenso Amsterdam 2022, que establece actuación ante eventos sospechosos independientemente de la carga acumulativa previa.
+
+\begin{table}[h]
+\centering
+\caption{Clasificación de sesión y códigos agregados (SES:CLS,C / SES:ADV,A)}
+\label{tab:session_codes}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Clase (C) & Zona máxima & Código A & Recomendación \\
+\hline
+0 & Solo Z0 & 100 & Continuar entrenamiento normal \\
+\hline
+1 & Máx Z1 & 110 & Reducir intensidad próxima sesión \\
+\hline
+2 & Máx Z2 & 120 & Evitar contacto adicional hoy. Vigilar síntomas \\
+\hline
+3 & Máx Z3 & 130 & Suspender contacto. Evaluación si síntomas \\
+\hline
+\end{tabular}
+\end{table}
+
+Este esquema reduce complejidad y mantiene coherencia con el objetivo preventivo del sistema.
+
+\subsubsection{Comunicación BLE y protocolo de mensajes}
+\label{subsubsec:fw_ble}
+
+La comunicación entre el dispositivo y el receptor se implementa mediante Bluetooth Low Energy (BLE), utilizando el microcontrolador nRF51822 en modo periférico y el servicio UART proporcionado por la biblioteca del fabricante. Este enfoque permite transmitir mensajes estructurados en formato texto, facilitando la integración con aplicaciones móviles y simplificando la depuración del sistema.
+
+El dispositivo anuncia un servicio UART específico y permanece en espera de conexión en estado \texttt{IDLE}. Una vez establecida la conexión, la interacción se organiza mediante un protocolo de comandos y respuestas de baja complejidad.
+
+\paragraph{Servicio UART y flujo de comandos}
+\label{par:fw_ble_cmd}
+
+El control de la sesión se realiza a través de comandos enviados por el receptor:
+
+\begin{itemize}
+    \item \texttt{start}: solicita el inicio de una nueva sesión.
+    \item \texttt{stop}: finaliza la sesión activa y desencadena el envío del resumen.
+\end{itemize}
+
+Durante una sesión activa, únicamente se permite el comando \texttt{stop}, evitando cambios de estado no controlados. Esta restricción mejora la robustez del sistema y simplifica la gestión de estados internos.
+
+\paragraph{Mensajes: evento y resumen de sesión}
+\label{par:fw_payloads}
+
+El dispositivo transmite dos tipos principales de mensajes:
+
+%\begin{itemize}
+    \textbf{Evento individual de impacto:}
+
+\[
+\texttt{HIT:Z,E}
+\]
+
+donde \(Z \in \{0,1,2,3\}\) es la zona detectada y \(E\) el código de recomendación asociado (0, 10, 20 o 30).
+
+\textbf{Resumen de sesión (tras comando \texttt{stop}):}
+
+\[
+\texttt{SES:CLS,C}
+\]
+\[
+\texttt{SES:TOT,N}
+\]
+\[
+\texttt{SES:Z0,$n_0$}
+\]
+\[
+\texttt{SES:Z1,$n_1$}
+\]
+\[
+\texttt{SES:Z2,$n_2$}
+\]
+\[
+\texttt{SES:Z3,$n_3$}
+\]
+\[
+\texttt{SES:ADV,A}
+\]
+\[
+\texttt{SES:NOTE,900}
+\]
+\[
+\texttt{SES:END}
+\]
+%\end{itemize}
+
+Finalmente, se envía \texttt{OK STOP} indicando finalización completa del proceso.
+
+
+El resumen incluye la clase global de sesión \(C\), el número total de impactos \(N\), la distribución por zonas y un código agregado \(A\). Con el fin de garantizar estabilidad en la transmisión BLE, los mensajes se envían de forma secuencial y fragmentada, evitando paquetes de gran tamaño y reduciendo la probabilidad de pérdida de datos. Las recomendaciones implementadas, tanto a nivel de evento individual como de exposición acumulada por sesión, se alinean con los principios de reconocimiento, retirada y evaluación clínica prudente recogidos en el Consensus Statement de Ámsterdam 2022, y estan especificados en el Manual de Usuario \ref{anexo:manual}.
+
+El protocolo implementado prioriza la transmisión de información resumida frente a señal cruda, reduciendo el consumo energético y el uso de ancho de banda, en coherencia con el carácter preventivo y portátil del sistema.
+
+\subsubsection{Gestión de memoria, robustez y consumo}
+\label{subsubsec:fw_memoria}
+
+El sistema se implementa sobre el microcontrolador nRF51822, cuya memoria RAM es limitada (16 kB en la versión empleada). Esta restricción condiciona de forma directa la arquitectura del firmware, especialmente en lo relativo al almacenamiento temporal de muestras durante un evento de impacto.
+
+\paragraph{Gestión de memoria y buffer de evento}
+
+Durante el estado \texttt{EVENT}, el firmware almacena únicamente las variables estrictamente necesarias para el cálculo posterior de métricas:
+
+Durante el estado \texttt{EVENT}, el firmware almacena:
+
+\begin{itemize}
+    \item tiempo relativo desde el inicio del evento en microsegundos (\texttt{uint32\_t}),
+    \item módulo de la velocidad angular (\texttt{uint16\_t}),
+    \item aceleración rotacional escalada (\texttt{uint16\_t}).
+\end{itemize}
+
+
+El tamaño máximo del buffer se fija en \texttt{EVENT\_BUF\_MAX\_SAMPLES = 260}, lo que permite registrar aproximadamente 0.5 s de señal a 500 Hz. Esta duración es suficiente para capturar la ventana dinámica completa de un impacto deportivo típico, cuya duración se sitúa del orden de 5–20 ms para el pulso principal, incluyendo fase de subida y descenso.
+
+El uso de variables de 16 bits (\texttt{uint16\_t}) reduce el consumo de memoria respecto a tipos de mayor precisión, manteniendo suficiente resolución para la clasificación por rangos. Asimismo, la señal almacenada corresponde únicamente al módulo de la velocidad angular y no a los tres ejes individuales, lo que reduce el tamaño del buffer y simplifica el procesamiento posterior.
+
+Este enfoque evita el almacenamiento de señal cruda prolongada o transmisión continua, lo que resultaría inviable en términos de memoria y consumo energético.
+
+\paragraph{Robustez frente a saturación y desbordamientos}
+
+El cálculo de \(\alpha\) se realiza en forma escalada, evitando el uso de tipos de 32 bits en el almacenamiento permanente y reduciendo el riesgo de \textit{overflow}. Esta decisión es coherente con el objetivo del sistema, que no busca una reconstrucción física exacta de la señal, sino una clasificación robusta por rangos biomecánicos.
+
+\paragraph{Control de flujo y estabilidad BLE}
+
+La transmisión BLE se realiza de forma fragmentada y secuencial, evitando enviar bloques de gran tamaño en una única notificación. Este diseño reduce la probabilidad de pérdida de paquetes y evita sobrecargar el \textit{stack} BLE, lo cual es especialmente relevante en plataformas con recursos limitados.
+
+Asimismo, durante una sesión activa, el firmware restringe los comandos aceptados, impidiendo cambios de configuración en mitad del análisis. Esta medida simplifica la lógica interna y evita estados inconsistentes.
+
+
+
+\subsubsection{Verificación interna del firmware}
+\label{subsubsec:fw_verificacion}
+
+
+La validación del firmware se realizó mediante pruebas funcionales y mediciones internas orientadas a comprobar el cumplimiento de los requisitos definidos, especialmente en lo relativo a frecuencia de muestreo durante evento, detección estable de impactos y coherencia de la clasificación biomecánica.
+
+\paragraph{Verificación de frecuencia efectiva durante \texttt{EVENT}}
+
+El requisito RF-4 establece que la frecuencia de muestreo durante el evento debe ser superior a 400~Hz. Para verificarlo, se midió el intervalo real entre adquisiciones utilizando el contador interno en microsegundos (\texttt{us\_ticker\_read()}), registrando diferencias temporales entre muestras consecutivas.
+
+Las mediciones mostraron intervalos medios cercanos a 2000~\(\mu s\) durante \texttt{EVENT}, equivalentes a una frecuencia efectiva aproximada de 500~Hz, con pequeñas variaciones atribuibles al tiempo de lectura I\textsuperscript{2}C y a la ejecución del bucle principal. Estos resultados confirman el cumplimiento del requisito de muestreo intensivo durante el impacto.
+
+\paragraph{Estabilidad del inicio y fin de evento}
+
+La detección de impacto fue evaluada mediante impactos manuales controlados y movimientos bruscos intencionados del casco instrumentado. Se comprobó que:
+
+\begin{itemize}
+    \item el evento se inicia únicamente cuando el módulo de aceleración o velocidad angular supera los umbrales definidos,
+    \item el cierre del evento requiere varias muestras consecutivas no peligrosas, evitando fragmentación artificial del impacto,
+    \item el \textit{cooldown} temporal impide la detección repetida del mismo impacto como eventos independientes.
+\end{itemize}
+
+Este comportamiento confirma la estabilidad de la lógica de histéresis y la robustez frente a oscilaciones próximas al umbral.
+
+\paragraph{Verificación del cálculo de \texorpdfstring{$\alpha$}{alpha}}
+
+El cálculo de aceleración rotacional se verificó comprobando:
+
+\begin{itemize}
+    \item ausencia de desbordamientos en el cálculo escalado,
+    \item comportamiento consistente del pico de \(\alpha\) ante impactos de distinta intensidad.
+\end{itemize}
+
+\paragraph{Verificación de clasificación y contadores de sesión}
+
+Se realizaron pruebas generando impactos de diferente intensidad para verificar:
+
+\begin{itemize}
+    \item asignación coherente de zona (Z0--Z3) según el valor de \(\alpha_{\text{peak}}\),
+    \item incremento correcto de los contadores de sesión,
+    \item generación adecuada del resumen al recibir el comando \texttt{stop}.
+\end{itemize}
+
+Los mensajes BLE recibidos por la aplicación móvil confirmaron la consistencia entre eventos individuales y el resumen acumulado.
+
+\paragraph{Pruebas de robustez del protocolo BLE}
+
+Se evaluó el comportamiento ante:
+
+\begin{itemize}
+    \item desconexión durante sesión,
+    \item envío de comandos fuera de orden,
+\end{itemize}
+
+El sistema mantuvo un comportamiento estable, rechazando configuraciones inválidas y reiniciando correctamente el estado tras desconexión.
+
+\paragraph{Limitaciones de la verificación}
+
+La verificación realizada corresponde a validación funcional del firmware y coherencia interna del procesamiento. No constituye una validación clínica ni biomecánica experimental frente a sensores de referencia externos o sistemas de alta precisión. La clasificación implementada debe interpretarse como una estimación orientativa basada en rangos publicados en la literatura.
+
+En conjunto, las pruebas realizadas confirman que el firmware cumple los requisitos funcionales establecidos y opera de forma estable dentro de las limitaciones del hardware embebido empleado.
+
+
+
+\subsection{Encapsulado}
+\label{subsec:encapsulado}
+
+La integración del sistema electrónico en un elemento \textit{wearable} requiere, además del diseño del hardware y del firmware, una solución mecánica que proteja los componentes y permita su uso en condiciones reales. En este trabajo, el encapsulado se ha diseñado con el objetivo de alojar el conjunto formado por la placa TinyBLE y la batería LiPo, proporcionando (i) protección frente a golpes y manipulación, (ii) acceso funcional a los elementos necesarios para carga y reprogramación, y (iii) un método de fijación al casco que minimice el movimiento relativo del sensor respecto a la cabeza, en coherencia con el requisito RNF-5 (fijación mecánica).
+
+\subsubsection{Requisitos mecánicos y condicionantes}
+\label{subsubsec:enc_requisitos}
+
+A partir de los requisitos de operación del prototipo y de las necesidades de iteración durante el desarrollo, se definieron los siguientes condicionantes para la carcasa:
+
+\begin{itemize}
+    \item \textbf{Alojamiento del conjunto placa y batería:} el volumen interno debía permitir introducir la placa TinyBLE junto con la batería y su cableado sin esfuerzos, evitando presiones sobre conectores o componentes SMD.
+    \item \textbf{Acceso al conector de programación/carga:} se debía habilitar un hueco lateral alineado con el puerto micro-USB de la placa, permitiendo conectar un cable para recarga y actualización de firmware sin desmontar el encapsulado.
+    \item \textbf{Acceso a pines:} se incorporó una apertura específica para acceder al \textit{header} de pines, de forma que fuera posible depurar, medir señales o realizar ampliaciones durante el prototipado.
+    \item \textbf{Mantenimiento e iteración:} el sistema debía poder abrirse y cerrarse de forma repetida para permitir modificaciones del montaje, sustitución de batería o inspección del cableado.
+    \item \textbf{Fijación al casco:} se añadieron elementos geométricos para el paso de una cinta de velcro, de modo que el dispositivo pudiera anclarse a un casco con tensión suficiente para reducir desplazamientos durante el uso.
+\end{itemize}
+
+\subsubsection{Toma de medidas y diseño CAD}
+\label{subsubsec:enc_cad}
+
+El diseño se realizó a partir de medidas tomadas directamente sobre el conjunto placa+batería y de dimensiones extraídas de la documentación oficial \cite{SeeedTinyBLE}. Sobre esa base se elaboró un primer boceto del volumen exterior y de las zonas funcionales (aperturas y puntos de fijación).
+
+El modelado final se implementó en \textit{Fusion 360}. La carcasa se diseñó en dos piezas (cuerpo y tapa) e incorpora una geometría de cierre pensada para permitir apertura/cierre sin herramientas durante la fase de prototipo.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/3D.pdf}
+    \caption{Modelo CAD del encapsulado diseñado para la integración del sistema electrónico, mostrando la carcasa superior y la base de fijación.}
+    \label{fig:encapsulado_cad}
+\end{figure}
+
+
+\subsubsection{Fabricación mediante impresión 3D e iteraciones}
+\label{subsubsec:enc_impresion}
+
+El encapsulado se fabricó mediante impresión 3D. Tras la primera impresión se observaron limitaciones habituales del prototipado rápido: tolerancias geométricas, pequeñas irregularidades superficiales y desviaciones entre el modelo CAD y la pieza real. En la práctica, estas diferencias provocaron tres problemas principales:
+
+\begin{itemize}
+    \item \textbf{Inserción del conjunto:} el espacio interno resultó insuficiente para introducir la placa con comodidad, especialmente en zonas cercanas a conectores y bordes.
+    \item \textbf{Alineación del conector micro-USB:} el hueco lateral no coincidía de forma precisa con la posición real del puerto, dificultando la conexión del cable (Figura~\ref{fig:enc_usb}).
+    \item \textbf{Apertura/cierre:} el mecanismo de cierre no encajaba correctamente debido a pequeñas desviaciones dimensionales, afectando a la repetibilidad de apertura y cierre.
+\end{itemize}
+
+Para recuperar la funcionalidad del prototipo sin reimprimir iteraciones completas, se realizaron ajustes manuales sobre la pieza impresa mediante herramientas básicas (pequeño taladro, limas y acabado por retirada de material). Estas modificaciones permitieron: (i) aumentar holguras internas en puntos críticos para introducir placa y batería, (ii) corregir el contorno del hueco del conector para facilitar la conexión, y (iii) ajustar el encaje del mecanismo de cierre para permitir su uso repetido.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/caja.pdf}
+    \caption{Proceso de ajuste manual del encapsulado mediante herramienta rotativa}
+    \label{fig:ajuste_manual}
+\end{figure}
+
+
+
+\subsubsection{Control de holguras internas y fijación al casco}
+\label{subsubsec:enc_fijacion}
+
+Durante las pruebas se detectó además que, incluso con el conjunto ya introducido, existía movimiento relativo de la placa dentro del encapsulado. Este fenómeno es relevante en un sistema de medida inercial, ya que un desacoplamiento interno puede introducir vibraciones y picos espurios, además de generar impactos secundarios de la electrónica contra la carcasa.
+
+Para minimizar este problema, se añadió material compresible (espuma) en el interior de la caja, actuando como elemento de ajuste y amortiguación, con el fin de mantener la placa presionada de forma estable contra la carcasa. Esta solución permitió reducir el movimiento relativo interno sin modificar el hardware.
+
+Finalmente, se instaló una cinta de velcro pasando por las estructuras laterales diseñadas para tal fin, permitiendo fijar el dispositivo a un casco con suficiente tensión para evitar desplazamientos apreciables durante la práctica. Este enfoque proporciona una solución simple y ajustable, adecuada para prototipado, y coherente con el requisito RNF-5 relativo a la fijación mecánica.
+
+\subsubsection{Montaje final}
+\label{subsubsec:enc_limitaciones}
+
+El encapsulado final cumple los objetivos operativos del prototipo: protege el conjunto placa+batería, permite acceso al puerto micro-USB para carga y reprogramación, deja accesibles los pines mediante una apertura dedicada y posibilita su fijación al casco mediante velcro. No obstante, el proceso ha puesto de manifiesto limitaciones propias de la fabricación por impresión 3D y del diseño inicial: sensibilidad a tolerancias, necesidad de holguras adicionales para montaje y dependencia de ajustes manuales para garantizar alineación y cierre.
+
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/Casco.pdf}
+    \caption{Dispositivo integrado en el casco, mostrando la fijación mediante sistema de velcro estructural.}
+    \label{fig:dispositivo_casco}
+\end{figure}
+
+

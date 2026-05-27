@@ -1,0 +1,407 @@
+\documentclass[../main.tex]{subfiles}
+
+\begin{document}
+
+\section{Conceptos previos}   
+
+\subsection{Electroencefalografía (EEG)}
+
+La electroencefalografía es una técnica electrofisiológica destinada al registro de la actividad eléctrica que surge del cerebro humano. Su mayor ventaja es la sensibilidad temporal, lo que permite detectar variaciones rápidas, convirtiéndola en una técnica adecuada para aplicaciones en tiempo real. Su principal función es evaluar el funcionamiento dinámico del cerebro.
+
+Fisiológicamente, la señal eléctrica registrada no corresponde a la actividad de neuronas individuales, sino a la actividad conjunta de grandes poblaciones neuronales. Principalmente, la contribución a la señal se da por las neuronas piramidales, situadas en la corteza cerebral y orientadas perpendicularmente a la superficie cortical. Esta disposición favorece la formación de campos eléctricos detectables desde el exterior mediante electrodos colocados sobre el cuero cabelludo.
+
+Los electrodos recogen la suma de potenciales postsinápticos excitatorios e inhibitorios generados por células piramidales que actúan de forma sincronizada. Por otra parte, los potenciales de acción de neuronas individuales no suelen detectarse mediante EEG debido a su corta amplitud y duración.
+
+Para que la señal sea detectable por los electrodos, un gran número de neuronas debe presentar actividad sincronizada. Por ello, la electroencefalografía constituye una herramienta especialmente útil para el estudio de los ritmos cerebrales. Estos ritmos son actividades oscilatorias asociadas a circuitos de comunicación entre la corteza y estructuras subcorticales.
+
+La actividad registrada en el EEG puede considerarse como el resultado de fuentes eléctricas distribuidas a lo largo del córtex, las cuales generan campos eléctricos con polos negativos y positivos, es decir, dipolos. El dipolo formado es paralelo a la orientación de las neuronas piramidales. Por tanto, la orientación de las neuronas, la localización cortical de la fuente y la posición del electrodo afectan a la señal medida.
+
+\subsubsection{Adquisición de datos EEG}
+
+La primera etapa del sistema de procesamiento y sonificación es la adquisición de la señal EEG. Debido a que la amplitud del EEG es reducida, del orden de microvoltios (\si{\micro\volt}), el proceso de adquisición requiere instrumentación sensible, una adecuada colocación de electrodos, una correcta referencia eléctrica y un sistema de amplificación y digitalización con bajo ruido \cite{Palaniappan2014,StLouisFrey2016}.
+
+La colocación de los electrodos suele realizarse mediante el sistema internacional 10--20, que establece posiciones normalizadas a partir de referencias anatómicas craneales \cite{StLouisFrey2016}. Cada electrodo se identifica con una letra asociada a la región cortical aproximada ---frontal, central, temporal, parietal u occipital--- y con un número que indica el hemisferio: impar para el izquierdo, par para el derecho y z para la línea media \cite{Palaniappan2014,StLouisFrey2016}. Este sistema relaciona cada canal con una zona cerebral concreta.
+
+Una vez colocados los electrodos, se procede a registrar la actividad eléctrica. El EEG se basa en el principio de amplificación diferencial. El sistema registra la diferencia de voltaje entre un electrodo activo y una referencia \cite{StLouisFrey2016}. Los montajes pueden ser bipolares, cuando se comparan electrodos vecinos, o referenciales, cuando cada electrodo activo se compara con una referencia común o distante \cite{Palaniappan2014,StLouisFrey2016}. La elección del montaje y de la referencia es un aspecto fundamental en la adquisición.
+
+Cuando la señal es registrada por los electrodos, debe amplificarse y convertirse a formato digital mediante un convertidor analógico-digital \cite{Palaniappan2014}. La frecuencia de muestreo determina el número de muestras adquiridas por segundo. En aplicaciones EEG y BCI son habituales frecuencias próximas a \SI{250}{\hertz} o \SI{256}{\hertz}, suficientes para estudiar las bandas cerebrales clásicas empleadas en este trabajo, como delta, theta, alfa, beta y gamma \cite{Palaniappan2014,Wu2010}.
+
+Durante la adquisición, la señal puede verse afectada por diversas fuentes de ruido y artefactos. Por ello, se lleva a cabo un preprocesado de las señales recogidas, con el objetivo de reducir el ruido sin distorsionar la información fisiológica relevante de la señal EEG. Entre las fuentes comunes de ruido y artefactos se encuentran la actividad muscular, los movimientos oculares, el mal contacto electrodo-piel, el ruido electrónico y la interferencia de la red eléctrica, generalmente a \SI{50}{\hertz} \cite{Palaniappan2014}.
+
+Antes de analizar o hacer uso de las señales obtenidas, debe comprobarse que el sistema de adquisición funciona correctamente. Para ello se puede realizar una calibración con una señal conocida, verificando que los amplificadores y canales responden de forma homogénea \cite{StLouisFrey2016}. Además, la biocalibración, por ejemplo mediante apertura y cierre de ojos, permite confirmar que el registro refleja respuestas fisiológicas reales y esperadas, como variaciones en la actividad alfa posterior \cite{StLouisFrey2016}.
+
+En el contexto de este Trabajo Fin de Grado, la adquisición EEG es la base sobre la que se construye la sonificación. La señal registrada se digitaliza y procesa para extraer características temporales y espectrales, como la amplitud, la frecuencia dominante o la potencia relativa en bandas EEG. Posteriormente, dichas características se utilizan para generar parámetros musicales y eventos MIDI. Esta estructura sigue la lógica general de los sistemas BCI, donde tras la adquisición y limpieza de la señal se realiza una extracción de características que permite controlar una salida externa \cite{Palaniappan2014}. En este trabajo, dicha salida no se orienta al control clásico de un cursor o dispositivo físico, sino a la generación musical mediante eventos MIDI. Esta idea se relaciona con propuestas de conversión EEG-música, donde características cerebrales como frecuencia principal, energía, tasa alfa, varianza o amplitud se traducen en parámetros musicales como nota principal, tonalidad, ritmo, acorde, duración, volumen o timbre \cite{Wu2010}.
+
+\subsubsection{Características de la señal EEG}
+
+La señal EEG se caracteriza por ser una señal bioeléctrica de baja amplitud, variable en el tiempo y compuesta por diferentes oscilaciones cerebrales. Las formas de onda EEG representan la evolución temporal de la actividad eléctrica cerebral. En un registro pueden observarse ondas lentas, ritmos regulares, ráfagas de actividad o componentes rápidas de menor amplitud. Estas formas de onda varían según el estado funcional del sujeto, como vigilia alerta, relajación, somnolencia o sueño.
+
+Desde el punto de vista temporal, la amplitud representa la magnitud de las variaciones de potencial registradas por los electrodos, normalmente expresadas en microvoltios. Esta amplitud depende de factores fisiológicos, como la sincronización de las poblaciones neuronales, y de factores técnicos anteriormente mencionados, como la posición de los electrodos, la referencia utilizada, la impedancia electrodo-piel y la presencia de ruido o artefactos.
+
+Desde el punto de vista frecuencial, la señal EEG se organiza en bandas. Estas bandas agrupan rangos de frecuencia que reciben nombres convencionales: delta, theta, alfa, beta y gamma. La banda delta corresponde a las oscilaciones más lentas, aproximadamente entre \SI{1}{\hertz} y \SI{3}{\hertz}--\SI{3.5}{\hertz}; theta se sitúa alrededor de \SI{4}{\hertz} a \SI{7}{\hertz}--\SI{8}{\hertz}; alfa se encuentra entre \SI{8}{\hertz} y \SI{12}{\hertz}; beta comprende frecuencias superiores, aproximadamente desde \SI{12}{\hertz}--\SI{13}{\hertz} hasta \SI{30}{\hertz}; y gamma agrupa frecuencias todavía más altas. Aunque los límites exactos pueden variar ligeramente entre autores, esta clasificación permite describir de forma ordenada el contenido espectral de la señal EEG.
+
+Otra característica esencial de la señal EEG es su carácter no estacionario. Esto implica que su contenido frecuencial cambia con el tiempo, por lo que el análisis debe realizarse habitualmente sobre ventanas, épocas o segmentos temporales \cite{Sawa2022}. Esta división permite actualizar las características extraídas y seguir la evolución dinámica de la actividad cerebral. En aplicaciones de interfaz cerebro-computador y sonificación en tiempo real, esta propiedad es especialmente importante, ya que la salida del sistema debe adaptarse de forma continua a los cambios de la señal. Para analizar estas características se emplean métodos de procesamiento espectral y tiempo-frecuencia.
+
+En este Trabajo Fin de Grado, las características de la señal EEG constituyen la base para la sonificación EEG-MIDI. La amplitud puede relacionarse con parámetros de intensidad o volumen; la frecuencia dominante puede utilizarse como indicador de registro o altura relativa; y la potencia en bandas como delta, theta, alfa, beta y gamma puede emplearse para modular ritmo, densidad de notas, estabilidad armónica o tensión musical. Esta estrategia se relaciona con propuestas de conversión EEG-música en las que características como frecuencia principal, energía media, tasa alfa, varianza y amplitud se transforman en parámetros musicales como nota principal, tonalidad, ritmo, acorde, duración, volumen y timbre \cite{Wu2010}.
+
+
+\subsection{Análisis espectral de la señal EEG}
+
+El análisis espectral de la señal EEG permite estudiar la distribución de la energía de la señal en función de la frecuencia. Mientras que el análisis temporal describe la evolución del voltaje registrado por los electrodos, el análisis frecuencial permite identificar componentes oscilatorios y cuantificar su contribución mediante el espectro de potencia o la densidad espectral de potencia, conocida como \textit{Power Spectral Density} (PSD). Esta aproximación resulta especialmente relevante en EEG, ya que numerosos estados fisiológicos se manifiestan como cambios en la potencia de determinadas bandas de frecuencia \cite{Sawa2022}.
+
+La señal EEG se adquiere inicialmente como una señal analógica continua y posteriormente se digitaliza mediante un convertidor analógico-digital. La frecuencia de muestreo, \(f_s\), determina el número de muestras adquiridas por segundo y fija el límite superior de frecuencia que puede representarse sin ambigüedad. Según el criterio de Nyquist-Shannon, la frecuencia máxima analizable corresponde a la mitad de la frecuencia de muestreo \cite{Sawa2022}:
+
+\begin{equation}
+    f_N = \frac{1}{2} f_s
+    \label{eq:nyquist}
+\end{equation}
+
+donde \(f_N\) es la frecuencia de Nyquist y \(f_s\) la frecuencia de muestreo. De este modo, si el sistema adquiere EEG a \(250\,\text{Hz}\), la frecuencia de Nyquist es \(125\,\text{Hz}\). No obstante, en EEG de superficie el análisis suele concentrarse en rangos inferiores, debido a la presencia de ruido muscular, interferencia eléctrica y menor fiabilidad de las componentes de alta frecuencia.
+
+La resolución frecuencial del análisis depende del tamaño de la ventana temporal empleada. En la transformada discreta de Fourier, la separación entre bins frecuenciales se expresa como \cite{Sawa2022}:
+
+\begin{equation}
+    \Delta f = \frac{f_s}{N}
+    \label{eq:frequency_bin}
+\end{equation}
+
+donde \(\Delta f\) es la resolución frecuencial, \(f_s\) es la frecuencia de muestreo y \(N\) el número de muestras del segmento de análisis. También puede expresarse como:
+
+\begin{equation}
+    \Delta f = \frac{1}{N \cdot \Delta t}
+    \label{eq:frequency_bin_dt}
+\end{equation}
+
+donde \(\Delta t\) representa el intervalo temporal entre muestras. Por tanto, aumentar la duración del segmento mejora la resolución en frecuencia, pero reduce la capacidad de respuesta temporal. Este compromiso es especialmente importante en una aplicación de sonificación EEG-MIDI en tiempo real, donde las características espectrales deben ser suficientemente estables sin introducir una latencia excesiva.
+
+La base matemática del análisis frecuencial es la transformada de Fourier, que permite representar una señal como combinación de senos y cosenos de distinta frecuencia y amplitud. Para una función \(f(x)\) definida en un intervalo \(T\), puede escribirse como \cite{Sawa2022}:
+
+\begin{equation}
+    f(x) =
+    \frac{a_0}{2}
+    +
+    \sum_{n=1}^{\infty}
+    \left(
+    a_n \cos \frac{2\pi n x}{T}
+    +
+    b_n \sin \frac{2\pi n x}{T}
+    \right)
+    \label{eq:fourier_series}
+\end{equation}
+
+donde los coeficientes de Fourier se definen como:
+
+\begin{equation}
+    a_0 = \int_0^T f(x)\,dx
+    \label{eq:a0}
+\end{equation}
+
+\begin{equation}
+    a_n =
+    \frac{2}{T}
+    \int_0^T
+    f(x)\cos \frac{2\pi n x}{T}\,dx
+    \label{eq:an}
+\end{equation}
+
+\begin{equation}
+    b_n =
+    \frac{2}{T}
+    \int_0^T
+    f(x)\sin \frac{2\pi n x}{T}\,dx
+    \label{eq:bn}
+\end{equation}
+
+En estas expresiones, \(a_0\), \(a_n\) y \(b_n\) determinan la contribución de cada componente sinusoidal. Aplicado al EEG, esto significa que una señal registrada en el dominio temporal puede descomponerse en oscilaciones de diferente frecuencia, cada una con una amplitud asociada.
+
+De forma equivalente, la transformada de Fourier puede expresarse mediante exponenciales complejas, a partir de la fórmula de Euler:
+
+\begin{equation}
+    e^{i\theta} = \cos \theta + i \sin \theta
+    \label{eq:euler}
+\end{equation}
+
+Así, la función puede representarse como:
+
+\begin{equation}
+    f(x) =
+    \sum_{n=-\infty}^{\infty}
+    C_n
+    \exp \left(
+    \frac{2\pi i n x}{T}
+    \right)
+    \label{eq:complex_fourier}
+\end{equation}
+
+donde:
+
+\begin{equation}
+    C_n =
+    \frac{1}{T}
+    \int_0^T
+    f(x)
+    \exp \left(
+    -\frac{2\pi i n x}{T}
+    \right)
+    dx
+    \label{eq:complex_coefficients}
+\end{equation}
+
+Esta formulación compleja es especialmente importante porque la transformada discreta de Fourier y su implementación eficiente, la transformada rápida de Fourier, se basan en esta representación matemática.
+
+En señales EEG digitalizadas se emplea la transformada discreta de Fourier, o DFT, normalmente calculada mediante el algoritmo FFT. Para una ventana de \(N\) muestras, la DFT puede expresarse como:
+
+\begin{equation}
+    X[k] =
+    \sum_{n=0}^{N-1}
+    x[n] e^{-j2\pi kn/N}
+    \label{eq:dft}
+\end{equation}
+
+donde \(x[n]\) representa la señal EEG en el dominio temporal, \(X[k]\) la componente frecuencial asociada al bin \(k\), \(N\) el número de muestras de la ventana y \(j\) la unidad imaginaria. A partir de \(X[k]\) puede estimarse la potencia de cada componente frecuencial mediante:
+
+\begin{equation}
+    P[k] = |X[k]|^2
+    \label{eq:power_spectrum}
+\end{equation}
+
+Esta distribución de potencia recibe el nombre de espectro de potencia, mientras que su densidad se denomina densidad espectral de potencia o PSD \cite{Sawa2022}. A partir de la PSD pueden calcularse las potencias de las bandas EEG integrando o sumando la energía dentro de un rango frecuencial determinado:
+
+\begin{equation}
+    P_{\text{banda}} =
+    \sum_{f=f_1}^{f_2} PSD(f)
+    \label{eq:bandpower}
+\end{equation}
+
+La potencia relativa de una banda puede expresarse como:
+
+\begin{equation}
+    P_{\text{rel,banda}} =
+    \frac{
+    P_{\text{banda}}
+    }{
+    \sum_{f=f_{\min}}^{f_{\max}} PSD(f)
+    }
+    \label{eq:relative_bandpower}
+\end{equation}
+
+Esta magnitud resulta útil para comparar la contribución relativa de bandas como delta, theta, alpha, beta o gamma, independientemente de la amplitud absoluta del registro. En el contexto de este TFG, estas potencias relativas son especialmente relevantes porque permiten transformar la actividad espectral del EEG en parámetros musicales normalizados.
+
+Una estimación simple de la PSD mediante DFT se denomina periodograma. Para un segmento \(x[n]\), puede expresarse de forma simplificada como:
+
+\begin{equation}
+    I(f_k) =
+    \frac{1}{N f_s}
+    \left|
+    \sum_{n=0}^{N-1}
+    x[n]e^{-j2\pi kn/N}
+    \right|^2
+    \label{eq:periodogram}
+\end{equation}
+
+donde \(I(f_k)\) representa el periodograma en la frecuencia \(f_k\). El periodograma es un método sencillo y computacionalmente eficiente, aunque puede presentar alta variabilidad y sensibilidad a la fuga espectral.
+
+Al analizar segmentos finitos de señal aparece el problema de la fuga espectral. Este fenómeno se produce porque la señal real se corta artificialmente en los extremos de la ventana, generando discontinuidades que introducen potencia en frecuencias no presentes en la señal original \cite{Sawa2022}. Matemáticamente, el recorte puede representarse mediante una función ventana rectangular:
+
+\begin{equation}
+    w(x)=
+    \begin{cases}
+    1, & T_1 \leq x \leq T_2 \\
+    0, & x < T_1 \ \text{o} \ x > T_2
+    \end{cases}
+    \label{eq:rectangular_window}
+\end{equation}
+
+La señal ventaneada puede escribirse como:
+
+\begin{equation}
+    x_w[n] = x[n] \cdot w[n]
+    \label{eq:windowed_signal}
+\end{equation}
+
+En el dominio frecuencial, la multiplicación por una ventana en el dominio temporal equivale a una convolución en frecuencia:
+
+\begin{equation}
+    X_w(f) = X(f) * W(f)
+    \label{eq:frequency_convolution}
+\end{equation}
+
+Por ello, el espectro estimado depende tanto del contenido real de la señal EEG como de las características espectrales de la ventana utilizada.
+
+Para reducir la fuga espectral se aplican funciones ventana que suavizan los bordes del segmento antes de calcular la DFT. Entre las más utilizadas se encuentran las ventanas Hann, Hamming y Blackman \cite{Sawa2022}. La ventana Hann se define como:
+
+\begin{equation}
+    w_{\text{Hann}}(x)
+    =
+    0.5 - 0.5\cos(2\pi x),
+    \quad 0 \leq x \leq 1
+    \label{eq:hann}
+\end{equation}
+
+La ventana Hamming se expresa como:
+
+\begin{equation}
+    w_{\text{Hamming}}(x)
+    =
+    0.54 - 0.46\cos(2\pi x),
+    \quad 0 \leq x \leq 1
+    \label{eq:hamming}
+\end{equation}
+
+Por último, la ventana Blackman se define como:
+
+\begin{equation}
+    w_{\text{Blackman}}(x)
+    =
+    0.42
+    -
+    0.5\cos(2\pi x)
+    +
+    0.08\cos(4\pi x),
+    \quad 0 \leq x \leq 1
+    \label{eq:blackman}
+\end{equation}
+
+Estas ventanas reducen la contribución de los extremos de la señal y disminuyen los lóbulos laterales del espectro. Sin embargo, existe un compromiso entre resolución frecuencial y rango dinámico: algunas ventanas conservan mejor la separación entre frecuencias próximas, mientras que otras reducen con mayor eficacia las componentes espectrales artificiales.
+
+Como alternativa más robusta, el método Welch mejora la estimación espectral dividiendo la señal en ventanas, normalmente solapadas, calculando un periodograma en cada una y promediando los resultados. Puede expresarse como:
+
+\begin{equation}
+    \hat{S}_{\text{Welch}}(f)
+    =
+    \frac{1}{M}
+    \sum_{m=1}^{M}
+    I_m(f)
+    \label{eq:welch}
+\end{equation}
+
+donde \(\hat{S}_{\text{Welch}}(f)\) es la PSD estimada mediante Welch, \(M\) es el número de segmentos e \(I_m(f)\) el periodograma del segmento \(m\).
+
+El método multitaper utiliza varias funciones ventana ortogonales, denominadas \textit{tapers}, para obtener múltiples estimaciones espectrales del mismo segmento. Estas estimaciones se promedian para reducir la varianza, la fuga espectral y la influencia del ruido. La estimación multitaper puede expresarse como \cite{Sawa2022}:
+
+\begin{equation}
+    \hat{S}^{(MT)}(f)
+    =
+    \frac{1}{K}
+    \sum_{k=0}^{K-1}
+    \hat{S}^{(MT)}_k(f)
+    \label{eq:multitaper}
+\end{equation}
+
+donde cada estimación individual se calcula como:
+
+\begin{equation}
+    \hat{S}^{(MT)}_k(f)
+    =
+    \Delta t
+    \left|
+    \sum_{t=0}^{N-1}
+    h_{k,t} X_t
+    e^{-i2\pi f t \Delta t}
+    \right|^2
+    \label{eq:multitaper_individual}
+\end{equation}
+
+En estas expresiones, \(K\) es el número de tapers, \(h_{k,t}\) representa el taper \(k\)-ésimo, \(X_t\) es la muestra EEG en el instante \(t\), \(\Delta t\) es el intervalo de muestreo y \(N\) el número de muestras del segmento. En el método multitaper suelen emplearse secuencias DPSS o de Slepian, que permiten obtener estimaciones más estables de la PSD.
+
+Finalmente, el espectrograma permite representar la evolución temporal del contenido frecuencial de la señal. Para ello se calculan espectros sucesivos sobre ventanas temporales desplazadas, generando una representación tiempo-frecuencia. De forma general, puede escribirse como:
+
+\begin{equation}
+    S(t_m,f)
+    =
+    \left|
+    \sum_{n=0}^{N-1}
+    x[n+mH]w[n]e^{-j2\pi fn/f_s}
+    \right|^2
+    \label{eq:spectrogram}
+\end{equation}
+
+donde \(S(t_m,f)\) representa la potencia en la frecuencia \(f\) y en la ventana temporal \(t_m\), \(H\) es el salto entre ventanas, \(w[n]\) es la función ventana y \(N\) el tamaño de la ventana. Esta representación resulta especialmente importante en EEG, ya que la señal es no estacionaria y sus componentes espectrales cambian con el tiempo.
+
+En el contexto de este Trabajo Fin de Grado, el análisis espectral permite transformar la señal EEG digitalizada en variables cuantificables, como potencia absoluta y relativa por bandas, frecuencia dominante o estabilidad espectral. Estas características constituyen la entrada del sistema de sonificación EEG-MIDI, donde pueden emplearse para modular parámetros musicales como el registro, la densidad rítmica, el volumen, la estabilidad armónica o la generación de eventos MIDI. Por tanto, las expresiones matemáticas anteriores no solo describen el procesamiento de la señal, sino que justifican el paso desde la actividad cerebral registrada hasta su representación musical.
+
+\subsection{Brain--Computer Music Interfacing (BCMI)}
+
+Las interfaces cerebro--computador, conocidas como \textit{Brain--Computer Interfaces} (BCI), constituyen sistemas que permiten establecer una vía de comunicación entre la actividad cerebral del usuario y una aplicación externa. En su planteamiento clásico, una BCI permite controlar dispositivos o sistemas mediante señales procedentes del cerebro, evitando el uso directo de músculos periféricos o extremidades. Este enfoque resulta especialmente relevante en usuarios con alteraciones motoras severas, aunque en los últimos años también se ha extendido a aplicaciones en videojuegos, biometría, realidad virtual y música \cite{Palaniappan2014}.
+
+Dentro de este marco surge el concepto de \textit{Brain--Computer Music Interfacing} (BCMI), que puede entenderse como la aplicación de las interfaces cerebro--computador al ámbito musical. La investigación en BCMI se sitúa en la intersección entre música, ciencia e ingeniería biomédica, y aborda tres retos principales: la extracción de información significativa a partir de señales cerebrales, el diseño de técnicas musicales capaces de responder a dicha información y la definición de aplicaciones que puedan tener utilidad artística, terapéutica, asistiva o experimental \cite{Miranda2014BCMI}. Por tanto, una BCMI no se limita a registrar actividad cerebral, sino que transforma dicha actividad en información útil para generar, modificar o controlar procesos musicales.
+
+El EEG es una de las señales más utilizadas en BCI y BCMI debido a su carácter no invasivo, su portabilidad y su coste relativamente bajo frente a otras técnicas de registro cerebral. En una BCI basada en EEG, la señal se adquiere mediante electrodos colocados sobre el cuero cabelludo, se amplifica, se digitaliza y se procesa para extraer características que posteriormente pueden emplearse como entrada de control \cite{Palaniappan2014}. En el caso de una BCMI, estas características no se utilizan necesariamente para controlar un dispositivo físico, sino para influir en parámetros musicales como la altura, el ritmo, la intensidad, la textura, la tonalidad o la estructura temporal de la música.
+
+Miranda distingue entre dos aproximaciones principales dentro de la BCMI: \textit{hard BCMI} y \textit{soft BCMI}. En una \textit{hard BCMI}, el usuario controla voluntariamente la salida musical mediante la modulación consciente de su actividad cerebral. Este enfoque es cercano a la BCI clásica, ya que requiere que el usuario aprenda a producir determinados patrones cerebrales para generar comandos musicales. Por el contrario, en una \textit{soft BCMI}, el sistema musical puede reaccionar al estado mental del usuario sin que exista necesariamente un control explícito o voluntario de la música \cite{Miranda2014BCMI}. Esta segunda aproximación resulta especialmente relevante cuando el objetivo no es sustituir un dispositivo de control convencional, sino representar o adaptar musicalmente la actividad cerebral registrada.
+
+Esta distinción se relaciona directamente con el concepto de BCI pasiva o \textit{implicit BCI}. En una BCI activa, el usuario intenta modular deliberadamente su actividad cerebral para enviar comandos a una aplicación. En cambio, en una BCI pasiva el usuario no trata de controlar su actividad cerebral, sino que el sistema analiza dicha actividad para inferir variables relacionadas con su estado mental y adaptar la interacción o el contenido de la aplicación \cite{GeorgeLecuyer2014PassiveBCI}. Este tipo de interfaz no pretende reemplazar los métodos tradicionales de entrada, sino aportar una fuente adicional de información basada en la actividad cerebral del usuario.
+
+En el contexto musical, las BCI pasivas resultan especialmente interesantes porque permiten adaptar el proceso de creación o generación musical a partir de estados cognitivos o afectivos del usuario. Por ejemplo, una aplicación musical podría modificar su tempo, densidad rítmica o textura sonora en función de indicadores relacionados con concentración, relajación o nivel de activación \cite{GeorgeLecuyer2014PassiveBCI}. De este modo, la música no se entiende como una respuesta a comandos explícitos, sino como una representación dinámica de la actividad cerebral y de sus variaciones temporales.
+
+En este Trabajo Fin de Grado, el sistema desarrollado se aproxima a una BCMI pasiva basada en EEG. El usuario no controla voluntariamente la música mediante comandos cerebrales específicos, como ocurre en paradigmas activos basados en imaginación motora, P300 o SSVEP. En su lugar, la señal EEG se registra, se procesa y se analiza para extraer características temporales y espectrales que posteriormente se transforman en parámetros musicales. Por tanto, el sistema no debe interpretarse como una interfaz de control musical directo, sino como una interfaz de sonificación y generación musical adaptada a la actividad EEG.
+
+La arquitectura general del sistema sigue la lógica habitual de una BCI basada en EEG: adquisición de la señal, preprocesamiento, extracción de características y generación de una salida externa \cite{Palaniappan2014}. Sin embargo, en este caso la salida externa se corresponde con eventos musicales y mensajes MIDI. Las características extraídas de la señal, como la amplitud, la frecuencia dominante o la potencia relativa en bandas EEG, se emplean para definir parámetros de generación musical. De esta forma, la actividad cerebral se convierte en una fuente de control indirecta para la creación de material sonoro.
+
+Esta aproximación conecta con los principios generales de la BCMI, ya que combina procesamiento de señales cerebrales con técnicas de generación musical. Además, se diferencia de una BCI activa porque no requiere entrenamiento específico del usuario ni una intención explícita de producir comandos. En su lugar, la música generada refleja la evolución de las características EEG registradas. Por ello, el sistema propuesto puede describirse como una BCMI pasiva orientada a la sonificación EEG-MIDI.
+
+\subsection{Sonificación EEG}
+
+La sonificación puede definirse como el proceso de representar datos mediante sonido. En el caso de la electroencefalografía, la sonificación EEG consiste en transformar la señal EEG, o características extraídas de ella, en una salida sonora. Esta aproximación resulta especialmente adecuada para señales cerebrales, ya que el EEG presenta una dinámica temporal rápida y compleja que puede ser representada de forma perceptible mediante variaciones acústicas. Además, la percepción auditiva humana posee una elevada resolución temporal, lo que convierte al sonido en un canal apropiado para representar cambios rápidos de señales fisiológicas \cite{Valjamae2013EEGSonification}.
+
+El interés por hacer audible la actividad EEG aparece desde los primeros desarrollos de la electroencefalografía. Väljamäe et al. señalan que ya en los años treinta se realizaron experiencias en las que se escuchaban directamente señales EEG, y que desde entonces distintos investigadores y artistas han explorado la conversión de actividad cerebral en sonido \cite{Valjamae2013EEGSonification}. Sin embargo, los autores también advierten que muchos trabajos históricos utilizaron conversiones arbitrarias, con escasa descripción de los procedimientos de adquisición fisiológica, síntesis sonora o validación experimental. Por ello, la sonificación EEG debe plantearse no solo como una conversión creativa, sino como un proceso metodológicamente justificado.
+
+La sonificación EEG puede clasificarse según su finalidad y según el modo de procesamiento de los datos. Desde el punto de vista temporal, puede realizarse en tiempo real, cuando la salida sonora se genera durante la adquisición o el procesamiento de la señal, u \textit{offline}, cuando se aplica sobre datos previamente registrados. Desde el punto de vista funcional, puede orientarse a tareas de monitorización, diagnóstico, neurofeedback, comunicación mediante BCI, creación de instrumentos musicales o composición musical \cite{Valjamae2013EEGSonification}. Esta diversidad de aplicaciones implica que no todas las sonificaciones deben evaluarse de la misma forma: en contextos clínicos o de neurofeedback prima la utilidad informativa del sonido, mientras que en contextos artísticos o musicales adquiere mayor importancia la expresividad y coherencia estética de la salida sonora.
+
+En aplicaciones de monitorización, la sonificación permite informar a un usuario o a una tercera persona sobre el estado cerebral registrado. Por ejemplo, puede utilizarse para advertir cambios relevantes en estados de fatiga, anestesia o actividad cerebral anómala. En aplicaciones de neurofeedback, el sonido proporciona información al propio usuario con el objetivo de facilitar el aprendizaje o la modificación de determinados estados cerebrales. En aplicaciones BCI, la sonificación puede actuar como mecanismo de retroalimentación o comunicación. Finalmente, en contextos artísticos y musicales, los patrones EEG pueden utilizarse como material de control para generar sonido, instrumentos musicales o composiciones \cite{Valjamae2013EEGSonification}.
+
+Väljamäe et al. distinguen varias estrategias de sonificación EEG. La primera es la \textit{audificación}, que consiste en tratar directamente los valores de la señal como una onda sonora. Esta aproximación fue una de las primeras técnicas utilizadas, aunque en muchos casos requiere comprimir temporalmente los datos EEG para desplazar sus frecuencias al rango audible. La segunda estrategia es el mapeo de parámetros, donde una característica de la señal EEG se asocia a un parámetro sonoro, como intensidad, altura, timbre, tempo o densidad. La tercera es la sonificación basada en modelos, en la que los datos EEG modifican el comportamiento de un modelo matemático o físico que genera sonido. Finalmente, los autores incluyen la música generativa, donde las señales EEG controlan reglas o estructuras musicales de nivel superior \cite{Valjamae2013EEGSonification}.
+
+En el contexto de este Trabajo Fin de Grado, la sonificación EEG se plantea como una estrategia para transformar características temporales y espectrales de la señal cerebral en información musical. El sistema desarrollado no realiza una audificación directa de la señal EEG, ya que no convierte la forma de onda cruda en sonido. En su lugar, extrae características como amplitud, frecuencia dominante y potencia relativa en bandas EEG, y las utiliza para modificar parámetros musicales. Por tanto, el enfoque adoptado se corresponde principalmente con una sonificación mediante mapeo de parámetros.
+
+Esta elección resulta coherente con el objetivo del sistema EEG-MIDI. A diferencia de una audificación directa, el mapeo de parámetros permite definir relaciones interpretables entre características EEG y elementos musicales. Por ejemplo, la amplitud de la señal puede asociarse a la intensidad o velocidad MIDI, la potencia relativa en la banda alfa puede influir en la densidad rítmica o estabilidad musical, y la frecuencia dominante puede emplearse como indicio para modificar el registro o la altura relativa. De este modo, la sonificación no se limita a hacer audible la señal, sino que traduce sus propiedades relevantes en una estructura musical organizada.
+
+Así, la sonificación EEG desarrollada en este TFG se integra dentro de una BCMI pasiva basada en EEG. El usuario no genera comandos cerebrales voluntarios, sino que el sistema analiza la actividad EEG registrada y adapta la generación musical a sus características. La salida se materializa mediante eventos MIDI, lo que permite controlar sintetizadores, instrumentos virtuales o dispositivos musicales externos. En consecuencia, la sonificación actúa como el puente entre el análisis de la señal EEG y la representación musical de la actividad cerebral.
+
+
+\subsubsection{Mapeo de información EEG a parámetros musicales}
+
+El mapeo constituye una etapa central en los sistemas de \textit{Brain--Computer Music Interfacing} (BCMI), ya que permite traducir información procedente de la actividad cerebral en parámetros comprensibles para un sistema musical. En el contexto de una BCMI, el mapeo puede entenderse como la conexión entre las variables extraídas del EEG y la salida musical generada por un motor sonoro, un sintetizador, un instrumento digital o un sistema MIDI \cite{EatonMiranda2014Mapping}.
+
+Eaton y Miranda señalan que el problema principal no consiste únicamente en adquirir la señal EEG, sino en decidir cómo transformar esa información en estructuras sonoras o musicales. Es decir, el mapeo define cómo una señal no musical, como la actividad eléctrica cerebral, puede controlar algoritmos de síntesis sonora o procesos de generación musical \cite{EatonMiranda2014Mapping}. Por este motivo, el diseño del mapeo condiciona directamente la expresividad, la coherencia y la utilidad del sistema BCMI.
+
+En los instrumentos digitales tradicionales, el mapeo suele relacionar gestos físicos del intérprete con parámetros sonoros. Por ejemplo, la presión, la posición o el movimiento pueden controlar la altura, el volumen o el timbre. Sin embargo, en una BCMI no existe necesariamente una acción gestual directa. La entrada procede de señales cerebrales, por lo que es necesario transformar características EEG en variables musicales de forma indirecta. Esto convierte el mapeo en una etapa especialmente importante, ya que actúa como intermediario entre el análisis de señal y la generación musical.
+
+Los mapeos pueden clasificarse según el número de relaciones entre entradas y salidas. Un mapeo uno a uno relaciona una característica EEG con un único parámetro musical; por ejemplo, utilizar la amplitud de la señal para controlar el volumen. Un mapeo uno a muchos utiliza una misma característica EEG para modificar varios parámetros musicales; por ejemplo, emplear la potencia alfa para influir simultáneamente en la densidad rítmica y en la estabilidad armónica. Finalmente, un mapeo muchos a muchos combina varias características EEG para controlar varios parámetros musicales, permitiendo relaciones más complejas entre actividad cerebral y resultado sonoro \cite{EatonMiranda2014Mapping}.
+
+Esta clasificación resulta útil para describir el diseño del sistema, aunque no siempre refleja toda la complejidad del proceso. En aplicaciones musicales, el mapeo puede depender también de reglas, umbrales, restricciones musicales o procesos generativos. Por ello, algunos enfoques avanzados emplean interpolaciones de alta dimensión o relaciones no lineales entre un conjunto reducido de entradas y múltiples parámetros musicales \cite{EatonMiranda2014Mapping}. En una BCMI, este tipo de estrategias puede ser útil cuando se desea obtener una salida musical más rica a partir de un número limitado de características EEG.
+
+Eaton y Miranda distinguen además entre diferentes formas de utilizar la actividad cerebral en sistemas musicales. En primer lugar, la sonificación EEG consiste en traducir información EEG en sonido, normalmente con una finalidad no musical o principalmente funcional. En segundo lugar, la musificación EEG consiste en mapear información EEG a parámetros musicales organizados, aunque el control pueda ser limitado o no explícito. Finalmente, el control BCI aparece cuando existe un control cognitivo directo y en tiempo real sobre la música \cite{EatonMiranda2014Mapping}. Esta distinción es importante porque no todos los sistemas que utilizan EEG para producir sonido deben considerarse equivalentes desde el punto de vista del control.
+
+En la sonificación, el objetivo principal suele ser hacer perceptible la información contenida en los datos. Por ello, las relaciones entre señal y sonido deben ser relativamente directas e intuitivas, de forma que el oyente pueda reconocer cambios en la actividad cerebral a través de cambios sonoros. En cambio, en la musificación, los datos EEG se insertan dentro de una estructura musical organizada. En este caso, el objetivo no es únicamente escuchar los datos, sino utilizarlos como material de control para generar música. Por esta razón, la musificación suele apoyarse en reglas musicales, escalas, acordes, patrones rítmicos o procesos generativos \cite{EatonMiranda2014Mapping}.
+
+En el presente Trabajo Fin de Grado, el sistema desarrollado se aproxima principalmente a un enfoque de musificación o sonificación musical mediante mapeo de parámetros. La señal EEG no se reproduce directamente como una onda sonora, sino que se procesa para obtener características temporales y espectrales. Posteriormente, estas características se asignan a parámetros musicales que determinan la generación de segmentos, compases, notas y eventos MIDI. Por tanto, el mapeo constituye el enlace entre la extracción de características EEG y la salida musical final.
+
+La arquitectura general de un sistema BCMI puede describirse mediante varios bloques: estímulos, entrada EEG, procesamiento de señal, algoritmo de transformación y motor musical \cite{EatonMiranda2014Mapping}. En este TFG, la entrada EEG procede del sistema de adquisición biomédico; el procesamiento de señal permite obtener características como amplitud, frecuencia dominante y potencia relativa en bandas; el algoritmo de transformación realiza el mapeo entre dichas características y parámetros musicales; y el motor musical genera eventos MIDI que pueden ser enviados a un sintetizador o dispositivo externo.
+
+\subsection{MIDI}
+
+MIDI, acrónimo de \textit{Musical Instrument Digital Interface}, es un protocolo estándar diseñado para transmitir información de interpretación musical en forma de datos electrónicos. A diferencia del audio digital, MIDI no almacena ni transmite directamente una forma de onda sonora, sino instrucciones que indican a un sintetizador o generador de sonido qué eventos musicales debe ejecutar. Por tanto, el dispositivo receptor es el encargado de producir el sonido final a partir de los mensajes recibidos \cite{Heckroth1995}.
+
+Esta diferencia entre MIDI y audio digital resulta especialmente importante en el contexto de este Trabajo Fin de Grado. Mientras que una señal de audio contiene muestras de presión sonora o amplitud en el tiempo, un mensaje MIDI contiene información simbólica de alto nivel, como qué nota debe sonar, en qué canal, con qué intensidad y durante cuánto tiempo. Esta representación hace que MIDI sea especialmente adecuado para sistemas de generación musical, ya que permite separar la lógica de composición o control de la síntesis sonora final.
+
+El protocolo MIDI transmite la información mediante mensajes. Un mensaje MIDI está formado por un byte de estado, que identifica el tipo de mensaje y, en muchos casos, el canal MIDI asociado, seguido normalmente por uno o dos bytes de datos \cite{Heckroth1995}. Los mensajes pueden clasificarse de forma general en mensajes de canal y mensajes de sistema. Los mensajes de canal afectan a un canal MIDI concreto, mientras que los mensajes de sistema no están asociados a un canal específico. Dentro de los mensajes de canal, los más relevantes para la interpretación musical son los \textit{Channel Voice Messages}, entre los que se encuentran \textit{Note On}, \textit{Note Off}, \textit{Program Change}, \textit{Control Change}, \textit{Pitch Bend} y mensajes de presión o \textit{aftertouch} \cite{Heckroth1995}.
+
+En este trabajo, los mensajes principales son \textit{Note On} y \textit{Note Off}. En MIDI, la activación de una nota y su liberación se consideran dos eventos independientes. El mensaje \textit{Note On} indica el comienzo de una nota musical, mientras que el mensaje \textit{Note Off} indica su finalización. El mensaje \textit{Note On} incluye dos datos fundamentales: el número de nota, que determina la altura musical que debe reproducirse, y la velocidad o \textit{velocity}, que representa la intensidad con la que se activa la nota \cite{Heckroth1995}. En la práctica, el número de nota se utiliza por el sintetizador para seleccionar la altura, mientras que la velocidad suele emplearse para controlar la amplitud o energía percibida de la nota.
+
+El parámetro \textit{velocity} tiene especial relevancia en sistemas de sonificación EEG-MIDI, ya que permite traducir características de la señal cerebral en variaciones dinámicas de la salida musical. Por ejemplo, una medida de amplitud o energía de la señal EEG puede mapearse a la velocidad MIDI, haciendo que ciertos eventos musicales se reproduzcan con mayor o menor intensidad. De esta forma, la dinámica musical puede reflejar cambios en la actividad EEG sin necesidad de modificar directamente la forma de onda sonora.
+
+Cuando una nota debe finalizar, se envía un mensaje \textit{Note Off}. Este mensaje también contiene el número de nota y una velocidad de liberación, aunque esta última suele ser ignorada por muchos sintetizadores \cite{Heckroth1995}. En algunas implementaciones MIDI también es habitual representar el apagado de una nota mediante un mensaje \textit{Note On} con velocidad igual a cero, técnica que puede reducir la cantidad de información transmitida cuando se emplea \textit{running status} \cite{Heckroth1995}. No obstante, desde el punto de vista conceptual, en este TFG resulta más claro describir la duración de una nota mediante un evento \textit{Note On} seguido de su correspondiente evento \textit{Note Off}.
+
+Otro concepto importante es el canal MIDI. Aunque la conexión física MIDI es única, el protocolo permite dividirla en dieciséis canales lógicos. El número de canal se incluye dentro de muchos mensajes MIDI, permitiendo que distintos instrumentos, partes o capas musicales sean controlados de forma independiente \cite{Heckroth1995}. En una aplicación musical, esto permite asignar diferentes voces o timbres a distintos canales. En el sistema desarrollado, el canal MIDI puede emplearse para organizar la salida musical generada a partir del EEG y enviar eventos a un sintetizador o instrumento externo.
+
+Además de los mensajes de nota, el mensaje \textit{Program Change} permite seleccionar el tipo de instrumento o timbre que debe utilizarse en un canal determinado. Este mensaje no genera una nota por sí mismo, sino que modifica el sonido que se empleará para reproducir las notas posteriores \cite{Heckroth1995}. En el contexto de este TFG, este mensaje puede utilizarse de forma secundaria para seleccionar el timbre de la sonificación, por ejemplo piano, sintetizador, bajo u otro instrumento virtual.
+
+El sistema General MIDI proporciona una asignación estandarizada entre números de programa e instrumentos, lo que permite que una secuencia MIDI pueda reproducirse de forma más coherente en distintos sintetizadores compatibles. General MIDI también establece una diferencia entre los canales melódicos y el canal 10, utilizado habitualmente para sonidos de percusión \cite{Heckroth1995}. Aunque esta información no constituye el núcleo del presente trabajo, resulta útil para comprender cómo el parámetro \textit{program} puede asociarse al timbre de la salida musical.
+
+En aplicaciones en tiempo real, los mensajes MIDI se procesan conforme son recibidos por el sintetizador. Cuando el sintetizador recibe un mensaje \textit{Note On}, reproduce la nota correspondiente, y cuando recibe el mensaje \textit{Note Off}, la detiene \cite{Heckroth1995}. En cambio, cuando los eventos MIDI se almacenan en un archivo, es necesario incluir información temporal que indique cuándo debe ejecutarse cada mensaje. Por ello, los archivos MIDI estándar incorporan marcas temporales o tiempos relativos para secuenciar correctamente los eventos \cite{Heckroth1995}.
+
+En el sistema EEG-MIDI desarrollado en este TFG, MIDI constituye la etapa final de representación musical. La señal EEG se adquiere, se procesa y se transforma en características temporales y espectrales. Posteriormente, dichas características se mapean a parámetros musicales, generando eventos de nota con inicio, final, altura, velocidad, canal e instrumento. Estos eventos se convierten finalmente en mensajes MIDI, principalmente \textit{Note On} y \textit{Note Off}, que pueden enviarse a un sintetizador, instrumento virtual o puerto MIDI físico.
+
+Por tanto, MIDI actúa como el lenguaje de salida del sistema de sonificación. Su función no es analizar la señal EEG ni generar directamente audio, sino codificar las decisiones musicales resultantes del procesamiento EEG en una forma estándar, eficiente y compatible con dispositivos musicales. Esta separación entre análisis EEG, generación musical y reproducción sonora permite que el sistema sea modular: las reglas de mapeo pueden modificarse sin cambiar necesariamente el sintetizador final, y el timbre de salida puede variar sin alterar el procesamiento EEG.
+\end{document}

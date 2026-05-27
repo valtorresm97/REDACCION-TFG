@@ -1,0 +1,102 @@
+\documentclass[../main.tex]{subfiles}
+
+\begin{document}
+
+\vspace{48pt}
+
+\section{Introducción}
+
+\subsection{Motivación}
+
+\subsection{Estado del arte}
+
+\subsubsection{Antecedentes de la música con señales biológicas y EEG}
+
+El uso de señales cerebrales y fisiológicas para la creación musical no es reciente. En el ámbito artístico, la utilización del electroencefalograma como fuente de sonido o de control musical se remonta al menos a la década de 1960, con compositores como Alvin Lucier, Richard Teitelbaum y David Rosenboom. Lucier empleó señales EEG amplificadas para excitar instrumentos de percusión, Teitelbaum utilizó señales biológicas como EEG y ECG para controlar sintetizadores, y Rosenboom exploró sistemas inspirados en cibernética y biofeedback aplicados a la creación musical en tiempo real \cite{MirandaCastet2014Preface}.
+
+No obstante, la idea de hacer audible la actividad EEG es incluso anterior. Fernandes et al. señalan que Adrian y Matthews propusieron ya en 1934 un método para escuchar el EEG, utilizando características simples de la señal, como la amplitud de las ondas alfa, como fuente sonora \cite{Fernandes2021BraiNSy}. Estos antecedentes muestran que la relación entre EEG y sonido ha evolucionado desde la exploración científica inicial hacia prácticas artísticas, sistemas interactivos y aplicaciones de sonificación.
+
+El desarrollo de estos sistemas estuvo limitado durante décadas por la baja disponibilidad de equipos EEG accesibles y por la falta de técnicas avanzadas de análisis de señal. La aparición de dispositivos como BioMuse en la década de 1990 permitió procesar digitalmente biosignales y convertirlas en datos MIDI, anticipando la posibilidad de usar señales fisiológicas como controladores musicales digitales \cite{MirandaCastet2014Preface}.
+
+\subsubsection{De la BCI a la Brain--Computer Music Interfacing}
+
+El desarrollo de las interfaces cerebro--computador, o \textit{Brain--Computer Interfaces} (BCI), proporcionó un marco técnico para emplear señales cerebrales como vía de comunicación o control. Tradicionalmente, la BCI se ha orientado a aplicaciones biomédicas y asistivas, especialmente para usuarios con alteraciones motoras severas, en las que el sistema interpreta patrones cerebrales como comandos para controlar dispositivos externos.
+
+A partir de este marco surge la \textit{Brain--Computer Music Interfacing} (BCMI), que aplica los principios de la BCI al ámbito musical. El avance de las técnicas de procesamiento EEG y la aparición de equipos más accesibles favorecieron la consolidación de sistemas capaces de utilizar actividad cerebral para generar, modificar o controlar procesos musicales \cite{MirandaCastet2014Preface}.
+
+Sin embargo, en aplicaciones musicales el concepto de control puede abordarse con mayor flexibilidad que en una BCI clásica. No siempre es necesario que el usuario controle voluntariamente cada evento sonoro; en algunos casos, la música puede adaptarse a características extraídas de la señal EEG o a estados cerebrales estimados. Esta idea resulta especialmente relevante para el presente Trabajo Fin de Grado, cuyo sistema no se plantea como una BCI activa de control explícito, sino como una BCMI pasiva en la que la música se genera a partir de características temporales y espectrales de la señal EEG.
+
+\subsubsection{Sonificación de señales biológicas y EEG}
+
+La sonificación puede entenderse como la representación auditiva no verbal de información. En el caso de las señales biológicas, esta práctica se relaciona con una tradición más amplia de escucha del cuerpo como fuente de información fisiológica. Aunque históricamente los datos científicos se han representado principalmente mediante gráficos, trazas o histogramas, el canal auditivo ofrece ventajas cuando la información es dinámica y cambia rápidamente.
+
+La sonificación EEG resulta especialmente adecuada porque la señal cerebral es compleja, no estacionaria y presenta variaciones temporales rápidas. Väljamäe et al. destacan que el sonido puede representar la complejidad y la dinámica temporal del EEG, aprovechando la elevada resolución temporal de la percepción auditiva humana \cite{Valjamae2013EEGSonification}. Además, en aplicaciones portables o \textit{wearable}, la salida sonora puede resultar más adecuada que una interfaz visual, al no requerir atención visual continua.
+
+El desarrollo de sensores fisiológicos inalámbricos, dispositivos EEG de bajo coste, computación \textit{wearable}, hardware de audio portátil y técnicas modernas de procesamiento de señal ha facilitado la aparición de nuevas aplicaciones de sonificación EEG en tiempo real. Sistemas comerciales como NeuroSky, Enobio, Emotiv o Nexus han contribuido a trasladar la monitorización cerebral fuera del laboratorio y a abrir aplicaciones en salud, neurofeedback, biofeedback, neuromarketing e interfaces implícitas \cite{Valjamae2013EEGSonification}.
+
+No obstante, la accesibilidad del hardware no elimina la necesidad de una adquisición fiable. Miranda y Castet advierten que muchos dispositivos EEG de bajo coste han ampliado el acceso a esta tecnología, pero pueden comprometer la calidad de la señal registrada. Por ello, incluso cuando no se busca control voluntario directo, resulta necesario asegurar que las características procesadas corresponden realmente a actividad EEG y no a artefactos, interferencias o ruido instrumental \cite{MirandaCastet2014Preface}.
+
+\subsubsection{De la audificación directa a la generación musical estructurada}
+
+La literatura sobre EEG y música muestra una evolución desde enfoques de audificación directa hacia sistemas de generación musical más estructurados. En los métodos más simples, la señal EEG o algunas de sus propiedades se transforman directamente en sonido. Sin embargo, trabajos posteriores incorporan análisis espectral, reglas musicales, estructuras simbólicas y procesos generativos.
+
+Fernandes et al. sitúan la sonificación dentro de una tradición más amplia de creación musical basada en datos extramusicales y defienden que las señales EEG son candidatas válidas para la sonificación tanto desde una perspectiva artística como científica \cite{Fernandes2021BraiNSy}. En su propuesta BraiNSy, los autores no convierten directamente la señal EEG en sonido, sino que separan la señal en bandas de frecuencia, la traducen a una representación simbólica, la organizan jerárquicamente y finalmente la codifican como música \cite{Fernandes2021BraiNSy}.
+
+Este cambio metodológico es relevante porque introduce niveles intermedios entre la señal fisiológica y la salida musical. En lugar de realizar una conversión directa EEG--sonido, la señal se analiza, se resume mediante características relevantes y se transforma en decisiones musicales. Esta aproximación permite generar resultados más estructurados, interpretables y musicalmente coherentes.
+
+\subsubsection{Mapeo de características EEG a parámetros musicales}
+
+Uno de los antecedentes más próximos al enfoque de este TFG es el trabajo de Wu et al., donde se propone traducir señales EEG en música para representar estados mentales. En dicho sistema, características como periodo, potencia y amplitud se emplean para generar parámetros musicales como nota, tempo, ritmo y tonalidad \cite{Wu2010}. Este tipo de aproximación muestra cómo las características temporales y espectrales de la señal pueden actuar como puente entre la actividad cerebral y la generación musical.
+
+El mapeo de parámetros permite evitar una conversión arbitraria de la señal EEG. En lugar de reproducir directamente la forma de onda cerebral, se extraen variables interpretables, como amplitud, frecuencia dominante, potencia relativa en bandas o estabilidad espectral, y se asignan a parámetros musicales como altura, registro, duración, volumen, densidad rítmica o timbre. Esta estrategia es especialmente adecuada para sistemas EEG-MIDI, ya que permite convertir la evolución de la señal en eventos musicales discretos y controlables.
+
+En este contexto, MIDI proporciona una capa de representación musical estandarizada. Las características EEG no generan audio directamente, sino eventos musicales que pueden codificarse como mensajes MIDI, por ejemplo mediante notas, velocidades, duraciones, canales o cambios de instrumento. Esto permite separar el procesamiento EEG de la síntesis sonora final y facilita una arquitectura modular.
+
+\subsubsection{Limitaciones del estado del arte y justificación del sistema propuesto}
+
+La literatura revisada muestra varias limitaciones recurrentes en los sistemas de EEG y música. En primer lugar, muchos trabajos históricos han utilizado conversiones directas o arbitrarias entre EEG y sonido, sin justificar suficientemente las reglas de mapeo. En segundo lugar, algunas propuestas no describen con detalle la adquisición fisiológica, el preprocesamiento o la síntesis sonora, lo que dificulta su replicación. En tercer lugar, ciertos sistemas dependen de configuraciones cerradas de hardware y software, limitando su reutilización y adaptación.
+
+Frente a estas limitaciones, el presente Trabajo Fin de Grado propone una arquitectura modular de sonificación EEG-MIDI. El sistema no realiza una audificación directa de la señal, sino que sigue una cadena estructurada basada en adquisición EEG, procesamiento temporal y espectral, extracción de características, segmentación musical, generación de compases, generación de notas y salida MIDI. De este modo, la señal cerebral se transforma progresivamente en información musical organizada.
+
+El sistema se sitúa dentro de una BCMI pasiva basada en EEG. La música generada no pretende representar comandos voluntarios explícitos del usuario, sino reflejar la evolución de características temporales y espectrales de la actividad EEG. Esta aproximación permite documentar cada etapa del proceso, reducir la arbitrariedad del mapeo y facilitar futuras modificaciones del sistema, como el ajuste de reglas musicales, la incorporación de nuevos métodos de análisis espectral o la adaptación de la salida MIDI a diferentes sintetizadores.
+
+\subsubsection{Estructura del documento}
+
+\subsection{Tecnologías usadas}
+
+A lo largo de este trabajo se han empleado distintas tecnologías hardware y software para el desarrollo del sistema propuesto. El proyecto integra adquisición de señales EEG, procesado digital, generación musical en tiempo real, comunicación MIDI, visualización gráfica y diseño electrónico. A continuación, se describen las principales tecnologías utilizadas.
+
+\begin{itemize}
+
+    \item \textbf{Arduino UNO Q:} placa de desarrollo utilizada como plataforma principal del sistema. Su arquitectura permite combinar tareas de bajo nivel, como la comunicación con el convertidor analógico-digital, con la ejecución de aplicaciones Python en el entorno Linux de la placa. En este proyecto se ha empleado para integrar la adquisición EEG, el procesado de datos, la interfaz web y la comunicación con periféricos externos.
+
+    \item \textbf{ADS1299-4PAG:} convertidor analógico-digital de Texas Instruments diseñado para la adquisición de biopotenciales. Se ha utilizado para captar la señal EEG mediante electrodos, trabajando en modo diferencial y con configuración adaptada a la adquisición de señales cerebrales de baja amplitud. Su correcta configuración y validación han sido fundamentales para garantizar la calidad de los datos utilizados por el sistema.
+
+    \item \textbf{Electrodos de gel y montaje EEG:} empleados para la adquisición real de la actividad eléctrica cerebral. Durante el desarrollo se probaron diferentes configuraciones de medida, incluyendo montajes frontales Fp1-Fp2 y configuraciones tipo ear-EEG/mastoides, así como distintas estrategias de referencia mediante BIAS/RLD para mejorar la estabilidad de la señal.
+
+    \item \textbf{C/C++:} lenguaje utilizado para el desarrollo del firmware ejecutado en el microcontrolador de la Arduino UNO Q. Este firmware se encarga de la configuración del ADS1299, la comunicación SPI, la lectura sincronizada mediante DRDY, la reconstrucción de las muestras de 24 bits, el acondicionamiento inicial de la señal y el envío de bloques de datos hacia el entorno Python.
+
+    \item \textbf{Python:} lenguaje empleado para el backend de la aplicación. En Python se realiza la recepción de los datos EEG, el almacenamiento temporal de la señal, el procesado digital, la extracción de características espectrales, la generación de eventos musicales, la comunicación con la interfaz web y la ejecución de herramientas de validación offline.
+
+    \item \textbf{Procesado digital de señal EEG:} conjunto de técnicas utilizadas para transformar la señal temporal en características útiles para la sonificación. Se han calculado métricas como RMS, potencia por bandas, potencia relativa, frecuencias pico y medidas de calidad espectral. Para la estimación espectral se ha empleado el método \textit{multitaper}, seleccionado por su mayor robustez frente a los efectos de borde de ventana y al \textit{spectral leakage}.
+
+    \item \textbf{HTML / Web UI:} tecnología utilizada para el desarrollo de la interfaz web de monitorización y control. La interfaz permite visualizar el estado de la adquisición, la calidad de la señal, las características espectrales, los eventos musicales generados y el piano scroll en tiempo real.
+
+    \item \textbf{MIDI:} protocolo utilizado para representar y transmitir los eventos musicales generados a partir de la señal EEG. Las características espectrales se transforman en notas y mensajes MIDI, como \textit{note on}, \textit{note off} y \textit{program change}, permitiendo la conexión del sistema con sintetizadores o dispositivos musicales externos.
+
+    \item \textbf{Matriz LED:} empleada como visualización física complementaria al piano scroll de la interfaz web. Las notas generadas por la sonificación se representan en la matriz mediante un desplazamiento temporal, facilitando una lectura visual directa de la actividad musical producida por el sistema.
+
+    \item \textbf{KiCad:} herramienta utilizada para el diseño de la PCB del sistema. Se ha empleado para el desarrollo del esquema electrónico y el trazado de la placa, integrando las conexiones entre la Arduino UNO Q, el ADS1299, los electrodos, la salida MIDI y los elementos auxiliares del circuito.
+
+    \item \textbf{Git y GitHub:} herramientas utilizadas para el control de versiones y la organización del desarrollo. El uso de ramas permitió separar fases como captura de datos, validación DSP, sonificación, piano scroll, matriz LED y firmware final, manteniendo trazabilidad sobre los cambios realizados.
+
+    \item \textbf{Buscadores bibliográficos y bases documentales:} se han utilizado herramientas como Google Académico, buscadores bibliográficos universitarios y recursos documentales de la Universidad de Málaga para la localización de artículos científicos, documentación técnica, hojas de datos y referencias relacionadas con electroencefalografía, sonificación, procesado digital de señal, interfaces cerebro-computador y MIDI.
+
+    \item \textbf{ChatGPT:} herramienta de apoyo basada en inteligencia artificial utilizada durante el desarrollo del proyecto para asistencia en la redacción técnica, estructuración de documentación, revisión conceptual, generación de prompts de trabajo, análisis de código, planificación de pruebas y apoyo en la interpretación de resultados. Su uso se ha limitado a tareas de asistencia y organización, manteniendo la validación técnica del sistema basada en pruebas reales, documentación oficial y datos experimentales obtenidos durante el proyecto.
+
+    \item \textbf{LaTeX:} sistema de composición utilizado para la redacción del TFG, permitiendo estructurar el documento, incluir figuras, tablas, ecuaciones, referencias y anexos técnicos de forma ordenada.
+
+\end{itemize}
+
+
+\end{document}

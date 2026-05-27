@@ -1,0 +1,166 @@
+\renewcommand{\tablename}{Tabla} 
+
+\section{Biomecánica y fisiopatología de las lesiones cerebrales en deportes de combate}
+
+El estudio de las lesiones cerebrales asociadas a impactos craneales requiere una comprensión adecuada de los fundamentos biológicos y biomecánicos que intervienen en su aparición. En el contexto de los deportes de combate, donde los impactos repetidos en la cabeza son frecuentes, resulta especialmente relevante analizar cómo las fuerzas mecánicas actúan sobre el tejido cerebral y cuáles son los mecanismos que pueden dar lugar al daño neurológico.
+
+Dado que el enfoque de este trabajo se basa en la medición de la cinemática del movimiento craneal mediante sensores inerciales, es necesario establecer el marco teórico que conecta dichas magnitudes con los mecanismos de lesión cerebral descritos en la literatura. Este capítulo tiene como objetivo proporcionar ese marco biomédico de referencia, abordando la anatomía cerebral relevante, los principales tipos de lesiones cerebrales traumáticas y los mecanismos biomecánicos implicados en su desarrollo.
+
+Finalmente, se contextualiza el problema en el ámbito específico de los deportes de combate y se analiza la relación entre la cinemática del impacto y el riesgo de lesión, sentando las bases conceptuales que justifican el diseño y la implementación del sistema de monitorización descrito en los capítulos posteriores.
+
+\subsection{Anatomía y estructuras cerebrales relevantes}
+
+Desde un punto de vista anatómico, el cerebro es un órgano altamente complejo cuya estructura condiciona de manera significativa su respuesta frente a fuerzas mecánicas externas. A diferencia de otros órganos, el tejido cerebral presenta una consistencia blanda y heterogénea, y no se encuentra fijado rígidamente al cráneo, lo que lo hace especialmente vulnerable ante aceleraciones y desaceleraciones bruscas de la cabeza \cite{Meaney2011Biomechanics}.
+
+El encéfalo se localiza en el interior de la cavidad craneal y se encuentra protegido por el cráneo y por un conjunto de membranas denominadas meninges, formadas por la duramadre, la aracnoides y la piamadre (Figura \ref{fig:meninges}). Estas estructuras proporcionan una primera barrera de protección mecánica frente a impactos externos. Entre la aracnoides y la piamadre se dispone el espacio subaracnoideo, ocupado por el líquido cefalorraquídeo (LCR), que rodea al cerebro y actúa como un medio de amortiguación frente a cargas mecánicas \cite{OpenStaxAnatomy}.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/Craneo.pdf}
+    \caption{Capas meníngeas del encéfalo: duramadre, aracnoides y piamadre. Fuente: \cite{OpenStaxAnatomy}.}
+    \label{fig:meninges}
+\end{figure}
+
+
+No obstante, esta protección es limitada, ya que el cerebro no se encuentra inmovilizado dentro del cráneo, sino suspendido en el propio LCR. Como consecuencia, ante aceleraciones bruscas, puede producirse un movimiento relativo entre el cráneo y el tejido cerebral, dando lugar a deformaciones internas del encéfalo \cite{Meaney2011Biomechanics}.
+
+Desde el punto de vista estructural, el cerebro está constituido por dos tipos principales de tejido: la sustancia gris y la sustancia blanca (Figura \ref{fig:sustancia}). La sustancia gris está formada principalmente por cuerpos neuronales, mientras que la sustancia blanca está compuesta mayoritariamente por axones, prolongaciones largas de las neuronas que conectan regiones distantes del cerebro y permiten la transmisión de señales eléctricas (ver Figura \ref{fig:neurona}). Esta organización no homogénea implica la existencia de interfaces entre tejidos con diferentes propiedades mecánicas, lo que favorece la aparición de esfuerzos de cizallamiento cuando el cerebro es sometido a movimientos rápidos o rotacionales \cite{Meaney2011Biomechanics,OpenStaxAnatomy}.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/cerebro.pdf}
+    \caption{Sustancia gris y sustancia blanca en un encéfalo humano. Fuente: \cite{OpenStaxAnatomy}.}
+    \label{fig:sustancia}
+\end{figure}
+
+
+
+La presencia de axones en la sustancia blanca resulta especialmente relevante en el contexto de las lesiones cerebrales traumáticas, ya que estas estructuras presentan una morfología alargada y orientada, lo que las hace especialmente sensibles a deformaciones mecánicas longitudinales y de cizallamiento. Además, la compleja geometría del encéfalo y su organización interna hacen que el daño producido por fuerzas mecánicas no siempre sea focal, sino que pueda manifestarse de forma difusa \cite{Meaney2011Biomechanics}.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/NEURONA.pdf}
+    \caption{Estructura general de una neurona, incluyendo soma, dendritas, axón y vaina de mielina. Fuente: \cite{OpenStaxAnatomy}.}
+    \label{fig:neurona}
+\end{figure}
+
+Estas características anatómicas justifican la necesidad de analizar los impactos craneales desde un punto de vista biomecánico, tal como se aborda en los apartados posteriores \cite{Meaney2011Biomechanics}.
+
+\subsection{Lesiones cerebrales traumáticas y daño acumulativo}
+
+La lesión cerebral traumática (Traumatic Brain Injury, TBI) se define como una alteración
+de la función cerebral producida por una fuerza externa que actúa sobre la cabeza, dando lugar
+a cambios transitorios o permanentes en el estado neurológico del individuo \cite{parikh2007tbi}. 
+Constituye una de las principales causas de discapacidad neurológica a nivel mundial y puede producirse como consecuencia de impactos directos, aceleraciones o desaceleraciones bruscas, o combinaciones de estos mecanismos.
+
+En los traumatismos cerrados, sin penetración del cráneo, frecuentes en el ámbito deportivo, el daño cerebral puede producirse incluso en ausencia de lesiones estructurales evidentes en las técnicas de imagen convencionales. En estos casos, pueden aparecer alteraciones internas del tejido cerebral que afectan de forma preferente a la sustancia blanca \cite{parikh2007tbi}.
+
+Dentro del espectro de la TBI, la conmoción cerebral representa la forma clínica más leve y frecuente. Desde el punto de vista fisiopatológico se asocia a una alteración transitoria del equilibrio iónico y metabólico neuronal inducida por la deformación mecánica del tejido. Se caracteriza por una alteración transitoria del estado mental, que puede manifestarse como pérdida breve de conciencia, amnesia, confusión o desorientación. Durante el periodo de recuperación pueden persistir síntomas como cefalea, mareo, dificultades de atención y lentitud cognitiva, reflejando una disfunción neuronal reversible \cite{blennow2012tbi}. 
+
+Otra forma relevante de TBI es la lesión axonal difusa (Diffuse Axonal Injury, DAI) que, a nivel microscópico, se asocia a estiramientos rápidos del axón que alteran su citoesqueleto y comprometen el transporte axonal, pudiendo producir disfunción de la conectividad cerebral incluso sin contusiones o hemorragias focales evidentes \cite{Meaney2011Biomechanics}. Desde el punto de vista clínico, la DAI puede dar lugar a déficits neurológicos persistentes, alteraciones cognitivas y, en los casos más graves, pérdida prolongada de conciencia, incluso cuando la neuroimagen estructural no muestra hallazgos significativos.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/Cascada.pdf}
+    \caption{Esquema de la cascada fisiopatológica tras una lesión cerebral inducida por movimiento rotacional, Fuente: \cite{blennow2012tbi}.}
+    \label{fig:cascada_conmocion}
+\end{figure}
+
+La exposición repetida a impactos craneales, incluso de baja intensidad y sin síntomas inmediatos, puede desencadenar un proceso de daño cerebral acumulativo \cite{Bernick2013}. Este tipo de exposición, conocida como \textit{repeated head impacts} (RHI), es característica de deportes de contacto y colisión, en los que los movimientos bruscos de la cabeza se repiten de forma reiterada a lo largo del tiempo.
+
+La encefalopatía traumática crónica (Chronic Traumatic Encephalopathy, CTE) constituye la manifestación neuropatológica más representativa del daño cerebral acumulativo. Se clasifica como una tauopatía, caracterizada por la acumulación patológica de proteína tau hiperfosforilada (p-tau) en el tejido cerebral, preferentemente alrededor de pequeños vasos sanguíneos y en los fondos de los surcos corticales, lo que permite diferenciarla de otras tauopatías neurodegenerativas \cite{babcock2025cte} (ver Figura \ref{fig:cte}). Aunque su diagnóstico definitivo solo puede establecerse mediante examen neuropatológico post mortem, la evidencia disponible respalda una relacion clara entre la exposición repetida a impactos craneales y el desarrollo de esta patología, que clínicamente se asocia a alteraciones del estado de ánimo y del comportamiento, dificultades cognitivas progresivas y, en fases avanzadas, deterioro neurodegenerativo de tipo demencial \cite{blennow2012tbi}.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/cte.pdf}
+    \caption{Estadios neuropatológicos de la encefalopatía traumática crónica (CTE)  Fuente: \cite{babcock2025cte}.}
+    \label{fig:cte}
+\end{figure}
+
+
+En conjunto, la evidencia actual indica que el daño cerebral asociado a impactos craneales no debe interpretarse únicamente como el resultado de traumatismos aislados de alta energía, sino como un proceso dinámico en el que, la repetición de impactos subclínicos, puede desencadenar alteraciones funcionales y estructurales a largo plazo. Esta perspectiva refuerza la necesidad de estrategias orientadas a la prevención y a la monitorización de la exposición acumulada al impacto craneal, aspecto que constituye uno de los pilares del enfoque desarrollado en el presente trabajo.
+
+\subsection{Mecanismos biomecánicos de la lesión cerebral}
+
+La respuesta del encéfalo ante un impacto está condicionada por su comportamiento inercial y por sus propiedades mecánicas. Como ya se ha establecido, el cerebro es un tejido blando, altamente deformable y con comportamiento no lineal, que no se encuentra rígidamente fijado al cráneo. Cuando este se acelera, se producen deformaciones mecánicas del tejido cerebral. La naturaleza de estas deformaciones depende directamente de la cinemática del movimiento impuesto a la cabeza \cite{Meaney2011Biomechanics}.
+
+Desde el punto de vista biomecánico, los movimientos de la cabeza durante un evento traumático pueden describirse, de forma general, mediante dos componentes principales de la aceleración: la aceleración lineal y la aceleración rotacional. Ambos tipos de movimiento suelen coexistir durante un impacto real, pero generan respuestas mecánicas diferentes en el interior del encéfalo y contribuyen de manera distinta a los mecanismos de lesión \cite{Meaney2011Biomechanics}. Cuando la cabeza experimenta una aceleración brusca $a$, el encéfalo, debido a su masa, $m$ está sometido a fuerzas inerciales proporcionales a $F = m \cdot a$, mientras que una aceleración angular $\alpha$ genera un momento dinámico $\tau = I \cdot \alpha$, donde $I$ representa el momento de inercia del sistema cráneo–encéfalo.
+
+La aceleración lineal se asocia a movimientos traslacionales de la cabeza y produce gradientes de presión en el interior del cráneo. Durante un impacto, estos gradientes generan regiones de compresión y descompresión del tejido cerebral, cuya magnitud se relaciona con el valor máximo de aceleración alcanzado \cite{Meaney2011Biomechanics}. No obstante, en el caso de la conmoción cerebral y otras formas de lesión cerebral leve, estos mecanismos basados en la presión no explican por sí solos la aparición de la disfunción neurológica difusa \cite{Meaney2011Biomechanics}.
+
+La aceleración rotacional describe los cambios en la velocidad angular de la cabeza y constituye un mecanismo biomecánico especialmente relevante en la lesión cerebral leve. A diferencia de la aceleración lineal, las rotaciones rápidas inducen deformaciones predominantemente de cizallamiento en el tejido cerebral. La variable mecánica más directamente relacionada con el daño tisular es la deformación ($strain$), que cuantifica el cambio relativo de forma del tejido bajo carga. Diversos estudios experimentales y modelos computacionales han mostrado que las aceleraciones rotacionales generan niveles de deformación significativamente mayores que los inducidos exclusivamente por aceleraciones lineales \cite{Meaney2011Biomechanics}.
+
+Las deformaciones por cizallamiento asociadas a la aceleración rotacional generan desplazamientos relativos entre distintas regiones del encéfalo y se distribuyen de forma difusa en el tejido cerebral. Este patrón de deformación depende, además, de la dirección del movimiento angular, observándose que aceleraciones en determinados planos pueden generar mayores deformaciones en estructuras profundas \cite{Meaney2011Biomechanics}. Este comportamiento se considera un mecanismo biomecánico clave en la aparición de la disfunción neurológica característica de la conmoción cerebral. De hecho, se ha observado que la restricción del componente rotacional del movimiento dificulta la aparición de pérdida de conciencia, mientras que la introducción de rotaciones incrementa de forma significativa la probabilidad de alteración neurológica.
+
+Estas deformaciones afectan de manera preferente a estructuras alargadas y orientadas, como los axones de la sustancia blanca. Cuando las tensiones y deformaciones inducidas por la aceleración rotacional superan la capacidad de tolerancia del tejido, pueden producirse alteraciones estructurales, proporcionando un marco mecánico para comprender la aparición de lesiones difusas. Asimismo, la repetición de episodios de deformación subumbral, incluso en ausencia de daño estructural inmediato, puede contribuir a que aparezca un daño acumulativo asociado a exposiciones repetidas a impactos craneales \cite{Meaney2011Biomechanics}. 
+
+
+\subsection{Lesiones cerebrales en deportes de combate}
+
+Los deportes de combate constituyen un modelo singular de exposición a impactos craneales, ya que el contacto directo con la cabeza no es un evento accidental, sino un componente estructural del propio sistema competitivo. En modalidades como el boxeo y las artes marciales mixtas (MMA), una proporción relevante de los combates finaliza por \textit{knockout} (KO) o \textit{technical knockout} (TKO), generalmente como consecuencia de golpes dirigidos a la cabeza, lo que implica la transferencia repetida de energía mecánica al encéfalo \cite{Follmer2019,Fares2021} y que se asocia frecuentemente con la conmoción cerebral.
+
+El análisis de competiciones profesionales de MMA ha mostrado que la incidencia de finales por KO/TKO varía de forma marcada según la categoría de peso y el sexo, alcanzando valores especialmente elevados en categorías masculinas de peso medio, semipesado y pesado \cite{Follmer2019}. Como muestra la Figura \ref{fig:peso}, en estos grupos, más del 50\% de los combates pueden finalizar por KO o TKO, lo que refleja una mayor exposición a impactos de alta intensidad sobre la cabeza. Estos datos ponen de manifiesto que la carga mecánica acumulada no depende únicamente del número total de combates disputados, sino también de la intensidad típica de los impactos y de factores estructurales del deporte y del perfil del atleta.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/KO.pdf}
+    \caption{Porcentaje de resultados de combate según categoría de peso y sexo,  Fuente: \cite{Follmer2019}.}
+    \label{fig:peso}
+\end{figure}
+
+
+Además, los resultados experimentales indican que determinados gestos técnicos en deportes de combate pueden generar aceleraciones comparables o superiores a los observados en otros deportes de contacto. En particular, los estudios comparativos entre boxeo y taekwondo han mostrado que ciertas patadas a la cabeza producen aceleraciones lineales superiores a las de golpes de puño, con valores medios de aceleración que superan los 100 g \cite{Fife2013}.
+
+Más allá del resultado del combate, la exposición a impactos craneales se extiende también a los entrenamientos, en particular a las sesiones de \textit{sparring}, donde los atletas pueden experimentar múltiples impactos submáximos sin interrupción del combate ni signos clínicos evidentes \cite{Kirk2023}. Este patrón de exposición repetida resulta especialmente relevante para el análisis biomecánico del riesgo, ya que, como se ha expuesto, la ausencia de KO no implica necesariamente una carga mecánica despreciable sobre el tejido cerebral.
+
+El carácter repetitivo de esta exposición en deportes como el boxeo lo ha llevado a ser considerado históricamente como un modelo humano para el estudio de los efectos del trauma craneal repetido y de patologías como el CTE \cite{Bernick2013}.
+
+En conjunto, los datos disponibles muestran que los deportes de combate se caracterizan por una combinación de impactos de alta intensidad, variabilidad en la exposición según el tipo de combate, la técnica empleada y el perfil del atleta, y una carga acumulativa de impactos a lo largo del tiempo. Estas características hacen necesaria la utilización de métricas biomecánicas objetivas para cuantificar la exposición y el riesgo, lo que proporciona el marco conceptual para la discusión de umbrales de lesión en el apartado siguiente.
+
+\subsection{Relación entre la cinemática del impacto y el riesgo de lesión}
+
+La relación entre la cinemática del movimiento craneal y el riesgo de lesión cerebral ha sido ampliamente investigada en el ámbito de la biomecánica del traumatismo craneoencefálico. En el caso de la conmoción cerebral y otras formas de lesión cerebral leve, la evidencia indica que el riesgo no puede explicarse mediante un único parámetro cinemático aislado, sino que depende de la interacción entre la magnitud del movimiento, su duración y la exposición repetida a lo largo del tiempo \cite{Guskiewicz2011,Tierney2024}.
+
+Históricamente, las primeras métricas de evaluación del riesgo de lesión cerebral se basaron en la aceleración lineal máxima de la cabeza. Un ejemplo clásico es el \textit{Head Injury Criterion} (HIC), desarrollado en el ámbito de la seguridad vial, que integra la aceleración lineal a lo largo de un intervalo temporal para reflejar que impactos de menor magnitud pero mayor duración pueden resultar igualmente lesivos. 
+
+En el contexto de la conmoción cerebral, múltiples estudios han mostrado que las métricas basadas únicamente en aceleración lineal presentan una capacidad limitada para explicar la aparición de disfunción neurológica difusa \cite{Meaney2011Biomechanics,Guskiewicz2011}. En su lugar, la aceleración rotacional de la cabeza se ha identificado como un determinante biomecánico clave del riesgo de lesión cerebral leve, debido a su capacidad para inducir deformaciones de cizallamiento en el tejido cerebral, como se ha expuesto anteriormente. \cite{Meaney2011Biomechanics,Lota2022}.
+
+Las revisiones sistemáticas y los estudios experimentales en deportes de combate coinciden en señalar que la aceleración rotacional máxima alcanzada durante un impacto es una variable especialmente relevante para caracterizar la severidad biomecánica del evento \cite{Lota2022,Tierney2024}. A partir de reconstrucciones físicas de impactos deportivos y de modelos de elementos finitos del cerebro humano, se han descrito rangos de aceleración rotacional asociados a distintos niveles de probabilidad de lesión cerebral leve. En particular, valores del orden de 2.5–3.0 krad/s$^2$ son frecuentes en colisiones deportivas sin lesión clínica, mientras que eventos asociados a conmoción cerebral suelen presentar aceleraciones rotacionales superiores, típicamente en el rango de 4–6 krad/s$^2$, alcanzando valores de 8–10 krad/s$^2$ o mayores en impactos más severos, como golpes directos en boxeo o artes marciales mixtas \cite{Hoshizaki2017,Lota2022}.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{p{4cm} p{6cm} p{3cm}}
+\hline
+\textbf{Rango de aceleración rotacional pico} & \textbf{Contexto reportado en la literatura} & \textbf{Referencia(s)} \\
+\textbf{(krad/s$^2$)} & & \\
+\hline
+$< 3.0$ & Impactos deportivos sin lesión clínica & \cite{Lota2022} \\
+
+$3.0$ -- $4.5$ & Impactos de intensidad intermedia & \cite{Lota2022,Hoshizaki2017} \\
+
+$4.0$ -- $6.0$ & Eventos asociados a conmoción cerebral & \cite{Lota2022,Hoshizaki2017} \\
+
+$\geq 8.0$ & Impactos de alta severidad biomecánica & \cite{Lota2022,Hoshizaki2017} \\
+
+\hline
+\end{tabular}
+\caption{Rangos de aceleración rotacional pico reportados en la literatura para impactos deportivos. Los valores representan intervalos orientativos y no constituyen umbrales diagnósticos absolutos \cite{Guskiewicz2011}.}
+\label{tab:rangos_rotacionales}
+\end{table}
+
+
+Estos rangos no representan umbrales diagnósticos estrictos, y la literatura es consistente en afirmar que no existe un valor único de aceleración rotacional capaz de predecir de forma fiable la aparición de síntomas clínicos \cite{Guskiewicz2011}. Impactos con aceleraciones elevadas pueden no producir conmoción, mientras que otros de menor magnitud sí pueden desencadenarla, en función de factores como la orientación del movimiento, la duración del impacto y la historia previa de exposición del atleta.
+
+En relación con la duración del evento, los estudios de reconstrucción han mostrado que los impactos deportivos suelen presentar perfiles temporales más largos y más complejos que los impactos de alta energía para los que se desarrollaron las curvas clásicas de tolerancia, como la Wayne State Tolerance Curve \cite{Hoshizaki2017}. En deportes de combate, los golpes de puño y codo suelen caracterizarse por duraciones del orden de 5–15 ms, mientras que colisiones y caídas con casco pueden alcanzar duraciones superiores a 20 ms, incluso con picos de aceleración más bajos \cite{Hoshizaki2017}. Este hecho refuerza la importancia de considerar conjuntamente la magnitud de la aceleración rotacional y la duración del evento al evaluar el riesgo biomecánico.
+
+Más allá del análisis de impactos individuales, la literatura subraya la importancia de la exposición acumulada. Estudios longitudinales y revisiones sistemáticas indican que la repetición de impactos submáximos puede modificar la tolerancia tisular y aumentar la susceptibilidad a eventos posteriores \cite{Guskiewicz2011,Tierney2024,Lota2022}. En este contexto, variables como la frecuencia de impactos, la densidad temporal de los eventos y la carga acumulada a lo largo del tiempo adquieren relevancia biomecánica, incluso cuando cada impacto aislado no supera valores tradicionalmente considerados elevados.
+
+A pesar de la importancia de factores como la orientación del impacto, la duración del pulso de aceleración y el historial individual de exposición como elementos relevantes en la determinación del riesgo, la definición de rangos operativos claros para estas variables sigue siendo un problema abierto. En particular, no existen actualmente valores de referencia consensuados que permitan clasificar de forma directa una exposición como lesiva o no lesiva en función de estos parámetros sin recurrir a valoraciones clinicas externas o modelos altamente dependientes del contexto \cite{Guskiewicz2011,Tierney2024}.
+
+A partir de estos hallazgos, el presente trabajo adopta un enfoque orientado a la gestión preventiva del riesgo biomecánico. La aceleración rotacional máxima se emplea como descriptor primario de severidad, dado su respaldo consistente en la literatura como variable correlacionada con los niveles de deformación interna del tejido cerebral. Para contextualizar los eventos detectados, se utilizan rangos de referencia derivados de estudios experimentales y reconstrucciones biomecánicas, entendidos como indicadores de severidad relativa y no como umbrales diagnósticos absolutos. 
+
+De forma complementaria, el número de impactos por sesión se incorpora como medida de exposición acumulada, permitiendo caracterizar la carga mecánica global a la que se expone el atleta a lo largo del tiempo. Este planteamiento no pretende inferir directamente la presencia de lesión clínica, sino proporcionar información objetiva que facilite decisiones prudentes en el ámbito deportivo. Otras variables biomecánicas identificadas en la literatura se consideran líneas de desarrollo futuro del sistema, en el marco de una mejora progresiva basada en la evidencia científica disponible.
+
+
+

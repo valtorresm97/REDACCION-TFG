@@ -1,0 +1,48 @@
+# LaTeX auxiliary files
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+*.xdv
+*.ilg
+*.ind
+*.idx
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.ist
+
+# Build folders
+build/
+out/
+_output/
+
+# Generated PDFs
+*.pdf
+
+# Editor / OS
+.vscode/
+!.vscode/settings.json
+.DS_Store
+Thumbs.db
+
+# Private or copyrighted references
+papers/
+libros/
+referencias/pdf/
+bibliografia/pdf/
