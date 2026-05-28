@@ -9,8 +9,6 @@
 
 En esta sección se definen los requisitos que debe cumplir el sistema de sonificación EEG--MIDI desarrollado en este Trabajo Fin de Grado. Estos requisitos permiten delimitar qué debe hacer el prototipo, bajo qué condiciones debe operar y qué decisiones de diseño se han adoptado en la implementación final.
 
-Es importante diferenciar entre requisitos funcionales, requisitos no funcionales y decisiones de diseño. Los requisitos funcionales describen las capacidades que debe ofrecer el sistema; los requisitos no funcionales recogen propiedades de calidad, seguridad, modularidad y escalabilidad; y las decisiones de diseño explican cómo se ha implementado el sistema en esta versión, sin convertir dichas elecciones en limitaciones cerradas de la arquitectura.
-
 El sistema se plantea como un prototipo experimental de sonificación EEG--MIDI en vivo. Su finalidad no es realizar diagnóstico médico ni evaluar patologías neurológicas, sino transformar señales EEG reales en eventos musicales enviados mediante una salida MIDI física.
 
 \subsubsection{Requisitos funcionales}
@@ -79,89 +77,53 @@ Los requisitos funcionales definen las capacidades principales que debe ofrecer 
 
 \subsubsection{Requisitos no funcionales}
 
-Los requisitos no funcionales describen las condiciones de calidad, operación y diseño que debe cumplir el sistema sin imponer una implementación concreta. En este proyecto son especialmente importantes porque el prototipo trabaja con señales EEG reales, de baja amplitud y sensibles al ruido, y debe transformarlas en eventos MIDI en vivo.
+Los requisitos no funcionales recogen las condiciones de calidad, seguridad y operación que debe cumplir el prototipo durante su uso experimental.
 
 \begin{description}[leftmargin=!,labelwidth=2cm]
 
-    \item[RNF-1] \textbf{Funcionamiento en tiempo real.} El sistema debe operar de forma continua durante una sesión de adquisición y sonificación, manteniendo una respuesta temporal suficiente para que los cambios en la señal EEG puedan reflejarse en la salida musical.
+    \item[RNF-1] \textbf{Funcionamiento en tiempo real.} La cadena de adquisición, procesamiento, sonificación y salida MIDI debe operar de forma continua durante la sesión, sin depender de análisis \textit{offline} posteriores.
 
-    Este requisito no impone una frecuencia de muestreo o una ventana de análisis concreta, sino que exige que la cadena completa funcione sin depender de un análisis \textit{offline} posterior.
+    \item[RNF-2] \textbf{Seguridad y uso no clínico.} El sistema debe orientarse a un uso experimental, con alimentación de baja tensión y sin finalidad diagnóstica o clínica.
 
-    \item[RNF-2] \textbf{Seguridad y uso no clínico.} El sistema debe estar orientado a un uso experimental y no clínico. Su finalidad es la sonificación de señales EEG reales en vivo, no el diagnóstico médico ni la toma de decisiones clínicas.
+    \item[RNF-3] \textbf{Robustez frente al ruido.} El diseño debe considerar la baja amplitud del EEG y su sensibilidad a interferencias eléctricas, artefactos fisiológicos y problemas de contacto electrodo--piel.
 
-    Al conectarse al cuerpo humano mediante electrodos, el prototipo debe emplear alimentación de baja tensión y medidas de diseño orientadas a reducir riesgos eléctricos en un entorno controlado y supervisado.
+    \item[RNF-4] \textbf{Modularidad.} El sistema debe separarse en bloques funcionales diferenciados: adquisición, comunicación, procesamiento, sonificación, salida MIDI e interfaz auxiliar.
 
-    \item[RNF-3] \textbf{Robustez frente al ruido e interferencias.} El sistema debe diseñarse teniendo en cuenta la baja amplitud de las señales EEG y su sensibilidad frente al ruido eléctrico, los artefactos fisiológicos y las interferencias externas.
+    \item[RNF-5] \textbf{Escalabilidad.} La arquitectura debe permitir futuras ampliaciones, como nuevos canales EEG, otros mapeos musicales, selección dinámica de canal o nuevas visualizaciones.
 
-    Este requisito afecta al diseño hardware, al montaje de adquisición y al procesamiento posterior de la señal.
+    \item[RNF-6] \textbf{Bajo coste y accesibilidad.} El prototipo debe priorizar componentes y herramientas accesibles en un contexto académico y de prototipado.
 
-    \item[RNF-4] \textbf{Modularidad del sistema.} El sistema debe organizarse en bloques funcionales separados: adquisición, comunicación, procesamiento, sonificación, salida MIDI e interfaz auxiliar.
+    \item[RNF-7] \textbf{Replicabilidad y documentación.} El sistema debe documentarse de forma que pueda ser comprendido, reproducido y modificado posteriormente.
 
-    Esta separación permite modificar una parte del sistema sin afectar de forma directa al resto.
+    \item[RNF-8] \textbf{Mantenibilidad.} El código debe organizarse de forma clara, reduciendo dependencias innecesarias entre módulos y facilitando ajustes posteriores.
 
-    \item[RNF-5] \textbf{Escalabilidad.} El sistema debe permitir futuras ampliaciones tanto a nivel hardware como software.
-
-    Entre las posibles ampliaciones se incluyen el uso de más canales EEG, nuevos mapeos musicales, selección dinámica de canal, nuevas visualizaciones o adaptación a distintos dispositivos MIDI.
-
-    \item[RNF-6] \textbf{Bajo coste y accesibilidad.} El sistema debe priorizar el uso de componentes y herramientas accesibles dentro de un contexto académico y de prototipado.
-
-    El objetivo no es competir con sistemas comerciales de EEG, sino desarrollar un prototipo funcional, documentable y reproducible con recursos razonables.
-
-    \item[RNF-7] \textbf{Replicabilidad y documentación.} El sistema debe estar suficientemente documentado para que su funcionamiento pueda ser entendido, reproducido y modificado posteriormente.
-
-    La documentación debe cubrir la arquitectura general, conexiones hardware, configuración de adquisición, procesamiento de señal, generación MIDI y pruebas realizadas.
-
-    \item[RNF-8] \textbf{Mantenibilidad del código.} El código del sistema debe organizarse de forma comprensible y mantenible, evitando dependencias innecesarias entre módulos.
-
-    Esta propiedad facilita la depuración y la evolución del sistema durante ajustes posteriores.
-
-    \item[RNF-9] \textbf{Portabilidad del prototipo.} El sistema debe poder funcionar como un prototipo compacto y transportable, adecuado para realizar pruebas en un entorno experimental sin equipamiento de laboratorio complejo.
-
-    La alimentación mediante USB y la integración en Arduino UNO Q favorecen esta portabilidad.
+    \item[RNF-9] \textbf{Portabilidad.} El sistema debe poder utilizarse como prototipo compacto y transportable en un entorno experimental controlado.
 
 \end{description}
 
 \subsubsection{Decisiones de diseño adoptadas}
 
-Una vez definidos los requisitos funcionales y no funcionales, se recogen las principales decisiones de diseño adoptadas durante el desarrollo. Estas decisiones representan la forma concreta en la que se ha implementado el sistema en este TFG, pero no deben confundirse con requisitos cerrados, ya que el objetivo es mantener una arquitectura escalable.
+A continuación se resumen las decisiones principales tomadas para implementar la versión desarrollada del sistema.
 
 \begin{description}[leftmargin=!,labelwidth=1.8cm]
 
-    \item[DD-1] \textbf{Uso del ADS1299--4PAG como front-end de adquisición.} Aunque el requisito funcional es disponer de adquisición multicanal de señales EEG, en este trabajo se ha seleccionado el ADS1299--4PAG como circuito principal de adquisición.
+    \item[DD-1] \textbf{ADS1299--4PAG.} Se seleccionó el ADS1299--4PAG como front-end de adquisición por estar orientado a biopotenciales y permitir la digitalización multicanal de señales EEG de baja amplitud.
 
-    Esta elección se debe a que está orientado a la medida de biopotenciales y permite digitalizar señales EEG de baja amplitud con varios canales disponibles.
+    \item[DD-2] \textbf{Frecuencia de muestreo de 250 Hz.} En las capturas y resultados del TFG se utilizó una frecuencia de \SI{250}{\hertz} por canal, suficiente para el análisis de las bandas EEG empleadas en la sonificación.
 
-    \item[DD-2] \textbf{Frecuencia de muestreo de 250 Hz en las pruebas.} La librería desarrollada para la comunicación con el ADS1299 permite configurar diferentes frecuencias de muestreo. Sin embargo, para las capturas y resultados de este TFG se ha utilizado una frecuencia de \SI{250}{\hertz} por canal.
+    \item[DD-3] \textbf{Montaje ear--EEG/mastoides.} Durante la validación se empleó una configuración próxima a ear--EEG/mastoides, con referencia o BIAS en la muñeca izquierda, por su estabilidad práctica y menor interferencia con el cabello.
 
-    Esta configuración resulta suficiente para el análisis de las bandas EEG empleadas en la sonificación y mantiene una carga de procesamiento razonable.
+    \item[DD-4] \textbf{Procesamiento en Python.} El procesamiento principal se implementó en Python dentro del entorno Linux/Qualcomm de Arduino UNO Q, facilitando el desarrollo y ajuste de los algoritmos.
 
-    \item[DD-3] \textbf{Configuración experimental ear--EEG/mastoides.} El sistema permite la conexión de electrodos en diferentes configuraciones EEG de superficie. No obstante, durante la validación se ha utilizado una configuración próxima a ear--EEG/mastoides, con referencia o BIAS en la muñeca izquierda.
+    \item[DD-5] \textbf{Estimación multitaper.} Se empleó el método multitaper para obtener características espectrales más estables en señales EEG no estacionarias.
 
-    Esta configuración se seleccionó por su estabilidad práctica, facilidad de colocación y menor interferencia con el cabello.
+    \item[DD-6] \textbf{Ventana de análisis de 4 segundos.} Se utilizó una ventana temporal aproximada de \SI{4}{\second} como compromiso entre estabilidad frecuencial y respuesta temporal.
 
-    \item[DD-4] \textbf{Procesamiento en Python dentro de Arduino UNO Q.} El requisito funcional es procesar la señal EEG de forma continua y extraer características útiles para la sonificación. En la implementación desarrollada, este procesamiento se realiza en Python dentro del entorno Linux/Qualcomm de Arduino UNO Q.
+    \item[DD-7] \textbf{Salida MIDI por D1/RX.} Los eventos MIDI generados se enviaron mediante la línea asociada al pin D1/RX hacia la PCB MIDI del prototipo.
 
-    Esta decisión facilita el desarrollo, la depuración y la modificación de los algoritmos de análisis y sonificación.
+    \item[DD-8] \textbf{Interfaz web auxiliar.} La interfaz web se utilizó como herramienta de monitorización y apoyo durante las pruebas del sistema.
 
-    \item[DD-5] \textbf{Estimación espectral mediante multitaper.} El sistema requiere obtener características espectrales robustas a partir de la señal EEG. Para ello, en esta versión se ha empleado el método multitaper como estrategia principal de estimación espectral.
-
-    Este método permite reducir la varianza de la estimación y los efectos asociados al ventaneado en señales EEG no estacionarias.
-
-    \item[DD-6] \textbf{Ventana de análisis de aproximadamente 4 segundos.} Durante el desarrollo se ha utilizado una ventana temporal de análisis de aproximadamente \SI{4}{\second}.
-
-    Esta configuración busca un equilibrio entre estabilidad frecuencial y capacidad de respuesta temporal durante la sonificación.
-
-    \item[DD-7] \textbf{Salida MIDI física mediante pin D1/RX y PCB MIDI.} El requisito funcional es disponer de salida MIDI física. En la implementación desarrollada, los eventos MIDI generados se envían mediante la línea asociada al pin D1/RX hacia la PCB MIDI del prototipo.
-
-    Esta decisión permite conectar el sistema con dispositivos musicales externos compatibles con MIDI.
-
-    \item[DD-8] \textbf{Interfaz web como herramienta auxiliar.} La interfaz web se ha planteado como una herramienta auxiliar de monitorización, no como la salida principal del sistema.
-
-    Su función es facilitar la supervisión del estado del prototipo durante las pruebas.
-
-    \item[DD-9] \textbf{Matriz LED como complemento visual opcional.} La matriz LED se considera un complemento visual opcional para representar de forma sencilla la actividad musical generada.
-
-    No constituye un requisito funcional esencial para cumplir el objetivo principal del sistema.
+    \item[DD-9] \textbf{Matriz LED opcional.} La matriz LED se consideró un complemento visual opcional para representar la actividad musical generada.
 
 \end{description}
 
