@@ -17,7 +17,7 @@ Los requisitos funcionales definen las capacidades principales que debe ofrecer 
 
 \begin{description}[leftmargin=!,labelwidth=1.8cm]
 
-    \item[RF-1] \textbf{Adquisición EEG en vivo.} El sistema debe permitir la adquisición de señales EEG reales procedentes de un usuario durante una sesión de funcionamiento. La señal utilizada para la sonificación debe proceder de una captura en vivo y no de la reproducción \textit{offline} de bases de datos o registros previamente almacenados.
+    \item[RF-1] \textbf{Adquisición EEG en vivo.} El sistema debe permitir la adquisición de señales EEG reales procedentes de un usuario durante una sesión de funcionamiento. La señal utilizada para la sonificación debe proceder de una captura en vivo y no de la reproducción \textit{offline} de bases de datos o registros EEG previamente almacenados.
 
     Este requisito responde al objetivo principal del proyecto: transformar actividad EEG real en eventos musicales MIDI durante el funcionamiento del prototipo.
 
@@ -137,16 +137,45 @@ En la parte Linux de la Arduino UNO Q, el backend recibe las muestras EEG y las 
 
 El módulo de sonificación no trabaja directamente con la forma de onda EEG, sino con las características previamente calculadas por el bloque de procesamiento. A partir de ellas se genera una estructura musical organizada en segmentos, compases y notas. Finalmente, estas notas se transforman en eventos MIDI válidos, principalmente mensajes de activación y finalización de nota, que se envían a través de la salida MIDI física del prototipo.
 
-\IfFileExists{IMAGENES/fig_arquitectura_general_sistema.png}{%
 La Figura~\ref{fig:arquitectura_general_sistema} resume la arquitectura general del sistema desarrollado, desde la adquisición de la señal EEG hasta la generación de eventos MIDI y la monitorización auxiliar.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{IMAGENES/fig_arquitectura_general_sistema.png}
+    \resizebox{0.98\textwidth}{!}{%
+    \begin{tikzpicture}[
+        block/.style={draw, rounded corners, align=center, minimum width=2.9cm, minimum height=1.05cm, font=\small},
+        aux/.style={draw, rounded corners, dashed, align=center, minimum width=2.9cm, minimum height=1.05cm, font=\small},
+        arrow/.style={-{Latex[length=3mm]}, thick},
+        node distance=1.05cm and 0.8cm
+    ]
+        \node[block] (electrodos) {Electrodos\\EEG};
+        \node[block, right=of electrodos] (ads) {ADS1299--4PAG\\adquisición};
+        \node[block, right=of ads] (fw) {Firmware\\Arduino UNO Q};
+        \node[block, right=of fw] (bridge) {Comunicación\\MCU--Linux};
+
+        \node[block, below=1.25cm of bridge] (backend) {Backend\\Python};
+        \node[block, left=of backend] (dsp) {Procesamiento\\DSP};
+        \node[block, left=of dsp] (features) {Características\\EEG};
+        \node[block, left=of features] (sonif) {Motor de\\sonificación};
+        \node[block, below=1.25cm of sonif] (midi) {Salida MIDI\\física};
+
+        \node[aux, below=1.25cm of dsp] (web) {Interfaz web\\monitorización};
+        \node[aux, below=1.25cm of features] (led) {Matriz LED\\opcional};
+
+        \draw[arrow] (electrodos) -- (ads);
+        \draw[arrow] (ads) -- node[above, font=\scriptsize]{SPI / DRDY} (fw);
+        \draw[arrow] (fw) -- (bridge);
+        \draw[arrow] (bridge) -- (backend);
+        \draw[arrow] (backend) -- (dsp);
+        \draw[arrow] (dsp) -- (features);
+        \draw[arrow] (features) -- (sonif);
+        \draw[arrow] (sonif) -- (midi);
+        \draw[arrow] (backend) -- (web);
+        \draw[arrow] (sonif) -- (led);
+    \end{tikzpicture}}
     \caption{Arquitectura general del sistema EEG--MIDI desarrollado, desde la adquisición de la señal EEG hasta la generación de eventos MIDI y la monitorización auxiliar.}
     \label{fig:arquitectura_general_sistema}
 \end{figure}
-}{}
 
 La salida principal del sistema es la transmisión MIDI física, ya que permite conectar el prototipo con sintetizadores, módulos de sonido o dispositivos musicales externos compatibles. La interfaz web se plantea como una herramienta auxiliar de monitorización, destinada a supervisar el estado del sistema durante las pruebas. De forma complementaria, la matriz LED puede emplearse como representación visual opcional de la actividad musical generada.
 
