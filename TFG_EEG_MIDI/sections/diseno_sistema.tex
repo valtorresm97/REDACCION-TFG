@@ -163,7 +163,7 @@ La Figura~\ref{fig:arquitectura_general_sistema} resume la arquitectura general 
         \node[aux, below=1.25cm of features] (led) {Matriz LED\\opcional};
 
         \draw[arrow] (electrodos) -- (ads);
-        \draw[arrow] (ads) -- node[above, font=\scriptsize]{SPI / DRDY} (fw);
+        \draw[arrow] (ads) -- node[above, font=\scriptsize]{SPI} (fw);
         \draw[arrow] (fw) -- (bridge);
         \draw[arrow] (bridge) -- (backend);
         \draw[arrow] (backend) -- (dsp);
