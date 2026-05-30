@@ -129,8 +129,28 @@ A continuación se resumen las decisiones principales tomadas para implementar l
 
 \subsection{Arquitectura general del sistema}
 
-% Pendiente de redacción propia.
-% Describir el flujo global: electrodos -> ADS1299 -> Arduino UNO Q -> backend Python -> sonificación -> salida MIDI / interfaz web.
+La arquitectura general del sistema se ha diseñado como una cadena modular de adquisición, procesamiento y sonificación en tiempo real. El objetivo de esta arquitectura es transformar una señal EEG real, captada mediante electrodos de superficie, en eventos musicales MIDI enviados a través de una salida física. Para ello, el sistema se organiza en varios bloques funcionales: adquisición EEG, comunicación entre microcontrolador y entorno Linux, procesamiento digital, extracción de características, sonificación, salida MIDI y monitorización auxiliar.
+
+El flujo principal de información comienza en los electrodos, que captan los biopotenciales generados por la actividad cerebral. Estas señales se introducen en el front-end de adquisición, basado en el ADS1299--4PAG, donde son acondicionadas y digitalizadas. A continuación, el firmware ejecutado en la Arduino UNO Q configura el convertidor, sincroniza la lectura de muestras y organiza el envío de los datos hacia el entorno de procesamiento.
+
+En la parte Linux de la Arduino UNO Q, el backend recibe las muestras EEG y las organiza en buffers temporales. A partir de estas ventanas de señal se calculan características temporales y espectrales, como amplitud, RMS, potencia por bandas, potencia relativa y frecuencias dominantes. Estas características constituyen la representación intermedia entre la señal EEG cruda y la generación musical.
+
+El módulo de sonificación no trabaja directamente con la forma de onda EEG, sino con las características previamente calculadas por el bloque de procesamiento. A partir de ellas se genera una estructura musical organizada en segmentos, compases y notas. Finalmente, estas notas se transforman en eventos MIDI válidos, principalmente mensajes de activación y finalización de nota, que se envían a través de la salida MIDI física del prototipo.
+
+\IfFileExists{IMAGENES/fig_arquitectura_general_sistema.png}{%
+La Figura~\ref{fig:arquitectura_general_sistema} resume la arquitectura general del sistema desarrollado, desde la adquisición de la señal EEG hasta la generación de eventos MIDI y la monitorización auxiliar.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{IMAGENES/fig_arquitectura_general_sistema.png}
+    \caption{Arquitectura general del sistema EEG--MIDI desarrollado, desde la adquisición de la señal EEG hasta la generación de eventos MIDI y la monitorización auxiliar.}
+    \label{fig:arquitectura_general_sistema}
+\end{figure}
+}{}
+
+La salida principal del sistema es la transmisión MIDI física, ya que permite conectar el prototipo con sintetizadores, módulos de sonido o dispositivos musicales externos compatibles. La interfaz web se plantea como una herramienta auxiliar de monitorización, destinada a supervisar el estado del sistema durante las pruebas. De forma complementaria, la matriz LED puede emplearse como representación visual opcional de la actividad musical generada.
+
+Esta organización modular permite separar las responsabilidades de cada bloque y facilita la evolución del sistema. La adquisición puede modificarse sin alterar directamente la sonificación, el procesamiento puede incorporar nuevos métodos de análisis y el motor musical puede ajustar sus reglas de mapeo sin modificar el hardware de adquisición. Los siguientes apartados describen con mayor detalle cada uno de los bloques principales de la arquitectura.
 
 \subsection{Bloque de adquisición EEG}
 
