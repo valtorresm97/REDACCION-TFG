@@ -187,7 +187,7 @@ La Figura~\ref{fig:arquitectura_general_sistema} resume esta organización. En e
         \draw[arrow] (dsp) -- (quality);
         \draw[arrow] (quality) -- (sonif);
         \draw[arrow] (sonif) -- (midi);
-        \draw[arrow] (midi) -- node[right, font=\scriptsize]{\texttt{midi\_bytes}} (midiout);
+        \draw[arrow] (midi) -- node[right, font=\scriptsize]{\texttt{UART}} (midiout);
 
         \draw[auxarrow] (backend) -- (web);
         \draw[auxarrow] (sonif) -- (led);
