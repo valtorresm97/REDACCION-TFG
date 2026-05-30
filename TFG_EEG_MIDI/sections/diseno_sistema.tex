@@ -129,57 +129,75 @@ A continuación se resumen las decisiones principales tomadas para implementar l
 
 \subsection{Arquitectura general del sistema}
 
-La arquitectura general del sistema se ha diseñado como una cadena modular de adquisición, procesamiento y sonificación. El objetivo de esta arquitectura es transformar una señal EEG real, captada mediante electrodos de superficie, en eventos musicales MIDI enviados a través de una salida física. Para ello, el sistema se organiza en varios bloques funcionales: adquisición EEG, comunicación entre microcontrolador y entorno Linux, procesamiento digital, extracción de características, sonificación, salida MIDI y monitorización auxiliar.
+La arquitectura general del sistema se plantea como una cadena modular orientada a transformar una señal EEG real en eventos musicales MIDI enviados por una salida física. El diseño separa de forma explícita las responsabilidades de adquisición, comunicación, procesamiento digital, evaluación de calidad, sonificación, planificación MIDI y monitorización auxiliar. Esta separación permite que cada bloque pueda validarse de forma independiente y evita que la lógica musical dependa directamente de detalles de bajo nivel del convertidor analógico-digital o del firmware.
 
-El flujo principal de información comienza en los electrodos, que captan los biopotenciales generados por la actividad cerebral. Estas señales se introducen en el front-end de adquisición, basado en el ADS1299--4PAG, donde son acondicionadas y digitalizadas. A continuación, el firmware ejecutado en la Arduino UNO Q configura el convertidor, sincroniza la lectura de muestras y organiza el envío de los datos hacia el entorno de procesamiento.
+El flujo principal comienza en los electrodos de superficie, que recogen la actividad bioeléctrica del usuario. Estas señales se introducen en el front-end ADS1299--4PAG, encargado de digitalizar la señal EEG. La lectura del convertidor se realiza desde el microcontrolador de la Arduino UNO Q mediante una comunicación SPI sincronizada con la señal DRDY y el modo de adquisición continua RDATAC. En esta primera etapa, el firmware configura el ADS1299, valida el estado de los frames recibidos, reconstruye las muestras de 24 bits, aplica el escalado correspondiente y entrega la señal en microvoltios.
 
-En la parte Linux de la Arduino UNO Q, el backend recibe las muestras EEG y las organiza en buffers temporales. A partir de estas ventanas de señal se calculan características temporales y espectrales, como amplitud, RMS, potencia por bandas, potencia relativa y frecuencias dominantes. Estas características constituyen la representación intermedia entre la señal EEG cruda y la generación musical.
+Una característica importante de la arquitectura es que la comunicación entre el microcontrolador y el entorno Linux no se realiza muestra a muestra de forma aislada, sino mediante bloques de muestras. El contrato principal de transmisión es el evento \texttt{eeg\_block\_uV}, que agrupa bloques de 8 muestras y conserva una estructura de cuatro canales. Aunque la configuración final de validación utiliza CH1 como canal EEG principal para la sonificación, se mantiene \texttt{NUM\_CH=4} en el contrato de datos para preservar la compatibilidad con el backend, las capturas CSV, las herramientas de análisis y la interfaz de monitorización. De esta forma, la decisión experimental de trabajar con un canal principal no rompe la estructura multicanal del sistema.
 
-El módulo de sonificación no trabaja directamente con la forma de onda EEG, sino con las características previamente calculadas por el bloque de procesamiento. A partir de ellas se genera una estructura musical organizada en segmentos, compases y notas. Finalmente, estas notas se transforman en eventos MIDI válidos, principalmente mensajes de activación y finalización de nota, que se envían a través de la salida MIDI física del prototipo.
+En la parte Linux de la Arduino UNO Q, el backend Python recibe los bloques enviados por el firmware, valida su continuidad y los introduce en un buffer temporal multicanal. A partir de este buffer se extraen ventanas de señal para el procesamiento digital. El cálculo de características se realiza sobre ventanas temporales, no sobre muestras individuales, lo que permite obtener medidas espectrales más estables. En la implementación validada, el sistema trabaja a \SI{250}{\hertz} y calcula nuevas características cada 64 muestras, con una ventana de análisis de \SI{4}{\second}. Estos valores forman parte de la configuración de diseño empleada en las pruebas, no de una limitación conceptual de la arquitectura.
 
-La Figura~\ref{fig:arquitectura_general_sistema} resume la arquitectura general del sistema desarrollado, desde la adquisición de la señal EEG hasta la generación de eventos MIDI y la monitorización auxiliar.
+El procesamiento digital se basa en la extracción de características temporales y espectrales de la señal EEG. Entre ellas se incluyen la amplitud RMS, la potencia absoluta y relativa por bandas EEG, y las frecuencias pico en distintas bandas. La estimación espectral se realiza mediante el bloque \texttt{DSPCore}, que actúa como fuente centralizada para el cálculo de PSD y potencias por banda. Estas características no se utilizan todavía como música, sino como una representación intermedia de la señal sobre la que se puede razonar de forma más estable que sobre la forma de onda cruda.
+
+Antes de alimentar el motor de sonificación, el sistema evalúa la calidad de la ventana analizada mediante un bloque de calidad espectral. Este bloque genera un estado de calidad y un factor de puerta o atenuación. Su función es impedir que ventanas dominadas por artefactos, pérdidas de datos, saturación, ruido excesivo o actividad no fiable modulen la música con la misma intensidad que una ventana válida. Por tanto, el \textit{quality gate} no es únicamente una herramienta de validación posterior, sino un elemento de diseño integrado en la arquitectura de ejecución.
+
+El módulo de sonificación recibe las características EEG ya procesadas y condicionadas por el bloque de calidad. La señal EEG no se convierte directamente en notas musicales ni decide por sí sola la tonalidad del sistema. En la arquitectura final, parámetros musicales como la nota raíz, la nota principal y la escala son controles de configuración musical disponibles para el usuario o para la WebUI. El EEG modula principalmente la actividad, la densidad rítmica, el registro, la estabilidad, la dinámica y la probabilidad de generación de notas. Esta decisión evita una traducción excesivamente literal de EEG a sonido y permite mantener una salida musical más controlada y coherente.
+
+La generación musical se organiza jerárquicamente. Primero se construye un estado musical de alto nivel a partir de los controles derivados del EEG. Después se generan compases, posiciones rítmicas, acordes y finalmente notas individuales. Estas notas se representan como eventos con instante de inicio, duración, altura, velocidad y canal MIDI. Posteriormente, el planificador MIDI transforma dichas notas en eventos temporizados de activación y desactivación, evitando que queden notas colgadas y permitiendo emitir mensajes de seguridad como \textit{panic} cuando sea necesario.
+
+La salida principal del sistema es el MIDI físico. Los eventos MIDI generados en Python se convierten en bytes MIDI y se envían al firmware mediante el contrato \texttt{midi\_bytes}. En el microcontrolador, el handler correspondiente escribe los bytes por la UART asociada a la salida MIDI física del prototipo. Esta ruta permite conectar el sistema a sintetizadores, módulos de sonido o interfaces externas compatibles con MIDI. Por ello, la WebUI no se considera la salida principal del sistema, sino una herramienta auxiliar de supervisión y control.
+
+La interfaz web cumple una función de observación y control ligero. Permite visualizar el estado de adquisición, métricas de recepción, características EEG, diagnóstico de calidad, estado de sonificación, eventos musicales recientes y estado MIDI. También permite modificar parámetros musicales acotados, como la nota raíz, la nota principal y la escala. Sin embargo, no sustituye a la salida MIDI física ni forma parte del flujo esencial de generación de sonido. Su papel es facilitar la supervisión experimental y el ajuste del sistema durante las pruebas.
+
+De forma complementaria, la matriz LED puede actuar como visualización lateral de las notas recientes, reutilizando la misma información que el piano roll de la WebUI. Esta matriz no constituye un flujo musical independiente ni modifica la sonificación; únicamente representa visualmente parte de la actividad musical generada. Por este motivo se considera un elemento opcional y no un requisito del flujo de ejecución principal.
+
+La Figura~\ref{fig:arquitectura_general_sistema} resume esta organización. En ella se diferencia la ruta esencial EEG--MIDI de las herramientas auxiliares de monitorización, visualización y validación.
 
 \begin{figure}[H]
     \centering
     \resizebox{0.98\textwidth}{!}{%
     \begin{tikzpicture}[
-        block/.style={draw, rounded corners, align=center, minimum width=2.9cm, minimum height=1.05cm, font=\small},
-        aux/.style={draw, rounded corners, dashed, align=center, minimum width=2.9cm, minimum height=1.05cm, font=\small},
+        block/.style={draw, rounded corners, align=center, minimum width=2.75cm, minimum height=1.0cm, font=\small},
+        aux/.style={draw, rounded corners, dashed, align=center, minimum width=2.75cm, minimum height=1.0cm, font=\small},
         arrow/.style={-{Latex[length=3mm]}, thick},
-        node distance=1.05cm and 0.8cm
+        auxarrow/.style={-{Latex[length=2.5mm]}, dashed},
+        node distance=0.95cm and 0.65cm
     ]
         \node[block] (electrodos) {Electrodos\\EEG};
         \node[block, right=of electrodos] (ads) {ADS1299--4PAG\\adquisición};
-        \node[block, right=of ads] (fw) {Firmware\\Arduino UNO Q};
-        \node[block, right=of fw] (bridge) {Comunicación\\MCU--Linux};
+        \node[block, right=of ads] (fw) {Firmware MCU\\STM32U585};
+        \node[block, right=of fw] (bridge) {\texttt{eeg\_block\_uV}\\bloques EEG};
 
-        \node[block, below=1.25cm of bridge] (backend) {Backend\\Python};
-        \node[block, left=of backend] (dsp) {Procesamiento\\DSP};
-        \node[block, left=of dsp] (features) {Características\\EEG};
-        \node[block, left=of features] (sonif) {Motor de\\sonificación};
-        \node[block, below=1.25cm of sonif] (midi) {Salida MIDI\\física};
+        \node[block, below=1.15cm of bridge] (backend) {Backend\\Python/Linux};
+        \node[block, left=of backend] (dsp) {DSPCore\\features EEG};
+        \node[block, left=of dsp] (quality) {Quality gate\\calidad};
+        \node[block, left=of quality] (sonif) {Motor de\\sonificación};
+        \node[block, below=1.15cm of sonif] (midi) {Scheduler y\\transporte MIDI};
+        \node[block, below=1.15cm of midi] (midiout) {MIDI OUT\\físico};
 
-        \node[aux, below=1.25cm of dsp] (web) {Interfaz web\\monitorización};
-        \node[aux, below=1.25cm of features] (led) {Matriz LED\\opcional};
+        \node[aux, below=1.15cm of dsp] (web) {WebUI\\monitorización};
+        \node[aux, below=1.15cm of quality] (led) {Piano roll / LED\\opcional};
+        \node[aux, right=of backend] (tools) {Capturas y\\benchmarks};
 
         \draw[arrow] (electrodos) -- (ads);
-        \draw[arrow] (ads) -- node[above, font=\scriptsize]{SPI} (fw);
+        \draw[arrow] (ads) -- node[above, font=\scriptsize]{SPI/DRDY/RDATAC} (fw);
         \draw[arrow] (fw) -- (bridge);
         \draw[arrow] (bridge) -- (backend);
         \draw[arrow] (backend) -- (dsp);
-        \draw[arrow] (dsp) -- (features);
-        \draw[arrow] (features) -- (sonif);
+        \draw[arrow] (dsp) -- (quality);
+        \draw[arrow] (quality) -- (sonif);
         \draw[arrow] (sonif) -- (midi);
-        \draw[arrow] (backend) -- (web);
-        \draw[arrow] (sonif) -- (led);
+        \draw[arrow] (midi) -- node[right, font=\scriptsize]{\texttt{midi\_bytes}} (midiout);
+
+        \draw[auxarrow] (backend) -- (web);
+        \draw[auxarrow] (sonif) -- (led);
+        \draw[auxarrow] (backend) -- (tools);
     \end{tikzpicture}}
-    \caption{Arquitectura general del sistema EEG--MIDI desarrollado, desde la adquisición de la señal EEG hasta la generación de eventos MIDI y la monitorización auxiliar.}
+    \caption{Arquitectura general del sistema EEG--MIDI. La ruta principal transforma EEG real en salida MIDI física; la WebUI, la matriz LED, las capturas y los benchmarks actúan como elementos auxiliares de monitorización, visualización y validación.}
     \label{fig:arquitectura_general_sistema}
 \end{figure}
 
-La salida principal del sistema es la transmisión MIDI física, ya que permite conectar el prototipo con sintetizadores, módulos de sonido o dispositivos musicales externos compatibles. La interfaz web se plantea como una herramienta auxiliar de monitorización, destinada a supervisar el estado del sistema durante las pruebas. De forma complementaria, la matriz LED puede emplearse como representación visual opcional de la actividad musical generada.
-
-Esta organización modular permite separar las responsabilidades de cada bloque y facilita la evolución del sistema. La adquisición puede modificarse sin alterar directamente la sonificación, el procesamiento puede incorporar nuevos métodos de análisis y el motor musical puede ajustar sus reglas de mapeo sin modificar el hardware de adquisición. Los siguientes apartados describen con mayor detalle cada uno de los bloques principales de la arquitectura.
+En conjunto, la arquitectura permite distinguir tres niveles. El primer nivel corresponde al tiempo real embebido, donde el microcontrolador adquiere, filtra y empaqueta muestras EEG. El segundo nivel corresponde al procesamiento y generación musical en Python, donde se calculan características, se evalúa la calidad y se generan eventos MIDI. El tercer nivel corresponde a herramientas auxiliares de observación, captura, benchmark y análisis \textit{offline}, que aportan trazabilidad y validación, pero no forman parte de la cadena esencial EEG--MIDI. Esta separación resulta clave para documentar el sistema de forma rigurosa y para justificar posteriormente los apartados de implementación y validación.
 
 \subsection{Bloque de adquisición EEG}
 
