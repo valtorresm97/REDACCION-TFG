@@ -129,7 +129,7 @@ A continuación se resumen las decisiones principales tomadas para implementar l
 
 \subsection{Arquitectura general del sistema}
 
-La arquitectura general del sistema se ha diseñado como una cadena modular de adquisición, procesamiento y sonificación en tiempo real. El objetivo de esta arquitectura es transformar una señal EEG real, captada mediante electrodos de superficie, en eventos musicales MIDI enviados a través de una salida física. Para ello, el sistema se organiza en varios bloques funcionales: adquisición EEG, comunicación entre microcontrolador y entorno Linux, procesamiento digital, extracción de características, sonificación, salida MIDI y monitorización auxiliar.
+La arquitectura general del sistema se ha diseñado como una cadena modular de adquisición, procesamiento y sonificación. El objetivo de esta arquitectura es transformar una señal EEG real, captada mediante electrodos de superficie, en eventos musicales MIDI enviados a través de una salida física. Para ello, el sistema se organiza en varios bloques funcionales: adquisición EEG, comunicación entre microcontrolador y entorno Linux, procesamiento digital, extracción de características, sonificación, salida MIDI y monitorización auxiliar.
 
 El flujo principal de información comienza en los electrodos, que captan los biopotenciales generados por la actividad cerebral. Estas señales se introducen en el front-end de adquisición, basado en el ADS1299--4PAG, donde son acondicionadas y digitalizadas. A continuación, el firmware ejecutado en la Arduino UNO Q configura el convertidor, sincroniza la lectura de muestras y organiza el envío de los datos hacia el entorno de procesamiento.
 
