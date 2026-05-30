@@ -180,7 +180,7 @@ La Figura~\ref{fig:arquitectura_general_sistema} resume esta organización. En e
         \node[aux, right=of backend] (tools) {Capturas y\\benchmarks};
 
         \draw[arrow] (electrodos) -- (ads);
-        \draw[arrow] (ads) -- node[above, font=\scriptsize]{SPI/DRDY/RDATAC} (fw);
+        \draw[arrow] (ads) -- node[above, font=\scriptsize]{SPI} (fw);
         \draw[arrow] (fw) -- (bridge);
         \draw[arrow] (bridge) -- (backend);
         \draw[arrow] (backend) -- (dsp);
