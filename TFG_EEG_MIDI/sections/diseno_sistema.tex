@@ -381,8 +381,69 @@ En resumen, el procesamiento digital se define como la cadena formada por recepc
 
 \subsection{Bloque de sonificación EEG--MIDI}
 
-% Pendiente de redacción propia.
-% Describir segmentación EEG, construcción de segmentos musicales, generación de compases, notas y eventos MIDI.
+El bloque de sonificación EEG--MIDI transforma las características calculadas a partir de la señal EEG en eventos musicales enviados posteriormente por la salida MIDI física del sistema. Su entrada no es la señal EEG cruda, sino una representación ya procesada formada por potencias por bandas, RMS, frecuencias pico y estado de calidad. Esta decisión separa claramente el análisis fisiológico de la generación musical y evita que la música dependa directamente de muestras individuales o de fluctuaciones instantáneas de la señal.
+
+La sonificación se diseña como una etapa jerárquica. En primer lugar, las características EEG y el resultado del bloque de calidad se convierten en controles musicales normalizados. Estos controles describen aspectos musicales como nivel de actividad, calma, tensión, densidad rítmica, registro, estabilidad armónica, intensidad y probabilidad de generación de notas. Aunque estos nombres se utilizan internamente en el sistema, deben interpretarse como variables musicales derivadas de la señal EEG, no como medidas clínicas ni diagnósticas.
+
+El uso del \textit{quality gate} es fundamental en esta etapa. La sonificación no debe responder con la misma intensidad a una ventana EEG válida que a una ventana dominada por ruido, artefactos musculares, saturación, mala conexión de electrodos o discontinuidades de transporte. Por ello, el estado de calidad puede atenuar o bloquear la influencia de las características EEG sobre los controles musicales. Esta barrera evita que artefactos no fisiológicos produzcan cambios musicales bruscos o engañosos.
+
+Una vez obtenidos los controles musicales, el sistema no genera notas de forma aislada. La generación se organiza en niveles. Primero se construye un estado musical de alto nivel, que resume la intención musical de la ventana EEG actual. Después se genera una estructura de compás, se seleccionan acordes o contextos armónicos y se distribuyen posiciones rítmicas. Finalmente se crean eventos de nota individuales, cada uno con altura, inicio, duración, velocidad y canal MIDI.
+
+Esta organización permite que la salida musical tenga mayor coherencia temporal que un mapeo directo banda--nota. En lugar de disparar notas de forma inmediata por cada variación espectral, el sistema acumula la información EEG en controles que modifican gradualmente la densidad, el registro, la dinámica y la estabilidad musical. Así se reduce la probabilidad de obtener una secuencia caótica o excesivamente sensible al ruido de la señal.
+
+La arquitectura también separa los parámetros musicales de configuración de los parámetros derivados del EEG. La nota raíz, la nota principal y la escala pueden modificarse desde la interfaz auxiliar, pero estos cambios no alteran la adquisición, el DSP ni el transporte MIDI. Su función es definir el marco musical sobre el que actúan las características EEG. De esta forma, el usuario puede ajustar el carácter armónico del sistema sin romper el flujo principal EEG--MIDI.
+
+Una vez generadas las notas, el planificador MIDI transforma cada nota en eventos temporizados. Una nota musical no se representa únicamente como una activación, sino como una pareja de eventos \textit{Note On} y \textit{Note Off}. El planificador mantiene el control de las notas activas, ordena los eventos pendientes y permite liberar notas de forma segura. Esta etapa es necesaria para evitar notas colgadas y para mantener una salida MIDI estable durante la ejecución continua.
+
+El transporte MIDI convierte los eventos planificados en bytes MIDI y los envía al firmware mediante el contrato \texttt{midi\_bytes}. En el microcontrolador, estos bytes se escriben por la UART asociada a la salida MIDI física del prototipo. Por tanto, la salida principal del bloque no es una gráfica ni una simulación en pantalla, sino una secuencia real de mensajes MIDI enviada hacia el conector físico MIDI OUT.
+
+La WebUI y el piano roll cumplen una función auxiliar. Permiten observar las notas recientes, el estado de la sonificación, los parámetros musicales activos y el estado del transporte MIDI. Sin embargo, no sustituyen al flujo principal. La función central del sistema sigue siendo transformar actividad EEG real en eventos musicales enviados por MIDI físico.
+
+La matriz LED, cuando está habilitada, también se considera una visualización lateral. Reutiliza información de notas recientes para representar actividad musical, pero no interviene en la generación de notas ni en la planificación MIDI. Por tanto, ni la WebUI ni la matriz LED forman parte de la ruta mínima necesaria para que el sistema produzca sonido mediante MIDI.
+
+La Figura~\ref{fig:bloque_sonificacion_midi} resume la organización interna del bloque de sonificación y su conexión con la salida MIDI física. La figura muestra el flujo principal de generación musical y sitúa la WebUI como ruta auxiliar de configuración y monitorización.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        sonblock/.style={draw, rounded corners, align=center, text width=4.3cm, minimum height=0.95cm, font=\footnotesize},
+        musicblock/.style={draw, rounded corners, align=center, text width=4.3cm, minimum height=0.95cm, font=\footnotesize, fill=gray!8},
+        auxblock/.style={draw, rounded corners, dashed, align=center, text width=3.7cm, minimum height=0.9cm, font=\footnotesize, fill=gray!5},
+        arrow/.style={-{Latex[length=3mm]}, thick},
+        auxarrow/.style={-{Latex[length=2.5mm]}, dashed, thick},
+        note/.style={align=center, font=\scriptsize}
+    ]
+        \node[sonblock]   (features)  at (0,0)      {features EEG\\+ \textit{quality gate}};
+        \node[sonblock]   (adapter)   at (0,-1.55)  {\texttt{SonificationFeatureAdapter}\\controles musicales};
+        \node[musicblock] (segment)   at (0,-3.1)   {\texttt{MusicSegmentBuilder}\\estado musical};
+        \node[musicblock] (bar)       at (0,-4.65)  {\texttt{BarGenerator}\\compás y contexto armónico};
+        \node[musicblock] (notes)     at (0,-6.2)   {\texttt{NoteGenerator}\\eventos de nota};
+        \node[musicblock] (scheduler) at (0,-7.75)  {\texttt{MidiScheduler}\\\textit{Note On/Off}};
+        \node[sonblock]   (transport) at (0,-9.3)   {\texttt{MidiByteTransport}\\\texttt{Bridge.call("midi\_bytes")}};
+        \node[sonblock]   (midiout)   at (0,-10.85) {MIDI OUT\\físico};
+
+        \node[auxblock] (web) at (5.4,-3.1) {WebUI auxiliar\\root, main note y escala};
+        \node[auxblock] (led) at (5.4,-6.2) {Piano roll / LED\\visualización lateral};
+
+        \draw[arrow] (features) -- (adapter);
+        \draw[arrow] (adapter) -- (segment);
+        \draw[arrow] (segment) -- (bar);
+        \draw[arrow] (bar) -- (notes);
+        \draw[arrow] (notes) -- (scheduler);
+        \draw[arrow] (scheduler) -- (transport);
+        \draw[arrow] (transport) -- (midiout);
+
+        \draw[auxarrow] (web) -- (segment);
+        \draw[auxarrow] (notes) -- (led);
+
+        \node[note] at (-4.4,-1.55) {Los controles no son\\variables clínicas};
+        \node[note] at (-4.4,-7.75) {Evita notas colgadas\\mediante \textit{Note Off}/panic};
+    \end{tikzpicture}
+    \caption{Bloque de sonificación EEG--MIDI. Las características EEG y el \textit{quality gate} se transforman en controles musicales, que alimentan una generación jerárquica de segmentos, compases y notas. El planificador MIDI convierte las notas en eventos temporizados y el transporte envía bytes al firmware para producir la salida MIDI física.}
+    \label{fig:bloque_sonificacion_midi}
+\end{figure}
+
+En resumen, el bloque de sonificación EEG--MIDI se define como la cadena formada por características EEG, evaluación de calidad, adaptación a controles musicales, construcción de segmento, generación de compás, generación de notas, planificación temporal MIDI y transporte hacia el firmware. Esta separación permite mantener la sonificación controlada, evitar una traducción excesivamente literal de la señal EEG y asegurar que la salida final del sistema sea MIDI físico operativo.
 
 \subsection{Bloque de visualización e interacción}
 
