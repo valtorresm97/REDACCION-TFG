@@ -264,8 +264,70 @@ En resumen, el bloque de adquisición EEG se define por la siguiente cadena: ele
 
 \subsection{Bloque de comunicación microcontrolador--Linux}
 
-% Pendiente de redacción propia.
-% Describir el envío de bloques desde el firmware hacia el entorno Python en la Arduino UNO Q.
+El bloque de comunicación microcontrolador--Linux conecta la adquisición embebida con el procesamiento en Python. Su función es transportar de forma continua las muestras EEG ya digitalizadas, filtradas y escaladas en microvoltios desde el firmware del STM32U585 hasta el backend que se ejecuta en el entorno Linux de la Arduino UNO Q. Este bloque no modifica el contenido fisiológico de la señal ni calcula características espectrales; su responsabilidad principal es preservar la continuidad temporal, la estructura multicanal y la integridad del contrato de datos.
+
+La comunicación no se realiza muestra a muestra, sino mediante bloques de muestras. Esta decisión reduce el número de llamadas entre el microcontrolador y el entorno Linux, disminuye la sobrecarga asociada al puente de comunicación y mantiene un flujo regular hacia Python. En la configuración final, cada bloque agrupa hasta 8 muestras consecutivas. Dado que la adquisición se realiza a \SI{250}{\hertz}, esta agrupación genera una frecuencia esperada de aproximadamente 31,25 bloques por segundo, suficientemente fina para mantener la continuidad temporal del sistema y, al mismo tiempo, más eficiente que una notificación por muestra individual.
+
+El contrato principal entre firmware y Python se denomina \texttt{eeg\_block\_uV}. Este evento transporta un índice de bloque, el índice de la primera muestra, el número de muestras válidas y una secuencia de valores asociados a cada muestra. Cada muestra conserva el \textit{status} del ADS1299 y los valores de los cuatro canales en microvoltios. Aunque la sonificación final utiliza CH1 como canal EEG principal, el \textit{payload} mantiene una estructura de cuatro canales para preservar la compatibilidad con el backend, las capturas CSV, las herramientas de análisis y la interfaz de monitorización.
+
+La inclusión de \texttt{block\_idx} y \texttt{first\_sample\_idx} permite reconstruir la continuidad de la señal en el lado Python. El índice de bloque permite detectar pérdidas o saltos entre bloques sucesivos. El índice de primera muestra permite verificar la progresión temporal dentro de la secuencia de adquisición. De este modo, el sistema puede distinguir entre una señal correctamente recibida y una señal con discontinuidades, pérdidas o errores de transporte.
+
+El \textit{status} del ADS1299 también se mantiene dentro del contrato. Esta decisión permite que Python no reciba únicamente valores de señal, sino también información mínima de sincronización del convertidor. El receptor puede comprobar que el prefijo de \textit{status} coincide con el formato esperado antes de aceptar el bloque como válido. Esta comprobación actúa como una barrera temprana frente a frames desalineados, \textit{payloads} corruptos o errores de comunicación.
+
+En el firmware, las muestras se acumulan en una cola de transmisión antes de publicarse hacia Linux. Esta cola desacopla parcialmente el ritmo de adquisición, marcado por DRDY, del ritmo de publicación mediante Bridge. El firmware debe seguir atendiendo la adquisición a \SI{250}{\hertz}, por lo que la comunicación no debe bloquear ni introducir trabajo pesado dentro de la ruta crítica de captura. Por este motivo, el bloque de comunicación se diseña como una etapa de empaquetado y publicación, no como una etapa de análisis.
+
+En el lado Python, el evento \texttt{eeg\_block\_uV} es recibido por un componente específico de recepción. Este receptor valida el bloque antes de entregarlo al procesamiento digital. Las comprobaciones principales incluyen el número de muestras, la longitud del \textit{payload}, la continuidad de los índices y el prefijo de \textit{status} ADS1299. Si el bloque cumple el contrato, se encola para ser drenado posteriormente por el backend. Esta separación evita que el \textit{callback} de recepción realice cálculos costosos y permite mantenerlo como una función ligera.
+
+El backend Python drena periódicamente la cola de bloques recibidos y entrega las muestras al procesador EEG. En esta transición, los valores en microvoltios pasan al buffer temporal multicanal utilizado por el bloque DSP. Si existe una captura activa, los mismos bloques también pueden enviarse al gestor de capturas, pero esta ruta es lateral y no forma parte del flujo mínimo necesario para producir MIDI en vivo.
+
+La Figura~\ref{fig:comunicacion_mcu_linux} resume la secuencia principal de comunicación entre el firmware y el backend Python. La figura muestra la ruta funcional de los bloques EEG y separa explícitamente la recepción en tiempo real de la ruta lateral de captura.
+
+\begin{figure}[H]
+    \centering
+    \resizebox{0.98\textwidth}{!}{%
+    \begin{tikzpicture}[
+        actor/.style={draw, rounded corners, align=center, minimum width=3.0cm, minimum height=0.9cm, font=\small, fill=gray!8},
+        step/.style={draw, rounded corners, align=center, minimum width=3.2cm, minimum height=0.85cm, font=\small},
+        payload/.style={draw, rounded corners, align=center, minimum width=4.4cm, minimum height=1.0cm, font=\scriptsize, fill=gray!10},
+        arrow/.style={-{Latex[length=3mm]}, thick},
+        auxarrow/.style={-{Latex[length=2.5mm]}, dashed},
+        node distance=0.95cm and 0.75cm
+    ]
+        \node[actor] (mcu) {Firmware MCU\\STM32U585};
+        \node[actor, right=of mcu] (bridge) {Arduino Bridge};
+        \node[actor, right=of bridge] (rx) {EEGReceiver\\Python};
+        \node[actor, right=of rx] (backend) {BackendService\\Python};
+
+        \node[step, below=1.0cm of mcu] (pack) {TxBlockRing\\agrupa 8 muestras};
+        \node[payload, below=1.0cm of bridge] (notify) {\texttt{Bridge.notify("eeg\_block\_uV")}\\
+        \texttt{block\_idx}, \texttt{first\_sample\_idx}, \texttt{sample\_count}\\
+        \texttt{status + ch1..ch4} en \si{\micro\volt}};
+        \node[step, below=1.0cm of rx] (validate) {validación de contrato\\longitud, índices, status};
+        \node[step, below=1.0cm of backend] (drain) {drenado periódico\\hacia procesador EEG};
+
+        \node[step, below=1.05cm of validate] (queue) {cola RX\\bloques válidos};
+        \node[step, below=1.05cm of drain] (proc) {EEGSignalProcessor\\buffer multicanal};
+        \node[step, below=1.05cm of queue, fill=gray!5] (capture) {CaptureManager\\ruta lateral};
+
+        \draw[arrow] (mcu) -- (pack);
+        \draw[arrow] (pack) -- (notify);
+        \draw[arrow] (notify) -- (validate);
+        \draw[arrow] (validate) -- (queue);
+        \draw[arrow] (queue) -- (drain);
+        \draw[arrow] (drain) -- (proc);
+
+        \draw[auxarrow] (queue) -- (capture);
+
+        \node[font=\scriptsize, align=center, below=0.25cm of pack] {Adquisición a \SI{250}{\hertz}\\bloques esperados: 31,25 bloques/s};
+        \node[font=\scriptsize, align=center, below=0.25cm of proc] {Salida del bloque:\\muestras listas para DSP};
+    \end{tikzpicture}}
+    \caption{Secuencia simplificada de comunicación microcontrolador--Linux. El firmware empaqueta muestras EEG en bloques, el Bridge transporta el evento \texttt{eeg\_block\_uV}, Python valida el contrato y el backend drena los bloques hacia el procesador EEG. La captura se representa como ruta lateral de validación.}
+    \label{fig:comunicacion_mcu_linux}
+\end{figure}
+
+El límite funcional de este bloque se sitúa antes del cálculo de características. La comunicación microcontrolador--Linux no estima bandas EEG, no calcula calidad espectral y no genera eventos musicales. Su salida esperada es una secuencia de bloques EEG válidos, continuos y ordenados, listos para ser incorporados al buffer de procesamiento. A partir de ese punto comienza el bloque de procesamiento digital.
+
+En conjunto, este diseño permite separar tres responsabilidades: el firmware adquiere y empaqueta la señal, el Bridge transporta bloques de datos entre MCU y Linux, y Python valida y encola esos bloques antes de introducirlos en el procesador EEG. Esta separación facilita la detección de errores, permite medir pérdidas o discontinuidades y mantiene estable el contrato entre adquisición, procesamiento, capturas y monitorización.
 
 \subsection{Bloque de procesamiento digital}
 
