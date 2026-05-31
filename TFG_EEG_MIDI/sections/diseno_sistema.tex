@@ -251,8 +251,8 @@ La Figura~\ref{fig:bloque_adquisicion_eeg} resume el recorrido de la señal dent
         \draw[arrow] (escala) -- (filtros);
         \draw[arrow] (filtros) -- (uv);
 
-        \node[note, below=0.15cm of montaje] {CH1 es el canal EEG principal\\en la configuración final};
-        \node[note, below=0.15cm of escala] {CH2--CH4 se conservan\\por contrato de datos};
+        \node[note, below=0.35cm of montaje] {CH1 es el canal EEG principal\\en la configuración final};
+        \node[note, below=0.35cm of escala] {CH2--CH4 se conservan\\por contrato de datos};
     \end{tikzpicture}}
     \caption{Bloque de adquisición EEG basado en el ADS1299--4PAG. La etapa transforma la señal bioeléctrica en muestras digitales escaladas en microvoltios; el empaquetado en bloques \texttt{eeg\_block\_uV} pertenece al bloque de comunicación posterior.}
     \label{fig:bloque_adquisicion_eeg}
@@ -287,7 +287,7 @@ La Figura~\ref{fig:comunicacion_mcu_linux} resume la secuencia principal de comu
     \resizebox{0.98\textwidth}{!}{%
     \begin{tikzpicture}[
         actor/.style={draw, rounded corners, align=center, minimum width=3.0cm, minimum height=0.9cm, font=\small, fill=gray!8},
-        step/.style={draw, rounded corners, align=center, minimum width=3.2cm, minimum height=0.85cm, font=\small},
+        procblock/.style={draw, rounded corners, align=center, minimum width=3.2cm, minimum height=0.85cm, font=\small},
         payload/.style={draw, rounded corners, align=center, minimum width=4.4cm, minimum height=1.0cm, font=\scriptsize, fill=gray!10},
         arrow/.style={-{Latex[length=3mm]}, thick},
         auxarrow/.style={-{Latex[length=2.5mm]}, dashed},
@@ -298,28 +298,28 @@ La Figura~\ref{fig:comunicacion_mcu_linux} resume la secuencia principal de comu
         \node[actor, right=of bridge] (rx) {EEGReceiver\\Python};
         \node[actor, right=of rx] (backend) {BackendService\\Python};
 
-        \node[step, below=1.0cm of mcu] (pack) {TxBlockRing\\agrupa 8 muestras};
+        \node[procblock, below=1.0cm of mcu] (pack) {TxBlockRing\\agrupa 8 muestras};
         \node[payload, below=1.0cm of bridge] (notify) {\texttt{Bridge.notify("eeg\_block\_uV")}\\
         \texttt{block\_idx}, \texttt{first\_sample\_idx}, \texttt{sample\_count}\\
         \texttt{status + ch1..ch4} en \si{\micro\volt}};
-        \node[step, below=1.0cm of rx] (validate) {validación de contrato\\longitud, índices, status};
-        \node[step, below=1.0cm of backend] (drain) {drenado periódico\\hacia procesador EEG};
+        \node[procblock, below=1.0cm of rx] (validate) {validación de contrato\\longitud, índices, status};
+        \node[procblock, below=1.0cm of backend] (drain) {drenado periódico\\hacia procesador EEG};
 
-        \node[step, below=1.05cm of validate] (queue) {cola RX\\bloques válidos};
-        \node[step, below=1.05cm of drain] (proc) {EEGSignalProcessor\\buffer multicanal};
-        \node[step, below=1.05cm of queue, fill=gray!5] (capture) {CaptureManager\\ruta lateral};
+        \node[procblock, below=1.05cm of validate] (queue) {cola RX\\bloques válidos};
+        \node[procblock, below=1.05cm of drain] (procnode) {EEGSignalProcessor\\buffer multicanal};
+        \node[procblock, below=1.05cm of queue, fill=gray!5] (capture) {CaptureManager\\ruta lateral};
 
         \draw[arrow] (mcu) -- (pack);
         \draw[arrow] (pack) -- (notify);
         \draw[arrow] (notify) -- (validate);
         \draw[arrow] (validate) -- (queue);
         \draw[arrow] (queue) -- (drain);
-        \draw[arrow] (drain) -- (proc);
+        \draw[arrow] (drain) -- (procnode);
 
         \draw[auxarrow] (queue) -- (capture);
 
         \node[font=\scriptsize, align=center, below=0.25cm of pack] {Adquisición a \SI{250}{\hertz}\\bloques esperados: 31,25 bloques/s};
-        \node[font=\scriptsize, align=center, below=0.25cm of proc] {Salida del bloque:\\muestras listas para DSP};
+        \node[font=\scriptsize, align=center, below=0.25cm of procnode] {Salida del bloque:\\muestras listas para DSP};
     \end{tikzpicture}}
     \caption{Secuencia simplificada de comunicación microcontrolador--Linux. El firmware empaqueta muestras EEG en bloques, el Bridge transporta el evento \texttt{eeg\_block\_uV}, Python valida el contrato y el backend drena los bloques hacia el procesador EEG. La captura se representa como ruta lateral de validación.}
     \label{fig:comunicacion_mcu_linux}
