@@ -201,8 +201,66 @@ En conjunto, la arquitectura permite distinguir tres niveles. El primer nivel co
 
 \subsection{Bloque de adquisición EEG}
 
-% Pendiente de redacción propia.
-% Describir electrodos, ADS1299-4PAG, canales, referencia, BIAS/RLD, ganancia, frecuencia de muestreo y lectura sincronizada.
+El bloque de adquisición EEG constituye la primera etapa funcional del sistema. Su responsabilidad es captar la actividad bioeléctrica del usuario mediante electrodos de superficie, digitalizarla con un \textit{front-end} adecuado para biopotenciales y entregar al firmware una secuencia de muestras temporales coherente, escalada y sincronizada. Esta etapa condiciona al resto de la arquitectura, ya que cualquier error de sincronismo, escala, referencia corporal o configuración de entrada se propagaría posteriormente hacia el procesamiento espectral, el cálculo de calidad y la sonificación MIDI.
+
+La elección del ADS1299--4PAG responde a los requisitos propios de una adquisición EEG. Se trata de un convertidor analógico-digital de 24 bits orientado a biopotenciales, con entradas diferenciales, amplificador de ganancia programable, referencia interna, interfaz SPI, circuitería de BIAS y funciones de diagnóstico como \textit{lead-off} y señal de test interna, según la descripción funcional del fabricante\footnote{Texas Instruments, \textit{ADS1299 Low-Noise, 8-Channel, 24-Bit Analog Front-End for Biopotential Measurements}, datasheet SBAS499C, revisión C. Disponible en: \url{https://www.ti.com/lit/ds/sbas499c/sbas499c.pdf}.}. Estas características permiten integrar en un único componente gran parte del \textit{front-end} necesario para medir señales EEG de baja amplitud, reduciendo la necesidad de etapas externas de amplificación antes de la digitalización.
+
+Desde el punto de vista de diseño, el ADS1299 se utiliza como frontera entre el dominio bioeléctrico y el dominio digital. En el lado analógico se encuentran los electrodos, el par diferencial de medida y el electrodo de BIAS/RLD. En el lado digital se encuentran la interfaz SPI, la señal DRDY, el modo de lectura continua RDATAC y el firmware del microcontrolador. Esta separación permite tratar de forma independiente las decisiones de montaje físico y las decisiones de comunicación digital.
+
+En la configuración final del prototipo se utiliza CH1 como canal EEG principal. El montaje empleado se plantea como una configuración tipo ear--EEG/mastoides, con el par diferencial conectado al canal CH1 y con BIAS/RLD derivado de CH1P y CH1N. Esta configuración busca mejorar la estabilidad de modo común y reducir la influencia de entradas no utilizadas. Las entradas CH2, CH3 y CH4 no se interpretan como EEG activo en las capturas finales; sin embargo, se conservan dentro del contrato de datos para mantener una estructura multicanal estable entre firmware, backend Python, capturas CSV, herramientas de análisis e interfaz de monitorización.
+
+La conservación de cuatro canales en el contrato no debe confundirse con una sonificación multicanal completa. El diseño mantiene la capacidad estructural multicanal del sistema, pero la versión final de validación utiliza CH1 como canal principal para el análisis espectral y la generación musical. Esta decisión permite obtener una señal más controlada durante la validación sin renunciar a una arquitectura ampliable a otros canales en futuras iteraciones.
+
+La configuración de BIAS/RLD se justifica por la sensibilidad de las señales EEG al ruido de modo común y a la referencia corporal. El ADS1299 permite derivar la señal de BIAS a partir de canales seleccionados y realimentarla hacia el usuario mediante la red analógica prevista en la placa. En el sistema final, la derivación se limita al par usado por CH1, evitando incluir canales no utilizados o flotantes. Además, durante la captura final se desactiva la detección \textit{lead-off} para evitar que la corriente de diagnóstico asociada a esa función pueda introducir componentes no deseadas en la señal usada para sonificación.
+
+La adquisición se realiza a una frecuencia de \SI{250}{\hertz} por canal. Esta frecuencia es adecuada para el objetivo del prototipo, ya que cubre las bandas EEG empleadas posteriormente en el procesamiento espectral y mantiene una carga razonable para el firmware, el transporte de datos y el backend Python. La frecuencia de muestreo es un parámetro de coherencia global: debe coincidir entre el firmware, el parser de datos, el buffer temporal, las ventanas de análisis y las herramientas de validación.
+
+La lectura digital del ADS1299 se organiza mediante la señal DRDY y el modo RDATAC. DRDY actúa como indicación hardware de que existe una nueva conversión disponible. El firmware no interroga el convertidor de forma arbitraria, sino que espera esa señal para leer el frame correspondiente por SPI. El uso de RDATAC permite mantener una lectura continua, adecuada para un sistema de funcionamiento en vivo, en el que la señal EEG debe fluir de forma sostenida hacia el backend.
+
+Cada frame leído contiene un campo de estado y las muestras de los canales. El firmware comprueba el prefijo del \textit{status} para detectar posibles frames incoherentes o desalineados antes de aceptar la muestra. A continuación reconstruye los valores de 24 bits con signo, respetando el formato en complemento a dos, y aplica el factor de conversión correspondiente para pasar de cuentas digitales a voltios. Esta conversión es esencial para que la señal conserve una escala física interpretable y para que las herramientas posteriores puedan expresar las muestras en microvoltios.
+
+Tras la reconstrucción y el escalado inicial, el firmware aplica una cadena de filtrado básica en el microcontrolador. Esta cadena incluye un bloqueo de continua o paso alto, un filtro de rechazo de red a \SI{50}{\hertz} y un paso bajo orientado a limitar el contenido de alta frecuencia antes de enviar la señal al entorno Python. La señal transmitida al backend ya se encuentra, por tanto, filtrada de forma básica y expresada en microvoltios.
+
+La Figura~\ref{fig:bloque_adquisicion_eeg} resume el recorrido de la señal dentro del bloque de adquisición, desde los electrodos hasta la obtención de muestras EEG en microvoltios listas para ser empaquetadas por el bloque de comunicación.
+
+\begin{figure}[H]
+    \centering
+    \resizebox{0.98\textwidth}{!}{%
+    \begin{tikzpicture}[
+        block/.style={draw, rounded corners, align=center, minimum width=2.9cm, minimum height=1.0cm, font=\small},
+        signal/.style={draw, rounded corners, align=center, minimum width=2.9cm, minimum height=0.9cm, font=\small, fill=gray!8},
+        arrow/.style={-{Latex[length=3mm]}, thick},
+        note/.style={align=center, font=\scriptsize},
+        node distance=0.85cm and 0.75cm
+    ]
+        \node[block] (electrodos) {Electrodos\\superficie};
+        \node[block, right=of electrodos] (montaje) {CH1P / CH1N\\BIAS/RLD};
+        \node[block, right=of montaje] (ads) {ADS1299--4PAG\\AFE 24 bits};
+        \node[block, right=of ads] (digital) {SPI\\DRDY + RDATAC};
+
+        \node[signal, below=1.05cm of digital] (frame) {status 24 bits\\CH1--CH4 signed 24 bits};
+        \node[signal, left=of frame] (escala) {validación status\\escalado \texttt{LSB\_V}};
+        \node[signal, left=of escala] (filtros) {filtros MCU\\HP + notch 50 Hz + LP};
+        \node[signal, left=of filtros] (uv) {muestras EEG\\en \si{\micro\volt}};
+
+        \draw[arrow] (electrodos) -- (montaje);
+        \draw[arrow] (montaje) -- (ads);
+        \draw[arrow] (ads) -- (digital);
+        \draw[arrow] (digital) -- (frame);
+        \draw[arrow] (frame) -- (escala);
+        \draw[arrow] (escala) -- (filtros);
+        \draw[arrow] (filtros) -- (uv);
+
+        \node[note, below=0.35cm of montaje] {CH1 es el canal EEG principal\\en la configuración final};
+        \node[note, below=0.35cm of escala] {CH2--CH4 se conservan\\por contrato de datos};
+    \end{tikzpicture}}
+    \caption{Bloque de adquisición EEG basado en el ADS1299--4PAG. La etapa transforma la señal bioeléctrica en muestras digitales escaladas en microvoltios; el empaquetado en bloques \texttt{eeg\_block\_uV} pertenece al bloque de comunicación posterior.}
+    \label{fig:bloque_adquisicion_eeg}
+\end{figure}
+
+El bloque de adquisición finaliza cuando las muestras EEG quedan disponibles en el firmware como valores temporales en microvoltios, asociados a su \textit{status} y a su índice de muestra. A partir de ese punto comienza el bloque de comunicación microcontrolador--Linux, encargado de agrupar las muestras en bloques y transmitirlas mediante el evento \texttt{eeg\_block\_uV}. Por tanto, el bloque de adquisición no calcula potencias por banda, métricas de calidad ni parámetros musicales; su función es obtener una señal digitalizada, sincronizada, validada y escalada correctamente.
+
+En resumen, el bloque de adquisición EEG se define por la siguiente cadena: electrodos de superficie, par diferencial CH1, BIAS/RLD, ADS1299--4PAG, lectura SPI sincronizada por DRDY, modo RDATAC, reconstrucción de datos de 24 bits, validación de \textit{status}, conversión a unidades físicas, filtrado básico en MCU y salida en microvoltios. Esta delimitación permite justificar de forma clara qué decisiones pertenecen al diseño de adquisición y cuáles corresponden a los bloques posteriores de comunicación, procesamiento digital, calidad espectral y sonificación.
 
 \subsection{Bloque de comunicación microcontrolador--Linux}
 
