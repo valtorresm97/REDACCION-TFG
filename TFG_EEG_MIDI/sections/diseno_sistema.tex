@@ -225,23 +225,21 @@ La Figura~\ref{fig:bloque_adquisicion_eeg} resume el recorrido de la señal dent
 
 \begin{figure}[H]
     \centering
-    \resizebox{0.98\textwidth}{!}{%
     \begin{tikzpicture}[
-        block/.style={draw, rounded corners, align=center, minimum width=2.9cm, minimum height=1.0cm, font=\small},
-        signal/.style={draw, rounded corners, align=center, minimum width=2.9cm, minimum height=0.9cm, font=\small, fill=gray!8},
+        block/.style={draw, rounded corners, align=center, text width=2.65cm, minimum height=0.95cm, font=\footnotesize},
+        signal/.style={draw, rounded corners, align=center, text width=2.65cm, minimum height=0.95cm, font=\footnotesize, fill=gray!8},
         arrow/.style={-{Latex[length=3mm]}, thick},
-        note/.style={align=center, font=\scriptsize},
-        node distance=0.85cm and 0.75cm
+        note/.style={align=center, font=\scriptsize}
     ]
-        \node[block] (electrodos) {Electrodos\\superficie};
-        \node[block, right=of electrodos] (montaje) {CH1P / CH1N\\BIAS/RLD};
-        \node[block, right=of montaje] (ads) {ADS1299--4PAG\\AFE 24 bits};
-        \node[block, right=of ads] (digital) {SPI\\DRDY + RDATAC};
+        \node[block]  (electrodos) at (0,0) {Electrodos\\de superficie};
+        \node[block]  (montaje)   at (3.4,0) {CH1P / CH1N\\BIAS/RLD};
+        \node[block]  (ads)       at (6.8,0) {ADS1299--4PAG\\AFE 24 bits};
+        \node[block]  (digital)   at (10.2,0) {SPI\\DRDY + RDATAC};
 
-        \node[signal, below=1.05cm of digital] (frame) {status 24 bits\\CH1--CH4 signed 24 bits};
-        \node[signal, left=of frame] (escala) {validación status\\escalado \texttt{LSB\_V}};
-        \node[signal, left=of escala] (filtros) {filtros MCU\\HP + notch 50 Hz + LP};
-        \node[signal, left=of filtros] (uv) {muestras EEG\\en \si{\micro\volt}};
+        \node[signal] (frame)     at (10.2,-2.25) {status 24 bits\\CH1--CH4 signed 24 bits};
+        \node[signal] (escala)    at (6.8,-2.25) {validación de status\\escalado \texttt{LSB\_V}};
+        \node[signal] (filtros)   at (3.4,-2.25) {filtros MCU\\HP + notch 50 Hz + LP};
+        \node[signal] (uv)        at (0,-2.25) {muestras EEG\\en \si{\micro\volt}};
 
         \draw[arrow] (electrodos) -- (montaje);
         \draw[arrow] (montaje) -- (ads);
@@ -251,9 +249,9 @@ La Figura~\ref{fig:bloque_adquisicion_eeg} resume el recorrido de la señal dent
         \draw[arrow] (escala) -- (filtros);
         \draw[arrow] (filtros) -- (uv);
 
-        \node[note, below=0.35cm of montaje] {CH1 es el canal EEG principal\\en la configuración final};
-        \node[note, below=0.35cm of escala] {CH2--CH4 se conservan\\por contrato de datos};
-    \end{tikzpicture}}
+        \node[note] at (3.4,-0.85) {CH1 es el canal EEG principal\\en la configuración final};
+        \node[note] at (6.8,-3.15) {CH2--CH4 se conservan\\por contrato de datos};
+    \end{tikzpicture}
     \caption{Bloque de adquisición EEG basado en el ADS1299--4PAG. La etapa transforma la señal bioeléctrica en muestras digitales escaladas en microvoltios; el empaquetado en bloques \texttt{eeg\_block\_uV} pertenece al bloque de comunicación posterior.}
     \label{fig:bloque_adquisicion_eeg}
 \end{figure}
@@ -284,43 +282,35 @@ La Figura~\ref{fig:comunicacion_mcu_linux} resume la secuencia principal de comu
 
 \begin{figure}[H]
     \centering
-    \resizebox{0.98\textwidth}{!}{%
     \begin{tikzpicture}[
-        actor/.style={draw, rounded corners, align=center, minimum width=3.0cm, minimum height=0.9cm, font=\small, fill=gray!8},
-        procblock/.style={draw, rounded corners, align=center, minimum width=3.2cm, minimum height=0.85cm, font=\small},
-        payload/.style={draw, rounded corners, align=center, minimum width=4.4cm, minimum height=1.0cm, font=\scriptsize, fill=gray!10},
+        commblock/.style={draw, rounded corners, align=center, text width=4.3cm, minimum height=0.9cm, font=\footnotesize},
+        payloadblock/.style={draw, rounded corners, align=center, text width=5.35cm, minimum height=1.1cm, font=\footnotesize, fill=gray!8},
+        auxblock/.style={draw, rounded corners, dashed, align=center, text width=3.3cm, minimum height=0.85cm, font=\footnotesize, fill=gray!5},
         arrow/.style={-{Latex[length=3mm]}, thick},
-        auxarrow/.style={-{Latex[length=2.5mm]}, dashed},
-        node distance=0.95cm and 0.75cm
+        auxarrow/.style={-{Latex[length=2.5mm]}, dashed, thick},
+        note/.style={align=center, font=\scriptsize}
     ]
-        \node[actor] (mcu) {Firmware MCU\\STM32U585};
-        \node[actor, right=of mcu] (bridge) {Arduino Bridge};
-        \node[actor, right=of bridge] (rx) {EEGReceiver\\Python};
-        \node[actor, right=of rx] (backend) {BackendService\\Python};
+        \node[commblock]    (mcu)     at (0,0) {Firmware MCU\\STM32U585};
+        \node[commblock]    (ring)    at (0,-1.35) {\texttt{TxBlockRing}\\agrupa 8 muestras};
+        \node[payloadblock] (notify)  at (0,-2.95) {\texttt{Bridge.notify(\"eeg\_block\_uV\")}\\\texttt{block\_idx}, \texttt{first\_sample\_idx}, \texttt{sample\_count}\\\texttt{status + ch1..ch4} en \si{\micro\volt}};
+        \node[commblock]    (rx)      at (0,-4.65) {\texttt{EEGReceiver}\\validación de contrato};
+        \node[commblock]    (queue)   at (0,-6.0) {cola RX\\bloques válidos};
+        \node[commblock]    (backend) at (0,-7.35) {\texttt{BackendService}\\drenado periódico};
+        \node[commblock]    (proc)    at (0,-8.7) {\texttt{EEGSignalProcessor}\\buffer multicanal};
+        \node[auxblock]     (capture) at (5.0,-6.0) {\texttt{CaptureManager}\\ruta lateral};
 
-        \node[procblock, below=1.0cm of mcu] (pack) {TxBlockRing\\agrupa 8 muestras};
-        \node[payload, below=1.0cm of bridge] (notify) {\texttt{Bridge.notify("eeg\_block\_uV")}\\
-        \texttt{block\_idx}, \texttt{first\_sample\_idx}, \texttt{sample\_count}\\
-        \texttt{status + ch1..ch4} en \si{\micro\volt}};
-        \node[procblock, below=1.0cm of rx] (validate) {validación de contrato\\longitud, índices, status};
-        \node[procblock, below=1.0cm of backend] (drain) {drenado periódico\\hacia procesador EEG};
-
-        \node[procblock, below=1.05cm of validate] (queue) {cola RX\\bloques válidos};
-        \node[procblock, below=1.05cm of drain] (procnode) {EEGSignalProcessor\\buffer multicanal};
-        \node[procblock, below=1.05cm of queue, fill=gray!5] (capture) {CaptureManager\\ruta lateral};
-
-        \draw[arrow] (mcu) -- (pack);
-        \draw[arrow] (pack) -- (notify);
-        \draw[arrow] (notify) -- (validate);
-        \draw[arrow] (validate) -- (queue);
-        \draw[arrow] (queue) -- (drain);
-        \draw[arrow] (drain) -- (procnode);
-
+        \draw[arrow] (mcu) -- (ring);
+        \draw[arrow] (ring) -- (notify);
+        \draw[arrow] (notify) -- (rx);
+        \draw[arrow] (rx) -- (queue);
+        \draw[arrow] (queue) -- (backend);
+        \draw[arrow] (backend) -- (proc);
         \draw[auxarrow] (queue) -- (capture);
 
-        \node[font=\scriptsize, align=center, below=0.25cm of pack] {Adquisición a \SI{250}{\hertz}\\bloques esperados: 31,25 bloques/s};
-        \node[font=\scriptsize, align=center, below=0.25cm of procnode] {Salida del bloque:\\muestras listas para DSP};
-    \end{tikzpicture}}
+        \node[note] at (-4.2,-1.35) {Adquisición a \SI{250}{\hertz}\\31,25 bloques/s esperados};
+        \node[note] at (4.2,-4.65) {Comprueba longitud,\\índices y status ADS1299};
+        \node[note] at (4.2,-8.7) {Salida del bloque:\\muestras listas para DSP};
+    \end{tikzpicture}
     \caption{Secuencia simplificada de comunicación microcontrolador--Linux. El firmware empaqueta muestras EEG en bloques, el Bridge transporta el evento \texttt{eeg\_block\_uV}, Python valida el contrato y el backend drena los bloques hacia el procesador EEG. La captura se representa como ruta lateral de validación.}
     \label{fig:comunicacion_mcu_linux}
 \end{figure}
