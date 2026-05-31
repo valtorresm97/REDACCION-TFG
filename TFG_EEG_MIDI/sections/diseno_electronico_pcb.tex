@@ -1,0 +1,176 @@
+% !TeX root = ../main.tex
+% Este subfile desarrolla la subsección "Diseño electrónico y PCB" declarada al final de sections/diseno_sistema.tex.
+\documentclass[../main.tex]{subfiles}
+
+\begin{document}
+
+\subsubsection{Antecedente del diseño electrónico base}
+
+El diseño electrónico del prototipo parte de una arquitectura previa de adquisición de biopotenciales desarrollada en un trabajo anterior. Dicho antecedente planteaba una placa orientada a captar señales biomédicas de baja amplitud mediante un conversor analógico--digital específico, una etapa de protección y acondicionamiento de entrada, alimentación regulada, aislamiento galvánico y comunicación digital con un microcontrolador. Esta aproximación resulta adecuada como punto de partida, ya que separa de forma clara la zona conectada al usuario, la etapa de conversión analógica, el dominio digital y el sistema de comunicación.
+
+En el presente TFG no se reproduce literalmente aquella arquitectura, sino que se toma como base conceptual para adaptarla a un objetivo diferente: transformar una señal EEG real en eventos musicales enviados por una salida MIDI física. Por tanto, el diseño electrónico no se entiende únicamente como una placa de adquisición, sino como el soporte físico de una cadena EEG--MIDI completa. Esta diferencia condiciona la elección del \textit{front-end}, la plataforma de control, la organización de la comunicación y la incorporación de una etapa final de salida MIDI.
+
+La Figura~\ref{fig:adaptacion_diseno_base_pcb} resume esta transición. El diseño base se interpreta como una arquitectura de adquisición de biopotenciales, mientras que el diseño adaptado incorpora los elementos necesarios para cerrar la cadena hasta la salida musical física.
+
+\begin{figure}[H]
+    \centering
+    \resizebox{0.95\textwidth}{!}{%
+    \begin{tikzpicture}[
+        block/.style={draw, rounded corners, align=center, minimum width=3.2cm, minimum height=0.95cm, font=\footnotesize},
+        newblock/.style={draw, rounded corners, align=center, minimum width=3.2cm, minimum height=0.95cm, font=\footnotesize, fill=gray!8},
+        arrow/.style={-{Latex[length=3mm]}, thick},
+        note/.style={align=center, font=\scriptsize}
+    ]
+        \node[block] (base1) at (0,1.5) {Electrodos\biopotenciales};
+        \node[block] (base2) at (3.8,1.5) {AFE biomédico\diseño base};
+        \node[block] (base3) at (7.6,1.5) {Microcontrolador\comunicación};
+        \node[block] (base4) at (11.4,1.5) {Datos de\adquisición};
+
+        \node[newblock] (new1) at (0,-1.5) {Electrodos\EEG};
+        \node[newblock] (new2) at (3.8,-1.5) {ADS1299--4PAGR\4 canales, 24 bits};
+        \node[newblock] (new3) at (7.6,-1.5) {Arduino UNO Q\MCU + Linux};
+        \node[newblock] (new4) at (11.4,-1.5) {MIDI OUT\físico};
+
+        \draw[arrow] (base1) -- (base2);
+        \draw[arrow] (base2) -- (base3);
+        \draw[arrow] (base3) -- (base4);
+
+        \draw[arrow] (new1) -- (new2);
+        \draw[arrow] (new2) -- (new3);
+        \draw[arrow] (new3) -- (new4);
+
+        \node[note] at (5.7,0) {adaptación hacia\sonificación EEG--MIDI};
+        \draw[arrow] (5.7,0.85) -- (5.7,-0.85);
+    \end{tikzpicture}}
+    \caption{Adaptación conceptual del diseño electrónico base hacia la arquitectura EEG--MIDI. El objetivo deja de ser únicamente adquirir señales biomédicas y pasa a integrar adquisición EEG, procesamiento y salida MIDI física.}
+    \label{fig:adaptacion_diseno_base_pcb}
+\end{figure}
+
+\subsubsection{Adaptación hacia ADS1299--4PAGR y Arduino UNO Q}
+
+La primera adaptación relevante es la sustitución del conversor del diseño base por un ADS1299--4PAGR. Este circuito integrado pertenece a la familia ADS1299 de Texas Instruments, formada por conversores de bajo ruido, 24 bits y 4, 6 u 8 canales orientados a EEG y otras medidas de biopotenciales \cite{TexasInstrumentsADS1299}. En la placa desarrollada se emplea la variante de cuatro canales, coherente con el contrato final del sistema, donde el firmware y el backend Python mantienen una estructura fija de cuatro canales aunque la validación experimental se centre en CH1 como canal EEG principal.
+
+La elección del ADS1299--4PAGR aporta varias ventajas para este prototipo. En primer lugar, integra entradas diferenciales de alta resolución, adecuadas para señales EEG de baja amplitud. En segundo lugar, incorpora funciones específicas de biopotenciales, como circuitería de BIAS, pines SRB, referencia y señales de diagnóstico. En tercer lugar, ofrece una interfaz SPI estándar, compatible con una lectura continua sincronizada mediante DRDY y adecuada para integrarse en una cadena embebida de adquisición en tiempo real.
+
+La segunda adaptación importante es el cambio de plataforma de control hacia Arduino UNO Q. En esta arquitectura, la UNO Q cumple una doble función. El microcontrolador se encarga de la comunicación de bajo nivel con el ADS1299, de la temporización asociada a DRDY, del empaquetado inicial de las muestras y de la salida MIDI física. Paralelamente, el entorno Linux de la placa ejecuta el backend Python, que recibe los bloques EEG, calcula características, aplica la puerta de calidad y genera los eventos musicales. Esta separación permite mantener una adquisición determinista en el lado embebido y reservar las tareas de procesamiento y sonificación al entorno Python.
+
+La adaptación también modifica la salida del sistema. El diseño base estaba orientado a adquisición y transmisión de datos, mientras que el sistema final incorpora una salida MIDI física. Esta decisión transforma la placa en un prototipo completo de interfaz EEG--MIDI: la señal no solo se observa o registra, sino que se convierte en mensajes musicales compatibles con dispositivos MIDI externos.
+
+\subsubsection{Organización funcional de la placa}
+
+La placa se organiza en bloques funcionales diferenciados. El primer bloque corresponde a las entradas de EEG y a la red de protección/acondicionamiento previa al conversor. El segundo bloque es el ADS1299--4PAGR, que actúa como núcleo de adquisición. El tercer bloque corresponde a la alimentación regulada y a la alimentación aislada. El cuarto bloque está formado por el aislamiento digital de las señales SPI y de control. El quinto bloque corresponde a la Arduino UNO Q, que conecta el dominio de adquisición con el firmware y el backend. Finalmente, el sexto bloque implementa la salida MIDI física mediante conector DIN-5 y etapa de adaptación.
+
+Esta organización permite separar conceptualmente la zona conectada al usuario de la zona de control y de la salida musical. En los archivos KiCad de la placa aparecen, además, referencias de serigrafía que ayudan a interpretar esta división, como las zonas identificadas como \textit{Aislado} y \textit{No aislado}, la salida \textit{MIDI OUT}, los canales \texttt{ch1} a \texttt{ch4} y la señal \texttt{RLDRV}. Estas indicaciones no sustituyen a una validación formal de layout o seguridad eléctrica, pero sí muestran la intención de organizar físicamente la placa en dominios funcionales.
+
+\begin{figure}[H]
+    \centering
+    \resizebox{0.98\textwidth}{!}{%
+    \begin{tikzpicture}[
+        block/.style={draw, rounded corners, align=center, text width=3.0cm, minimum height=0.95cm, font=\footnotesize},
+        isol/.style={draw, rounded corners, align=center, text width=3.0cm, minimum height=0.95cm, font=\footnotesize, fill=gray!10},
+        arrow/.style={-{Latex[length=3mm]}, thick},
+        auxarrow/.style={-{Latex[length=2.5mm]}, dashed, thick},
+        note/.style={align=center, font=\scriptsize}
+    ]
+        \node[block] (j1) at (0,0) {Conectores\electrodos};
+        \node[block] (prot) at (3.7,0) {Protección y\acondicionamiento};
+        \node[block] (ads) at (7.4,0) {ADS1299--4PAGR\adquisición EEG};
+        \node[isol] (adum) at (11.1,0) {ADuM3151\aislamiento SPI};
+        \node[block] (uno) at (14.8,0) {Arduino UNO Q\MCU + Linux};
+        \node[block] (midi) at (18.5,0) {DIN-5\MIDI OUT};
+
+        \node[isol] (power) at (7.4,-2.3) {Alimentación aislada\CRE1S0505SC + reguladores};
+        \node[block] (battery) at (0,-2.3) {Battery / 5 V\entrada de energía};
+
+        \draw[arrow] (j1) -- (prot);
+        \draw[arrow] (prot) -- (ads);
+        \draw[arrow] (ads) -- (adum);
+        \draw[arrow] (adum) -- (uno);
+        \draw[arrow] (uno) -- (midi);
+
+        \draw[auxarrow] (battery) -- (power);
+        \draw[auxarrow] (power) -- (ads);
+        \draw[auxarrow] (power) -- (adum);
+
+        \node[note] at (7.4,1.35) {zona de adquisición\conectada al usuario};
+        \node[note] at (14.8,1.35) {zona de control\y salida física};
+    \end{tikzpicture}}
+    \caption{Organización funcional de la placa. La PCB integra entradas EEG, protección, ADS1299--4PAGR, aislamiento digital, alimentación aislada, Arduino UNO Q y salida MIDI física.}
+    \label{fig:organizacion_funcional_pcb}
+\end{figure}
+
+\subsubsection{Módulo de adquisición EEG}
+
+El módulo de adquisición EEG está centrado en el ADS1299--4PAGR. Este componente constituye la frontera entre el dominio analógico de los electrodos y el dominio digital del sistema. En el lado analógico recibe los pares diferenciales asociados a los canales de EEG, así como las señales relacionadas con referencia, BIAS y alimentación analógica. En el lado digital expone las señales de comunicación y control necesarias para la lectura de datos: \texttt{DIN}, \texttt{DOUT}, \texttt{SCLK}, \texttt{CS}, \texttt{DRDY}, \texttt{START}, \texttt{RESET} y \texttt{PWDN}.
+
+La variante de cuatro canales se ajusta al alcance experimental del prototipo. La arquitectura software conserva cuatro canales en el contrato de datos para mantener una estructura estable entre firmware, backend, capturas e interfaz auxiliar. Sin embargo, durante la validación final se trabaja con CH1 como canal principal de sonificación. Esta decisión no contradice el diseño multicanal, sino que acota la validación experimental a un canal EEG más controlado.
+
+Desde el punto de vista de la memoria, este módulo debe describirse como el núcleo de adquisición y no como el bloque encargado de procesar la señal o generar música. El ADS1299 digitaliza la señal y entrega frames al firmware; el cálculo de bandas EEG, la evaluación de calidad y la generación de eventos musicales se realizan en etapas posteriores.
+
+\subsubsection{Entradas, protección y referencia RLD/BIAS}
+
+Las entradas de la placa se organizan mediante pares diferenciales asociados a los canales del ADS1299. En el diseño aparecen señales de entrada identificadas como \texttt{1P}/\texttt{1N}, \texttt{2P}/\texttt{2N}, \texttt{3P}/\texttt{3N} y \texttt{4P}/\texttt{4N}, junto con sus correspondientes señales internas hacia el conversor, como \texttt{IN\_1P}/\texttt{IN\_1N}, \texttt{IN\_2P}/\texttt{IN\_2N}, \texttt{IN\_3P}/\texttt{IN\_3N} e \texttt{IN\_4P}/\texttt{IN\_4N}. Esta nomenclatura facilita seguir el recorrido desde el conector de electrodos hasta el \textit{front-end}.
+
+Entre los conectores y el ADS1299 se incorporan elementos de protección y acondicionamiento. La lista de materiales del diseño incluye dispositivos TPD4E1U06, redes resistivas de \SI{2.2}{\kilo\ohm} y redes capacitivas de \SI{1}{\nano\farad}. A nivel funcional, estos elementos permiten proteger las entradas frente a descargas electrostáticas y limitar la entrada de interferencias de alta frecuencia antes de la conversión analógico--digital. En este apartado se describen como parte del diseño de entrada, mientras que el cálculo detallado de frecuencias de corte o la validación de ruido queda reservado para análisis específicos.
+
+La placa también contempla una red de referencia corporal asociada a las capacidades BIAS/RLD del ADS1299. En el esquemático aparecen los pines \texttt{BIASOUT}, \texttt{BIASIN}, \texttt{BIASINV} y \texttt{BIASREF}, así como señales identificadas como \texttt{RLD\_DRV} o \texttt{IN\_RLD\_DRV}. Esta red tiene como objetivo estabilizar el potencial común del montaje y mejorar el rechazo frente a interferencias de modo común. No obstante, al tratarse de un prototipo académico y no clínico, esta parte se describe como una solución experimental de referencia corporal, sin atribuirle prestaciones médicas ni certificación de seguridad.
+
+\subsubsection{Alimentación e aislamiento galvánico}
+
+El diseño de alimentación diferencia entre el lado de control y el lado asociado a la adquisición. La placa recibe alimentación desde la plataforma Arduino UNO Q y dispone de dominios de tensión utilizados por la electrónica digital y analógica. En la lista de materiales aparecen reguladores y conversores como \texttt{AMS1117--3.3}, \texttt{MIC5504--2.5YM5}, \texttt{TPS72325DBV} y \texttt{LM2664}. Estos componentes permiten generar las tensiones necesarias para el funcionamiento del ADS1299, su referencia y los circuitos auxiliares.
+
+La alimentación aislada se apoya en el conversor DC--DC \texttt{CRE1S0505SC}. Este bloque conserva la filosofía del diseño base: separar la zona relacionada con el usuario de la zona de control del sistema. En el esquemático y la PCB aparecen dominios como \texttt{VDDA}, \texttt{VSSA}, \texttt{VDD} y \texttt{GNDD}, que ayudan a distinguir las referencias y alimentaciones utilizadas por las distintas partes del circuito.
+
+La existencia de aislamiento no debe confundirse con una certificación clínica o con una validación normativa completa. En esta memoria se afirma únicamente que el diseño incorpora bloques de aislamiento y dominios diferenciados de alimentación. La comprobación de distancias, planos de masa, rigidez dieléctrica, fabricación y cumplimiento normativo pertenece a una validación electrónica posterior y queda fuera del alcance clínico del prototipo.
+
+\subsubsection{Comunicación SPI aislada con Arduino UNO Q}
+
+La comunicación entre el ADS1299 y la Arduino UNO Q se realiza mediante SPI, complementada con señales de control específicas del conversor. Las señales principales del bus son \texttt{MOSI}, \texttt{MISO}, \texttt{SCLK} y \texttt{CS}. A ellas se añaden \texttt{DRDY}, que indica la disponibilidad de una nueva conversión, y señales de control como \texttt{START}, \texttt{RESET} y \texttt{PWDN}.
+
+En el diseño de la placa estas señales atraviesan un aislador digital \texttt{ADuM3151}. Por ello aparecen pares de señales antes y después de la barrera de aislamiento: \texttt{SPI1\_MOSI} se relaciona con \texttt{SPI\_MOSI\_ISO}, \texttt{SPI1\_MISO} con \texttt{SPI\_MISO\_ISO}, \texttt{SPI1\_SCLK} con \texttt{SPI\_SCLK\_ISO}, \texttt{FE\_SPI\_CS} con \texttt{SPI\_CS\_ISO}, \texttt{FE\_START} con \texttt{START\_ISO}, \texttt{FE\_RESET} con \texttt{RESET\_ISO} y \texttt{FE\_DRDY} con \texttt{DRDY\_ISO}. Esta estructura confirma que el ADS1299 no queda conectado directamente al microcontrolador, sino a través de una barrera de aislamiento digital.
+
+\begin{figure}[H]
+    \centering
+    \resizebox{0.88\textwidth}{!}{%
+    \begin{tikzpicture}[
+        side/.style={draw, rounded corners, align=center, text width=3.6cm, minimum height=1.0cm, font=\footnotesize},
+        isol/.style={draw, rounded corners, align=center, text width=3.0cm, minimum height=4.9cm, font=\footnotesize, fill=gray!10},
+        arrow/.style={-{Latex[length=3mm]}, thick},
+        retarrow/.style={{Latex[length=3mm]}-{Latex[length=3mm]}, thick},
+        sig/.style={font=\scriptsize}
+    ]
+        \node[side] (uno) at (0,0) {Arduino UNO Q\lado no aislado};
+        \node[isol] (iso) at (4.6,0) {ADuM3151\aislamiento digital};
+        \node[side] (ads) at (9.2,0) {ADS1299--4PAGR\lado aislado};
+
+        \draw[arrow] (uno.east) ++(0,1.8) -- node[above, sig]{\texttt{SPI1\_SCLK} / \texttt{SPI\_SCLK\_ISO}} (ads.west |- 0,1.8);
+        \draw[arrow] (uno.east) ++(0,1.1) -- node[above, sig]{\texttt{SPI1\_MOSI} / \texttt{SPI\_MOSI\_ISO}} (ads.west |- 0,1.1);
+        \draw[arrow] (ads.west) ++(0,0.4) -- node[above, sig]{\texttt{SPI\_MISO\_ISO} / \texttt{SPI1\_MISO}} (uno.east |- 0,0.4);
+        \draw[arrow] (uno.east) ++(0,-0.3) -- node[above, sig]{\texttt{FE\_SPI\_CS} / \texttt{SPI\_CS\_ISO}} (ads.west |- 0,-0.3);
+        \draw[arrow] (uno.east) ++(0,-1.0) -- node[above, sig]{\texttt{FE\_START} / \texttt{START\_ISO}} (ads.west |- 0,-1.0);
+        \draw[arrow] (uno.east) ++(0,-1.7) -- node[above, sig]{\texttt{FE\_RESET} / \texttt{RESET\_ISO}} (ads.west |- 0,-1.7);
+        \draw[arrow] (ads.west) ++(0,-2.4) -- node[below, sig]{\texttt{DRDY\_ISO} / \texttt{FE\_DRDY}} (uno.east |- 0,-2.4);
+    \end{tikzpicture}}
+    \caption{Comunicación SPI aislada entre Arduino UNO Q y ADS1299--4PAGR. El ADuM3151 separa el lado de control del lado de adquisición, manteniendo las señales SPI y de control necesarias para la lectura continua del conversor.}
+    \label{fig:spi_aislado_adum3151}
+\end{figure}
+
+Esta comunicación aislada es coherente con el firmware, donde se definen las señales de selección de chip, reloj, entrada y salida SPI, DRDY, START, RESET y PWDN. El detalle de la secuencia de comandos del ADS1299, la escritura de registros, el modo RDATAC y la reconstrucción de frames pertenece al apartado de implementación. En el diseño electrónico basta con justificar la presencia de estas señales y su paso a través del aislamiento.
+
+\subsubsection{Salida MIDI física}
+
+La principal diferencia funcional del prototipo respecto a una placa de adquisición convencional es la presencia de una salida MIDI física. La PCB incluye un conector DIN-5 identificado como \texttt{MIDI OUT}. Esta salida se asocia a la señal \texttt{USART1\_TX} procedente de la Arduino UNO Q y a una etapa discreta formada por el transistor \texttt{MMBT5551} y resistencias de adaptación, entre ellas resistencias de \SI{220}{\ohm} y \SI{1}{\kilo\ohm}.
+
+Desde el punto de vista de diseño del sistema, esta etapa permite que la cadena EEG--MIDI termine en una interfaz musical estándar. Los eventos generados por Python se convierten en bytes MIDI, se entregan al firmware mediante el contrato correspondiente y finalmente se escriben por la UART asociada a la salida física. La implementación validada utiliza \texttt{Serial1}/D1/TX y requiere inversión de polaridad de transmisión, resuelta en firmware. Por tanto, en este apartado se describe la etapa física de salida, mientras que la configuración UART, la inversión TX y el envío de mensajes \textit{Note On}/\textit{Note Off} se documentan en implementación.
+
+La existencia de esta etapa es clave para delimitar el alcance del TFG. La WebUI y la matriz LED son herramientas auxiliares de observación, pero la salida principal del sistema es el conector MIDI físico. Esto permite conectar el prototipo a sintetizadores, módulos de sonido o interfaces MIDI externas, cumpliendo el objetivo de convertir actividad EEG en eventos musicales fuera del entorno de monitorización.
+
+\subsubsection{Consideraciones de PCB y alcance del diseño}
+
+La PCB integra físicamente los bloques principales descritos: Arduino UNO Q, ADS1299--4PAGR, protección de entradas, alimentación regulada, alimentación aislada, aislamiento digital, conectores de electrodos y salida MIDI física. La serigrafía y la asignación de redes permiten identificar la intención de separar zonas funcionales y de mantener una frontera entre adquisición, control y salida.
+
+No obstante, la memoria debe limitar las afirmaciones al nivel verificable en los archivos de diseño disponibles. La identificación de componentes, conectores, señales y bloques funcionales permite describir la arquitectura de la placa, pero no equivale por sí sola a una validación completa del layout. No se deben sobreafirmar aspectos como cumplimiento normativo, distancias de aislamiento, fabricación definitiva, ruido real de la placa o comportamiento de los planos de masa si no han sido evaluados mediante ensayos o revisión específica.
+
+En consecuencia, este subapartado presenta el diseño electrónico y PCB como la integración física de la arquitectura EEG--MIDI. Los detalles de configuración del ADS1299, lectura de frames, filtros en firmware, transporte por Bridge, procesamiento Python, sonificación y envío de bytes MIDI se desarrollan en los apartados de implementación. Del mismo modo, las capturas reales, pruebas de ruido, pruebas de BIAS/RLD, validación de CH1, benchmarks y comprobación de salida MIDI pertenecen al apartado de validación y resultados.
+
+\end{document}
