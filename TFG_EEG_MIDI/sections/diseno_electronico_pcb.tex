@@ -1,14 +1,11 @@
-% !TeX root = ../main.tex
-% Este subfile desarrolla la subsección "Diseño electrónico y PCB" declarada al final de sections/diseno_sistema.tex.
-\documentclass[../main.tex]{subfiles}
-
-\begin{document}
+% Fragmento incluido desde sections/diseno_sistema.tex mediante main.tex.
+% La subsección \subsection{Diseño electrónico y PCB} se declara al final de diseno_sistema.tex.
 
 \subsubsection{Antecedente del diseño electrónico base}
 
 El diseño electrónico del prototipo parte de una arquitectura previa de adquisición de biopotenciales desarrollada en un trabajo anterior. Dicho antecedente planteaba una placa orientada a captar señales biomédicas de baja amplitud mediante un conversor analógico--digital específico, una etapa de protección y acondicionamiento de entrada, alimentación regulada, aislamiento galvánico y comunicación digital con un microcontrolador. Esta aproximación resulta adecuada como punto de partida, ya que separa de forma clara la zona conectada al usuario, la etapa de conversión analógica, el dominio digital y el sistema de comunicación.
 
-En el presente TFG no se reproduce literalmente aquella arquitectura, sino que se toma como base conceptual para adaptarla a un objetivo diferente: transformar una señal EEG real en eventos musicales enviados por una salida MIDI física. Por tanto, el diseño electrónico no se entiende únicamente como una placa de adquisición, sino como el soporte físico de una cadena EEG--MIDI completa. Esta diferencia condiciona la elección del \textit{front-end}, la plataforma de control, la organización de la comunicación y la incorporación de una etapa final de salida MIDI.
+En el presente TFG no se reproduce literalmente aquella arquitectura, sino que se toma como base conceptual para adaptarla a un objetivo diferente: transformar una señal EEG real en eventos musicales enviados mediante una salida MIDI física. Por tanto, el diseño electrónico no se entiende únicamente como una placa de adquisición, sino como el soporte físico de una cadena EEG--MIDI completa. Esta diferencia condiciona la elección del \textit{front-end}, la plataforma de control, la organización de la comunicación y la incorporación de una etapa final de salida MIDI.
 
 La Figura~\ref{fig:adaptacion_diseno_base_pcb} resume esta transición. El diseño base se interpreta como una arquitectura de adquisición de biopotenciales, mientras que el diseño adaptado incorpora los elementos necesarios para cerrar la cadena hasta la salida musical física.
 
@@ -16,20 +13,20 @@ La Figura~\ref{fig:adaptacion_diseno_base_pcb} resume esta transición. El dise�
     \centering
     \resizebox{0.95\textwidth}{!}{%
     \begin{tikzpicture}[
-        block/.style={draw, rounded corners, align=center, minimum width=3.2cm, minimum height=0.95cm, font=\footnotesize},
-        newblock/.style={draw, rounded corners, align=center, minimum width=3.2cm, minimum height=0.95cm, font=\footnotesize, fill=gray!8},
+        block/.style={draw, rounded corners, align=center, text width=3.1cm, minimum height=0.95cm, font=\footnotesize},
+        newblock/.style={draw, rounded corners, align=center, text width=3.1cm, minimum height=0.95cm, font=\footnotesize, fill=gray!8},
         arrow/.style={-{Latex[length=3mm]}, thick},
         note/.style={align=center, font=\scriptsize}
     ]
-        \node[block] (base1) at (0,1.5) {Electrodos\biopotenciales};
-        \node[block] (base2) at (3.8,1.5) {AFE biomédico\diseño base};
-        \node[block] (base3) at (7.6,1.5) {Microcontrolador\comunicación};
-        \node[block] (base4) at (11.4,1.5) {Datos de\adquisición};
+        \node[block] (base1) at (0,1.5) {Electrodos de biopotenciales};
+        \node[block] (base2) at (3.8,1.5) {AFE biomédico del diseño base};
+        \node[block] (base3) at (7.6,1.5) {Microcontrolador y comunicación};
+        \node[block] (base4) at (11.4,1.5) {Datos de adquisición};
 
-        \node[newblock] (new1) at (0,-1.5) {Electrodos\EEG};
-        \node[newblock] (new2) at (3.8,-1.5) {ADS1299--4PAGR\4 canales, 24 bits};
-        \node[newblock] (new3) at (7.6,-1.5) {Arduino UNO Q\MCU + Linux};
-        \node[newblock] (new4) at (11.4,-1.5) {MIDI OUT\físico};
+        \node[newblock] (new1) at (0,-1.5) {Electrodos EEG};
+        \node[newblock] (new2) at (3.8,-1.5) {ADS1299--4PAGR, 4 canales y 24 bits};
+        \node[newblock] (new3) at (7.6,-1.5) {Arduino UNO Q, MCU y Linux};
+        \node[newblock] (new4) at (11.4,-1.5) {MIDI OUT físico};
 
         \draw[arrow] (base1) -- (base2);
         \draw[arrow] (base2) -- (base3);
@@ -39,7 +36,7 @@ La Figura~\ref{fig:adaptacion_diseno_base_pcb} resume esta transición. El dise�
         \draw[arrow] (new2) -- (new3);
         \draw[arrow] (new3) -- (new4);
 
-        \node[note] at (5.7,0) {adaptación hacia\sonificación EEG--MIDI};
+        \node[note] at (5.7,0) {adaptación hacia sonificación EEG--MIDI};
         \draw[arrow] (5.7,0.85) -- (5.7,-0.85);
     \end{tikzpicture}}
     \caption{Adaptación conceptual del diseño electrónico base hacia la arquitectura EEG--MIDI. El objetivo deja de ser únicamente adquirir señales biomédicas y pasa a integrar adquisición EEG, procesamiento y salida MIDI física.}
@@ -72,15 +69,15 @@ Esta organización permite separar conceptualmente la zona conectada al usuario 
         auxarrow/.style={-{Latex[length=2.5mm]}, dashed, thick},
         note/.style={align=center, font=\scriptsize}
     ]
-        \node[block] (j1) at (0,0) {Conectores\electrodos};
-        \node[block] (prot) at (3.7,0) {Protección y\acondicionamiento};
-        \node[block] (ads) at (7.4,0) {ADS1299--4PAGR\adquisición EEG};
-        \node[isol] (adum) at (11.1,0) {ADuM3151\aislamiento SPI};
-        \node[block] (uno) at (14.8,0) {Arduino UNO Q\MCU + Linux};
-        \node[block] (midi) at (18.5,0) {DIN-5\MIDI OUT};
+        \node[block] (j1) at (0,0) {Conectores de electrodos};
+        \node[block] (prot) at (3.7,0) {Protección y acondicionamiento};
+        \node[block] (ads) at (7.4,0) {ADS1299--4PAGR, adquisición EEG};
+        \node[isol] (adum) at (11.1,0) {ADuM3151, aislamiento SPI};
+        \node[block] (uno) at (14.8,0) {Arduino UNO Q, MCU y Linux};
+        \node[block] (midi) at (18.5,0) {DIN-5 MIDI OUT};
 
-        \node[isol] (power) at (7.4,-2.3) {Alimentación aislada\CRE1S0505SC + reguladores};
-        \node[block] (battery) at (0,-2.3) {Battery / 5 V\entrada de energía};
+        \node[isol] (power) at (7.4,-2.3) {Alimentación aislada, CRE1S0505SC y reguladores};
+        \node[block] (battery) at (0,-2.3) {Battery / 5 V, entrada de energía};
 
         \draw[arrow] (j1) -- (prot);
         \draw[arrow] (prot) -- (ads);
@@ -92,8 +89,8 @@ Esta organización permite separar conceptualmente la zona conectada al usuario 
         \draw[auxarrow] (power) -- (ads);
         \draw[auxarrow] (power) -- (adum);
 
-        \node[note] at (7.4,1.35) {zona de adquisición\conectada al usuario};
-        \node[note] at (14.8,1.35) {zona de control\y salida física};
+        \node[note] at (7.4,1.35) {zona de adquisición conectada al usuario};
+        \node[note] at (14.8,1.35) {zona de control y salida física};
     \end{tikzpicture}}
     \caption{Organización funcional de la placa. La PCB integra entradas EEG, protección, ADS1299--4PAGR, aislamiento digital, alimentación aislada, Arduino UNO Q y salida MIDI física.}
     \label{fig:organizacion_funcional_pcb}
@@ -136,12 +133,11 @@ En el diseño de la placa estas señales atraviesan un aislador digital \texttt{
         side/.style={draw, rounded corners, align=center, text width=3.6cm, minimum height=1.0cm, font=\footnotesize},
         isol/.style={draw, rounded corners, align=center, text width=3.0cm, minimum height=4.9cm, font=\footnotesize, fill=gray!10},
         arrow/.style={-{Latex[length=3mm]}, thick},
-        retarrow/.style={{Latex[length=3mm]}-{Latex[length=3mm]}, thick},
         sig/.style={font=\scriptsize}
     ]
-        \node[side] (uno) at (0,0) {Arduino UNO Q\lado no aislado};
-        \node[isol] (iso) at (4.6,0) {ADuM3151\aislamiento digital};
-        \node[side] (ads) at (9.2,0) {ADS1299--4PAGR\lado aislado};
+        \node[side] (uno) at (0,0) {Arduino UNO Q, lado no aislado};
+        \node[isol] (iso) at (4.6,0) {ADuM3151, aislamiento digital};
+        \node[side] (ads) at (9.2,0) {ADS1299--4PAGR, lado aislado};
 
         \draw[arrow] (uno.east) ++(0,1.8) -- node[above, sig]{\texttt{SPI1\_SCLK} / \texttt{SPI\_SCLK\_ISO}} (ads.west |- 0,1.8);
         \draw[arrow] (uno.east) ++(0,1.1) -- node[above, sig]{\texttt{SPI1\_MOSI} / \texttt{SPI\_MOSI\_ISO}} (ads.west |- 0,1.1);
@@ -172,5 +168,3 @@ La PCB integra físicamente los bloques principales descritos: Arduino UNO Q, AD
 No obstante, la memoria debe limitar las afirmaciones al nivel verificable en los archivos de diseño disponibles. La identificación de componentes, conectores, señales y bloques funcionales permite describir la arquitectura de la placa, pero no equivale por sí sola a una validación completa del layout. No se deben sobreafirmar aspectos como cumplimiento normativo, distancias de aislamiento, fabricación definitiva, ruido real de la placa o comportamiento de los planos de masa si no han sido evaluados mediante ensayos o revisión específica.
 
 En consecuencia, este subapartado presenta el diseño electrónico y PCB como la integración física de la arquitectura EEG--MIDI. Los detalles de configuración del ADS1299, lectura de frames, filtros en firmware, transporte por Bridge, procesamiento Python, sonificación y envío de bytes MIDI se desarrollan en los apartados de implementación. Del mismo modo, las capturas reales, pruebas de ruido, pruebas de BIAS/RLD, validación de CH1, benchmarks y comprobación de salida MIDI pertenecen al apartado de validación y resultados.
-
-\end{document}
