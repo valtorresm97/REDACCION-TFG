@@ -236,10 +236,10 @@ La Figura~\ref{fig:bloque_adquisicion_eeg} resume el recorrido de la señal dent
         \node[block]  (ads)       at (6.8,0) {ADS1299--4PAG\\AFE 24 bits};
         \node[block]  (digital)   at (10.2,0) {SPI\\DRDY + RDATAC};
 
-        \node[signal] (frame)     at (10.2,-2.25) {status 24 bits\\CH1--CH4 signed 24 bits};
-        \node[signal] (escala)    at (6.8,-2.25) {validación de status\\escalado \texttt{LSB\_V}};
-        \node[signal] (filtros)   at (3.4,-2.25) {filtros MCU\\HP + notch 50 Hz + LP};
-        \node[signal] (uv)        at (0,-2.25) {muestras EEG\\en \si{\micro\volt}};
+        \node[signal] (frame)     at (10.2,-2.75) {status 24 bits\\CH1--CH4 signed 24 bits};
+        \node[signal] (escala)    at (6.8,-2.75) {validación de status\\escalado \texttt{LSB\_V}};
+        \node[signal] (filtros)   at (3.4,-2.75) {filtros MCU\\HP + notch 50 Hz + LP};
+        \node[signal] (uv)        at (0,-2.75) {muestras EEG\\en \si{\micro\volt}};
 
         \draw[arrow] (electrodos) -- (montaje);
         \draw[arrow] (montaje) -- (ads);
@@ -249,8 +249,8 @@ La Figura~\ref{fig:bloque_adquisicion_eeg} resume el recorrido de la señal dent
         \draw[arrow] (escala) -- (filtros);
         \draw[arrow] (filtros) -- (uv);
 
-        \node[note] at (3.4,-0.85) {CH1 es el canal EEG principal\\en la configuración final};
-        \node[note] at (6.8,-3.15) {CH2--CH4 se conservan\\por contrato de datos};
+        \node[note] at (3.4,-1.1) {CH1 es el canal EEG principal\\en la configuración final};
+        \node[note] at (6.8,-4.12) {CH2--CH4 se conservan\\por contrato de datos};
     \end{tikzpicture}
     \caption{Bloque de adquisición EEG basado en el ADS1299--4PAG. La etapa transforma la señal bioeléctrica en muestras digitales escaladas en microvoltios; el empaquetado en bloques \texttt{eeg\_block\_uV} pertenece al bloque de comunicación posterior.}
     \label{fig:bloque_adquisicion_eeg}
@@ -284,20 +284,20 @@ La Figura~\ref{fig:comunicacion_mcu_linux} resume la secuencia principal de comu
     \centering
     \begin{tikzpicture}[
         commblock/.style={draw, rounded corners, align=center, text width=4.3cm, minimum height=0.9cm, font=\footnotesize},
-        payloadblock/.style={draw, rounded corners, align=center, text width=5.35cm, minimum height=1.1cm, font=\footnotesize, fill=gray!8},
+        payloadblock/.style={draw, rounded corners, align=center, text width=5.65cm, minimum height=1.1cm, font=\footnotesize, fill=gray!8},
         auxblock/.style={draw, rounded corners, dashed, align=center, text width=3.3cm, minimum height=0.85cm, font=\footnotesize, fill=gray!5},
         arrow/.style={-{Latex[length=3mm]}, thick},
         auxarrow/.style={-{Latex[length=2.5mm]}, dashed, thick},
         note/.style={align=center, font=\scriptsize}
     ]
         \node[commblock]    (mcu)     at (0,0) {Firmware MCU\\STM32U585};
-        \node[commblock]    (ring)    at (0,-1.35) {\texttt{TxBlockRing}\\agrupa 8 muestras};
-        \node[payloadblock] (notify)  at (0,-2.95) {\texttt{Bridge.notify(\"eeg\_block\_uV\")}\\\texttt{block\_idx}, \texttt{first\_sample\_idx}, \texttt{sample\_count}\\\texttt{status + ch1..ch4} en \si{\micro\volt}};
-        \node[commblock]    (rx)      at (0,-4.65) {\texttt{EEGReceiver}\\validación de contrato};
-        \node[commblock]    (queue)   at (0,-6.0) {cola RX\\bloques válidos};
-        \node[commblock]    (backend) at (0,-7.35) {\texttt{BackendService}\\drenado periódico};
-        \node[commblock]    (proc)    at (0,-8.7) {\texttt{EEGSignalProcessor}\\buffer multicanal};
-        \node[auxblock]     (capture) at (5.0,-6.0) {\texttt{CaptureManager}\\ruta lateral};
+        \node[commblock]    (ring)    at (0,-2.35) {\texttt{TxBlockRing}\\agrupa 8 muestras};
+        \node[payloadblock] (notify)  at (0,-5.25) {\texttt{Bridge.notify(\"eeg\_block\_uV\")}\\\texttt{block\_idx}, \texttt{first\_sample\_idx}, \texttt{sample\_count}\\\texttt{status + ch1..ch4} en \si{\micro\volt}};
+        \node[commblock]    (rx)      at (0,-7.65) {\texttt{EEGReceiver}\\validación de contrato};
+        \node[commblock]    (queue)   at (0,-9.35) {cola RX\\bloques válidos};
+        \node[commblock]    (backend) at (0,-11.35) {\texttt{BackendService}\\drenado periódico};
+        \node[commblock]    (proc)    at (0,-13.7) {\texttt{EEGSignalProcessor}\\buffer multicanal};
+        \node[auxblock]     (capture) at (5.0,-9.35) {\texttt{CaptureManager}\\ruta lateral};
 
         \draw[arrow] (mcu) -- (ring);
         \draw[arrow] (ring) -- (notify);
@@ -307,9 +307,9 @@ La Figura~\ref{fig:comunicacion_mcu_linux} resume la secuencia principal de comu
         \draw[arrow] (backend) -- (proc);
         \draw[auxarrow] (queue) -- (capture);
 
-        \node[note] at (-4.2,-1.35) {Adquisición a \SI{250}{\hertz}\\31,25 bloques/s esperados};
-        \node[note] at (4.2,-4.65) {Comprueba longitud,\\índices y status ADS1299};
-        \node[note] at (4.2,-8.7) {Salida del bloque:\\muestras listas para DSP};
+        \node[note] at (-4.2,-2.35) {Adquisición a \SI{250}{\hertz}\\31,25 bloques/s esperados};
+        \node[note] at (4.2,-7.65) {Comprueba longitud,\\índices y status ADS1299};
+        \node[note] at (4.2,-11.7) {Salida del bloque:\\muestras listas para DSP};
     \end{tikzpicture}
     \caption{Secuencia simplificada de comunicación microcontrolador--Linux. El firmware empaqueta muestras EEG en bloques, el Bridge transporta el evento \texttt{eeg\_block\_uV}, Python valida el contrato y el backend drena los bloques hacia el procesador EEG. La captura se representa como ruta lateral de validación.}
     \label{fig:comunicacion_mcu_linux}
