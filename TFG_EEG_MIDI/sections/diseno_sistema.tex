@@ -342,21 +342,21 @@ La Figura~\ref{fig:bloque_procesamiento_digital} resume el flujo interno del blo
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}[
-        procblock/.style={draw, rounded corners, align=center, text width=3.9cm, minimum height=0.9cm, font=\footnotesize},
-        featureblock/.style={draw, rounded corners, align=center, text width=4.2cm, minimum height=0.9cm, font=\footnotesize, fill=gray!8},
-        qualityblock/.style={draw, rounded corners, dashed, align=center, text width=3.8cm, minimum height=0.9cm, font=\footnotesize, fill=gray!5},
+        procblock/.style={draw, rounded corners, align=center, text width=3.9cm, minimum height=0.95cm, font=\footnotesize},
+        featureblock/.style={draw, rounded corners, align=center, text width=4.2cm, minimum height=0.95cm, font=\footnotesize, fill=gray!8},
+        qualityblock/.style={draw, rounded corners, dashed, align=center, text width=3.9cm, minimum height=0.95cm, font=\footnotesize, fill=gray!5},
         arrow/.style={-{Latex[length=3mm]}, thick},
         auxarrow/.style={-{Latex[length=2.5mm]}, dashed, thick},
         note/.style={align=center, font=\scriptsize}
     ]
-        \node[procblock]    (blocks)   at (0,0) {bloques EEG válidos\\en \si{\micro\volt}};
-        \node[procblock]    (units)    at (0,-1.35) {conversión de unidades\\\si{\micro\volt} $\rightarrow$ V};
-        \node[procblock]    (buffer)   at (0,-2.7) {ring buffer\\multicanal};
-        \node[procblock]    (window)   at (0,-4.05) {ventana CH1\\\SI{4}{\second}};
-        \node[featureblock] (dspcore)  at (0,-5.55) {\texttt{DSPCore}\\PSD multitaper};
-        \node[featureblock] (features) at (0,-7.05) {RMS, bandpowers\\relativos/absolutos y picos};
-        \node[qualityblock] (quality)  at (5.0,-7.05) {diagnóstico\\y \textit{quality gate}};
-        \node[featureblock] (out)      at (0,-8.55) {features EEG\\para sonificación};
+        \node[procblock]    (blocks)   at (0,0)        {bloques EEG válidos\\en \si{\micro\volt}};
+        \node[procblock]    (units)    at (0,-1.7)     {conversión de unidades\\\si{\micro\volt} $\rightarrow$ V};
+        \node[procblock]    (buffer)   at (0,-3.4)     {ring buffer\\multicanal};
+        \node[procblock]    (window)   at (0,-5.1)     {ventana CH1\\\SI{4}{\second}};
+        \node[featureblock] (dspcore)  at (0,-6.95)    {\texttt{DSPCore}\\PSD multitaper};
+        \node[featureblock] (features) at (0,-8.8)     {RMS, bandpowers\\relativos/absolutos y picos};
+        \node[qualityblock] (quality)  at (5.8,-8.8)   {diagnóstico\\y \textit{quality gate}};
+        \node[featureblock] (out)      at (0,-10.65)   {features EEG\\para sonificación};
 
         \draw[arrow] (blocks) -- (units);
         \draw[arrow] (units) -- (buffer);
@@ -364,11 +364,12 @@ La Figura~\ref{fig:bloque_procesamiento_digital} resume el flujo interno del blo
         \draw[arrow] (window) -- (dspcore);
         \draw[arrow] (dspcore) -- (features);
         \draw[arrow] (features) -- (out);
+
         \draw[auxarrow] (features) -- (quality);
         \draw[auxarrow] (quality) |- (out);
 
-        \node[note] at (-4.35,-4.05) {Actualización cada\\64 muestras};
-        \node[note] at (-4.35,-5.55) {Con \SI{250}{\hertz}:\\aprox. \SI{256}{\milli\second}};
+        \node[note] at (-3.7,-5.1)  {Actualización cada\\64 muestras};
+        \node[note] at (-3.7,-6.95) {Con \SI{250}{\hertz}:\\aprox. \SI{256}{\milli\second}};
     \end{tikzpicture}
     \caption{Flujo del bloque de procesamiento digital. Python convierte los bloques EEG a voltios, mantiene un buffer circular, extrae una ventana de CH1, calcula características espectrales mediante \texttt{DSPCore} y evalúa la calidad de la ventana antes de entregar las features al bloque de sonificación.}
     \label{fig:bloque_procesamiento_digital}
