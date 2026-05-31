@@ -251,8 +251,8 @@ La Figura~\ref{fig:bloque_adquisicion_eeg} resume el recorrido de la señal dent
         \draw[arrow] (escala) -- (filtros);
         \draw[arrow] (filtros) -- (uv);
 
-        \node[note, below=0.35cm of montaje] {CH1 es el canal EEG principal\\en la configuración final};
-        \node[note, below=0.35cm of escala] {CH2--CH4 se conservan\\por contrato de datos};
+        \node[note, below=0.15cm of montaje] {CH1 es el canal EEG principal\\en la configuración final};
+        \node[note, below=0.15cm of escala] {CH2--CH4 se conservan\\por contrato de datos};
     \end{tikzpicture}}
     \caption{Bloque de adquisición EEG basado en el ADS1299--4PAG. La etapa transforma la señal bioeléctrica en muestras digitales escaladas en microvoltios; el empaquetado en bloques \texttt{eeg\_block\_uV} pertenece al bloque de comunicación posterior.}
     \label{fig:bloque_adquisicion_eeg}
