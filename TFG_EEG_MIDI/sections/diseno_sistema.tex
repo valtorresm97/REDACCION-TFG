@@ -447,8 +447,63 @@ En resumen, el bloque de sonificación EEG--MIDI se define como la cadena formad
 
 \subsection{Bloque de visualización e interacción}
 
-% Pendiente de redacción propia.
-% Describir interfaz web HTML, métricas mostradas, piano scroll, selección de canal activo y visualización en matriz LED.
+El bloque de visualización e interacción proporciona una interfaz auxiliar para observar el estado del sistema y modificar parámetros musicales de alto nivel durante la ejecución. No forma parte de la ruta mínima necesaria para producir sonido, ya que la salida principal del prototipo es el puerto MIDI físico. Su función es facilitar la supervisión experimental, la depuración y el ajuste musical sin intervenir directamente en la adquisición, el procesamiento digital ni la escritura de bytes MIDI en la UART.
+
+La interfaz utilizada en la versión final no se basa en Streamlit, sino en una WebUI ligera servida desde el entorno Python de la Arduino UNO Q. El backend genera periódicamente un \textit{snapshot} de estado que resume la adquisición, la recepción de bloques, el buffer EEG, las características espectrales, el diagnóstico de calidad, la sonificación, el estado MIDI, las notas recientes y la configuración auxiliar. Este \textit{snapshot} actúa como contrato de visualización entre el backend y la interfaz.
+
+Desde el punto de vista de diseño, la WebUI se comporta como un observador del sistema. El navegador recibe el estado publicado por el servidor web y actualiza los paneles de visualización. La interfaz no calcula PSD, no estima potencias por banda, no accede al ADS1299, no modifica los filtros del firmware y no genera notas musicales por sí misma. Los cálculos críticos siguen perteneciendo a los bloques de adquisición, comunicación, procesamiento, calidad y sonificación.
+
+La información mostrada se organiza en paneles funcionales. Un primer conjunto resume el estado general de la aplicación, la disponibilidad de ventana de análisis, las tasas de recepción, los índices de muestra, posibles pérdidas de bloques y el estado de los canales. Otro conjunto representa las características EEG de CH1, incluyendo RMS, frecuencias pico y potencias por bandas. También se muestran métricas de diagnóstico y calidad, como amplitud, rango pico a pico, componente de red, avisos y estado del \textit{quality gate}.
+
+La WebUI incorpora además paneles específicos de sonificación y MIDI. Estos paneles permiten observar los controles musicales derivados de las características EEG, el estado del planificador, el transporte MIDI, el estado del handler en el microcontrolador y las notas recientes generadas. El piano roll representa visualmente dichas notas en el tiempo y actúa como evidencia rápida de que el motor de sonificación está produciendo eventos musicales.
+
+La interacción del usuario se mantiene deliberadamente acotada. La interfaz permite modificar parámetros musicales como la nota raíz, la nota principal y la escala. Estos controles cambian el marco musical sobre el que opera la sonificación, pero no alteran el firmware, el ADS1299, los filtros, la frecuencia de muestreo, el contrato \texttt{eeg\_block\_uV} ni el contrato \texttt{midi\_bytes}. Esta separación reduce el riesgo de que una acción de interfaz deje el sistema en un estado de adquisición no comparable o difícil de validar.
+
+Otra interacción importante es el botón de \textit{panic} MIDI. Su finalidad es enviar una acción de seguridad cuando existe riesgo de notas activas no liberadas o cuando se desea limpiar el estado musical durante las pruebas. Aunque esta acción es auxiliar, resulta relevante para la operabilidad del sistema porque permite recuperar una salida MIDI estable sin reiniciar toda la aplicación.
+
+Algunas rutas de la WebUI tienen carácter diagnóstico, como las pruebas MIDI de nota, secuencia o bucle. Estas funciones son útiles para comprobar el transporte MIDI de forma aislada, pero no pertenecen al flujo principal EEG--MIDI. En la memoria se consideran herramientas de apoyo y no evidencias de sonificación EEG por sí mismas, ya que pueden producir sonido sin depender de la señal cerebral.
+
+La matriz LED se mantiene como visualización lateral. Cuando está habilitada, reutiliza la información de notas recientes que también alimenta el piano roll. De este modo, LED y WebUI no constituyen motores musicales independientes, sino observadores de la misma actividad generada por el bloque de sonificación. Esta decisión mantiene coherencia entre la representación visual y la salida MIDI, sin introducir una segunda ruta de generación.
+
+La Figura~\ref{fig:bloque_visualizacion_interaccion} resume la relación entre backend, servidor web, navegador y acciones auxiliares. La figura muestra que la WebUI recibe \textit{snapshots} del sistema, representa el estado en paneles y solo envía acciones acotadas de control musical o seguridad MIDI.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        webblock/.style={draw, rounded corners, align=center, text width=4.3cm, minimum height=0.95cm, font=\footnotesize},
+        panelblock/.style={draw, rounded corners, align=center, text width=4.5cm, minimum height=0.95cm, font=\footnotesize, fill=gray!8},
+        auxblock/.style={draw, rounded corners, dashed, align=center, text width=3.8cm, minimum height=0.9cm, font=\footnotesize, fill=gray!5},
+        arrow/.style={-{Latex[length=3mm]}, thick},
+        auxarrow/.style={-{Latex[length=2.5mm]}, dashed, thick},
+        note/.style={align=center, font=\scriptsize}
+    ]
+        \node[webblock]   (backend) at (0,0)      {\texttt{BackendService}\\snapshot runtime};
+        \node[webblock]   (server)  at (0,-1.6)   {\texttt{EEGWebServer}\\\texttt{GET /latest} + socket};
+        \node[webblock]   (assets)  at (0,-3.2)   {assets WebUI\\HTML + JS + CSS};
+        \node[webblock]   (browser) at (0,-4.8)   {navegador\\dashboard};
+        \node[panelblock] (panels)  at (0,-6.4)   {paneles\\adquisición, calidad, sonificación, MIDI};
+
+        \node[auxblock] (music) at (5.4,-3.2) {controles musicales\\root, main note y escala};
+        \node[auxblock] (panic) at (5.4,-4.8) {\texttt{/midi/panic}\\seguridad MIDI};
+        \node[auxblock] (roll)  at (5.4,-6.4) {piano roll / LED\\notas recientes};
+
+        \draw[arrow] (backend) -- (server);
+        \draw[arrow] (server) -- (assets);
+        \draw[arrow] (assets) -- (browser);
+        \draw[arrow] (browser) -- (panels);
+
+        \draw[auxarrow] (music) -- (server);
+        \draw[auxarrow] (panic) -- (server);
+        \draw[auxarrow] (panels) -- (roll);
+
+        \node[note] at (-4.45,-1.6) {La UI observa snapshots;\\no calcula DSP};
+        \node[note] at (-4.45,-4.8) {No modifica ADS1299,\\firmware ni filtros MCU};
+    \end{tikzpicture}
+    \caption{Bloque de visualización e interacción. El backend publica snapshots hacia la WebUI, que representa el estado del sistema y permite acciones auxiliares acotadas: configuración musical, panic MIDI y visualización de notas recientes mediante piano roll o matriz LED.}
+    \label{fig:bloque_visualizacion_interaccion}
+\end{figure}
+
+En resumen, el bloque de visualización e interacción se diseña como una capa auxiliar de observación, control musical limitado y seguridad operativa. Permite supervisar la adquisición, el procesamiento, la calidad de señal, la sonificación y el estado MIDI, pero no sustituye a la salida MIDI física ni participa en los cálculos críticos. Esta delimitación mantiene la arquitectura defendible: la WebUI ayuda a entender y controlar el sistema, mientras que la ruta principal sigue siendo EEG real, procesamiento, sonificación y MIDI OUT físico.
 
 \subsection{Diseño electrónico y PCB}
 
