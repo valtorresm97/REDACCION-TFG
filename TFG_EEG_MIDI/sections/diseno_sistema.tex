@@ -321,8 +321,62 @@ En conjunto, este diseño permite separar tres responsabilidades: el firmware ad
 
 \subsection{Bloque de procesamiento digital}
 
-% Pendiente de redacción propia.
-% Describir filtrado, ventanas, buffer temporal, PSD, potencia por bandas, picos espectrales y métricas de calidad.
+El bloque de procesamiento digital transforma los bloques EEG recibidos desde el firmware en características temporales y espectrales utilizables por la sonificación. Su entrada son bloques de muestras EEG ya validados por el receptor Python, expresados en microvoltios y organizados según el contrato multicanal del sistema. Su salida no son todavía eventos musicales, sino una representación intermedia de la señal formada por métricas de amplitud, potencia por bandas, frecuencias pico y estado de calidad.
+
+A diferencia del bloque de adquisición, el procesamiento digital no accede directamente al ADS1299 ni a la interfaz SPI. Tampoco modifica el contrato de comunicación entre el microcontrolador y Linux. Su función comienza cuando el backend Python drena la cola de bloques válidos y entrega las muestras al procesador EEG. En ese punto, \texttt{EEGSignalProcessor} convierte los valores de microvoltios a voltios y los inserta en un buffer circular multicanal. Esta conversión de unidades es importante porque el firmware y las capturas trabajan en microvoltios, mientras que los cálculos internos de PSD y RMS se realizan sobre valores en voltios.
+
+El uso de un buffer circular permite mantener una historia temporal reciente de la señal sin crecer indefinidamente en memoria. En la configuración final, el backend conserva varios segundos de señal multicanal, suficientes para extraer ventanas de análisis y actualizar las características de forma periódica. Aunque el contrato mantiene cuatro canales, la versión final del sistema utiliza CH1 como canal principal para el análisis espectral en vivo y para la sonificación. Esta decisión simplifica la validación experimental sin eliminar la estructura multicanal del sistema.
+
+El cálculo de características no se realiza muestra a muestra. El sistema espera a disponer de una ventana temporal suficiente y calcula nuevas características cada cierto número de muestras. En la configuración final, la ventana de análisis es de \SI{4}{\second} y el salto entre actualizaciones es de 64 muestras. Con una frecuencia de muestreo de \SI{250}{\hertz}, esto equivale a una actualización aproximada cada \SI{256}{\milli\second}. Esta elección busca un compromiso entre estabilidad espectral y respuesta temporal: una ventana demasiado corta produciría estimaciones frecuenciales poco estables, mientras que una ventana excesivamente larga retrasaría la respuesta musical del sistema.
+
+El núcleo del análisis espectral se concentra en \texttt{DSPCore}. Este bloque calcula la densidad espectral de potencia de la ventana EEG y obtiene métricas asociadas a las bandas delta, theta, alfa, beta y gamma. En la ruta en vivo se emplea estimación multitaper, ya que ofrece una estimación espectral más estable para señales no estacionarias que una única ventana clásica. A partir de la PSD se calculan potencias absolutas, potencias relativas y frecuencias pico. Además, se calcula la amplitud RMS de la señal, que aporta una medida temporal complementaria a la información frecuencial.
+
+Las potencias relativas por banda son especialmente relevantes para la sonificación, porque permiten describir la distribución espectral de la señal con menor dependencia de la amplitud absoluta. Las potencias absolutas y el RMS, por otro lado, resultan útiles para diagnóstico, trazabilidad y detección de cambios de energía en la señal. Las frecuencias pico permiten identificar la componente dominante global o dentro de bandas concretas, aunque deben interpretarse con cautela cuando existe ruido, artefactos musculares o mala calidad de contacto.
+
+Después del cálculo de características, el sistema evalúa la calidad de la ventana analizada. Esta etapa calcula métricas de diagnóstico como amplitud RMS en microvoltios, rango pico a pico, presencia de componente de red, saturación, discontinuidades o comportamiento anómalo de la forma de onda. Estas métricas se combinan posteriormente en un bloque de calidad espectral que produce un estado de calidad y un factor de puerta. El objetivo es evitar que ventanas dominadas por ruido, artefactos o errores de transporte influyan en la sonificación con la misma intensidad que una ventana limpia.
+
+El \textit{quality gate} actúa, por tanto, como frontera entre procesamiento EEG y sonificación. Si la ventana se considera válida, las características pueden modular la generación musical con normalidad. Si la calidad es dudosa o mala, el sistema puede atenuar o bloquear la influencia de la señal sobre los controles musicales. Esta decisión es importante porque en una aplicación EEG real no todas las ventanas capturadas contienen información fisiológica útil; algunas pueden estar dominadas por movimiento, contacto deficiente, actividad muscular o interferencias.
+
+La Figura~\ref{fig:bloque_procesamiento_digital} resume el flujo interno del bloque de procesamiento digital. La figura diferencia entre la ruta principal de cálculo de características y la evaluación de calidad que condiciona su uso posterior en la sonificación.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        procblock/.style={draw, rounded corners, align=center, text width=3.9cm, minimum height=0.9cm, font=\footnotesize},
+        featureblock/.style={draw, rounded corners, align=center, text width=4.2cm, minimum height=0.9cm, font=\footnotesize, fill=gray!8},
+        qualityblock/.style={draw, rounded corners, dashed, align=center, text width=3.8cm, minimum height=0.9cm, font=\footnotesize, fill=gray!5},
+        arrow/.style={-{Latex[length=3mm]}, thick},
+        auxarrow/.style={-{Latex[length=2.5mm]}, dashed, thick},
+        note/.style={align=center, font=\scriptsize}
+    ]
+        \node[procblock]    (blocks)   at (0,0) {bloques EEG válidos\\en \si{\micro\volt}};
+        \node[procblock]    (units)    at (0,-1.35) {conversión de unidades\\\si{\micro\volt} $\rightarrow$ V};
+        \node[procblock]    (buffer)   at (0,-2.7) {ring buffer\\multicanal};
+        \node[procblock]    (window)   at (0,-4.05) {ventana CH1\\\SI{4}{\second}};
+        \node[featureblock] (dspcore)  at (0,-5.55) {\texttt{DSPCore}\\PSD multitaper};
+        \node[featureblock] (features) at (0,-7.05) {RMS, bandpowers\\relativos/absolutos y picos};
+        \node[qualityblock] (quality)  at (5.0,-7.05) {diagnóstico\\y \textit{quality gate}};
+        \node[featureblock] (out)      at (0,-8.55) {features EEG\\para sonificación};
+
+        \draw[arrow] (blocks) -- (units);
+        \draw[arrow] (units) -- (buffer);
+        \draw[arrow] (buffer) -- (window);
+        \draw[arrow] (window) -- (dspcore);
+        \draw[arrow] (dspcore) -- (features);
+        \draw[arrow] (features) -- (out);
+        \draw[auxarrow] (features) -- (quality);
+        \draw[auxarrow] (quality) |- (out);
+
+        \node[note] at (-4.35,-4.05) {Actualización cada\\64 muestras};
+        \node[note] at (-4.35,-5.55) {Con \SI{250}{\hertz}:\\aprox. \SI{256}{\milli\second}};
+    \end{tikzpicture}
+    \caption{Flujo del bloque de procesamiento digital. Python convierte los bloques EEG a voltios, mantiene un buffer circular, extrae una ventana de CH1, calcula características espectrales mediante \texttt{DSPCore} y evalúa la calidad de la ventana antes de entregar las features al bloque de sonificación.}
+    \label{fig:bloque_procesamiento_digital}
+\end{figure}
+
+El bloque de procesamiento digital finaliza generando una estructura de características y diagnóstico que será consumida por el adaptador de sonificación. Esta salida mantiene separadas dos capas: por un lado, las características EEG calculadas a partir de la señal; por otro, la evaluación de calidad que determina cuánto debe confiar el sistema en esa ventana. La conversión de dichas características en parámetros musicales pertenece al bloque posterior de sonificación EEG--MIDI.
+
+En resumen, el procesamiento digital se define como la cadena formada por recepción de bloques válidos, conversión de microvoltios a voltios, almacenamiento en buffer circular multicanal, extracción de una ventana temporal de CH1, estimación espectral multitaper, cálculo de RMS, potencias por banda y picos, diagnóstico de calidad y generación del factor de puerta. Esta organización permite que la sonificación no dependa directamente de la señal cruda, sino de una representación EEG más estable, interpretable y controlada.
 
 \subsection{Bloque de sonificación EEG--MIDI}
 
