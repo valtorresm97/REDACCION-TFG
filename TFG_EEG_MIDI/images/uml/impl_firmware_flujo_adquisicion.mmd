@@ -1,9 +1,8 @@
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 35, "rankSpacing": 45, "curve": "basis"}}}%%
 flowchart LR
-  ads["ADS1299-4PAG<br/>conversión EEG"] --> drdy["DRDY<br/>muestra disponible"]
-  drdy --> rdatac["readFrameRDATAC()<br/>status + CH1-CH4"]
-  rdatac --> unpack["Validación status<br/>unpack24()"]
-  unpack --> scale["Escalado<br/>counts → V con LSB_V"]
-  scale --> filters["Filtros MCU<br/>HP 0.5 Hz · notch 50 Hz · LP 40 Hz"]
-  filters --> uv["Conversión final<br/>microvoltios enteros"]
-  uv --> ring["TxBlockRing<br/>bloques de 8 muestras"]
-  ring --> bridge["Bridge.notify<br/>eeg_block_uV"]
+  ads["ADS1299<br/>EEG"] --> frame["Frame RDATAC<br/>15 bytes"]
+  frame --> unpack["Validar status<br/>unpack24"]
+  unpack --> scale["Escalar<br/>counts a V"]
+  scale --> filter["Filtrar MCU<br/>HP · notch · LP"]
+  filter --> block["Bloque uV<br/>8 muestras"]
+  block --> bridge["eeg_block_uV<br/>hacia Python"]
