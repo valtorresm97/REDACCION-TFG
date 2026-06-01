@@ -1,0 +1,9 @@
+flowchart LR
+  ads["ADS1299-4PAG<br/>conversión EEG"] --> drdy["DRDY<br/>muestra disponible"]
+  drdy --> rdatac["readFrameRDATAC()<br/>status + CH1-CH4"]
+  rdatac --> unpack["Validación status<br/>unpack24()"]
+  unpack --> scale["Escalado<br/>counts → V con LSB_V"]
+  scale --> filters["Filtros MCU<br/>HP 0.5 Hz · notch 50 Hz · LP 40 Hz"]
+  filters --> uv["Conversión final<br/>microvoltios enteros"]
+  uv --> ring["TxBlockRing<br/>bloques de 8 muestras"]
+  ring --> bridge["Bridge.notify<br/>eeg_block_uV"]
