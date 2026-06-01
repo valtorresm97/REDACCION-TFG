@@ -1,0 +1,28 @@
+flowchart TB
+  frame["Frame RDATAC ADS1299<br/>15 bytes"]
+  status["STATUS<br/>3 bytes"]
+  ch1["CH1<br/>3 bytes"]
+  ch2["CH2<br/>3 bytes"]
+  ch3["CH3<br/>3 bytes"]
+  ch4["CH4<br/>3 bytes"]
+
+  frame --> status
+  frame --> ch1
+  frame --> ch2
+  frame --> ch3
+  frame --> ch4
+
+  status --> validate["Validación<br/>(status & 0xF00000) == 0xC00000"]
+  ch1 --> unpack["unpack24()<br/>extensión de signo"]
+  ch2 --> unpack
+  ch3 --> unpack
+  ch4 --> unpack
+
+  validate --> sampleRaw["Muestra reconstruida<br/>status24 + ch_raw[4]"]
+  unpack --> sampleRaw
+  sampleRaw --> volts["Escalado<br/>ch_raw × LSB_V → voltios"]
+  volts --> filters["Filtros MCU<br/>HP 0.5 Hz · notch 50 Hz · LP 40 Hz"]
+  filters --> uv["Muestra filtrada<br/>status24 + ch_uV[4]"]
+  uv --> repeat["Repetir hasta completar<br/>8 muestras"]
+  repeat --> block["EegBlockUV<br/>block_idx + first_sample_idx + sample_count<br/>8 × (status, CH1, CH2, CH3, CH4)"]
+  block --> notify["Bridge.notify<br/>eeg_block_uV"]
