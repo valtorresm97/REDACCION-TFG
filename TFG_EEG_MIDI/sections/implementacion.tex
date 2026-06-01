@@ -42,6 +42,26 @@ Después de la identificación, \texttt{configureDefaults()} carga una configura
 
 En la configuración final del prototipo se utiliza \texttt{ADS\_DIAGNOSTIC\_MODE=5}. Este modo mantiene activo CH1 como canal EEG principal, con ganancia 24 y multiplexor en entrada normal. Los canales CH2, CH3 y CH4 se mantienen dentro de la estructura del frame, pero se configuran como canales no activos para la interpretación EEG de la sesión final. Además, la derivación de BIAS se limita a CH1P y CH1N, evitando incluir canales no usados o flotantes en la realimentación de modo común. La detección \textit{lead-off} se desactiva en esta configuración para evitar que las corrientes de diagnóstico introduzcan componentes no deseadas en la señal usada para la sonificación. La señal de test interna también permanece desactivada durante la adquisición real.
 
+La Tabla~\ref{tab:impl_ads1299_modo_final} resume esta configuración, diferenciando entre el contrato estructural de cuatro canales y el canal fisiológico utilizado para el análisis final. Esta distinción es importante porque el formato de datos se mantiene multicanal, mientras que la interpretación experimental se centra en CH1.
+
+\begin{table}[H]
+    \centering
+    \caption{Configuración final del ADS1299 en el modo de adquisición empleado.}
+    \label{tab:impl_ads1299_modo_final}
+    \begin{tabular}{p{0.22\textwidth}p{0.33\textwidth}p{0.34\textwidth}}
+        \hline
+        \textbf{Elemento} & \textbf{Configuración final} & \textbf{Papel en la adquisición} \\
+        \hline
+        CH1 & Activo, ganancia 24, entrada normal & Canal EEG principal usado por el procesamiento y la sonificación. \\
+        CH2--CH4 & Apagados/cortocircuitados en el modo final & Conservados en el payload por contrato, sin interpretarse como EEG activo principal. \\
+        BIAS & Derivado de CH1P + CH1N & Referencia de modo común limitada al canal usado. \\
+        \textit{Lead-off} & Desactivado & Evita inyección diagnóstica durante la captura final. \\
+        Test interno & Desactivado & No se mezcla señal de prueba con la señal real. \\
+        Tasa de muestreo & \SI{250}{\hertz} & Frecuencia común entre firmware y backend Python. \\
+        \hline
+    \end{tabular}
+\end{table}
+
 Esta decisión debe interpretarse junto con lo explicado en el diseño del sistema: la arquitectura conserva una estructura multicanal de cuatro canales por compatibilidad entre firmware, backend, capturas y herramientas, pero la versión final de validación utiliza CH1 como canal principal para el procesamiento espectral y la sonificación. Por tanto, conservar \texttt{NUM\_CH=4} no implica que la salida musical final esté construida a partir de cuatro canales EEG activos.
 
 \subsubsection{Lectura SPI y sincronización con DRDY}
@@ -73,11 +93,42 @@ Tras el campo de estado, el frame contiene las muestras de canal. Cada canal se 
 
 Una vez reconstruidas las cuentas digitales, el firmware aplica el factor \texttt{LSB\_V}. En la configuración utilizada, este valor es \SI{2.235e-8}{\volt} por cuenta. La conversión genera muestras en voltios, que todavía se mantienen dentro del firmware para aplicar el acondicionamiento digital previo al envío.
 
+La Figura~\ref{fig:impl_frame_rdatac_a_bloque_uv} muestra la transformación entre el frame nativo del ADS1299 y el bloque que finalmente recibe Python. Esta figura conecta la lectura SPI de 15 bytes con la estructura \texttt{EegBlockUV}, evitando confundir el frame RDATAC individual con el evento de bloque publicado por Bridge.
+
+\begin{figure}[H]
+    \centering
+    \IfFileExists{images/uml/impl_frame_rdatac_a_bloque_uv.pdf}{%
+        \includegraphics[width=0.96\textwidth]{images/uml/impl_frame_rdatac_a_bloque_uv.pdf}
+    }{%
+        \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_frame\_rdatac\_a\_bloque\_uv.mmd}}}%
+    }
+    \caption{Transformación entre un frame RDATAC del ADS1299 y el bloque \texttt{eeg\_block\_uV}. Cada frame individual se valida, se reconstruye, se escala y se filtra; después se acumulan ocho muestras para formar el bloque enviado a Python.}
+    \label{fig:impl_frame_rdatac_a_bloque_uv}
+\end{figure}
+
 \subsubsection{Envío de bloques hacia Linux}
 
 Antes de publicar las muestras hacia Linux, el firmware aplica una cadena de filtrado digital por canal. En primer lugar se utiliza un bloque de eliminación de continua o paso alto de \SI{0.5}{\hertz}, destinado a reducir la deriva lenta de línea base. A continuación se aplica un filtro de muesca centrado en \SI{50}{\hertz}, orientado a atenuar interferencias de red eléctrica, y finalmente un filtro paso bajo de \SI{40}{\hertz}, que limita el contenido de alta frecuencia antes del análisis posterior. Tras esta cadena, la señal filtrada se convierte a microvoltios enteros mediante \texttt{volts\_to\_uV\_i32()}.
 
 El envío hacia Linux no se realiza muestra a muestra. El firmware acumula las muestras filtradas en la estructura \texttt{EegBlockUV}, definida en \texttt{streaming.h}. Cada bloque contiene una cabecera con el índice de bloque, el índice de la primera muestra y el número de muestras incluidas. En la configuración actual, \texttt{BLOCK\_SAMPLES=8}, por lo que cada bloque representa \SI{32}{\milli\second} de señal a \SI{250}{\hertz}. Después de la cabecera se añaden, para cada una de las ocho muestras, el \texttt{status} del ADS1299 y los cuatro canales expresados en microvoltios.
+
+La Tabla~\ref{tab:impl_tiempos_adquisicion} resume la escala temporal de la adquisición. Esta tabla ayuda a interpretar la relación entre la frecuencia del ADS1299, el tamaño del bloque y el ritmo nominal de publicación hacia Linux.
+
+\begin{table}[H]
+    \centering
+    \caption{Relación temporal entre muestra, bloque y transporte en la adquisición.}
+    \label{tab:impl_tiempos_adquisicion}
+    \begin{tabular}{p{0.28\textwidth}p{0.25\textwidth}p{0.36\textwidth}}
+        \hline
+        \textbf{Elemento} & \textbf{Valor} & \textbf{Significado} \\
+        \hline
+        Frecuencia de muestreo & \SI{250}{\hertz} & Una muestra nueva aproximadamente cada \SI{4}{\milli\second}. \\
+        Tamaño de bloque & 8 muestras & Agrupación mínima antes de publicar por Bridge. \\
+        Periodo nominal de bloque & \SI{32}{\milli\second} & Intervalo temporal representado por cada \texttt{eeg\_block\_uV}. \\
+        Canales por muestra & 4 & Contrato estructural común a firmware, backend y capturas. \\
+        \hline
+    \end{tabular}
+\end{table}
 
 La Figura~\ref{fig:impl_payload_eeg_block_uv} muestra la estructura lógica del payload. Esta representación es importante porque el mismo contrato debe ser interpretado de forma idéntica por el firmware, el backend, las capturas CSV y las herramientas de validación.
 
