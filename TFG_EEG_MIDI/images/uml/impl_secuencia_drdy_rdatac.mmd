@@ -1,22 +1,21 @@
-sequenceDiagram
-  participant ADS as ADS1299
-  participant MCU as sketch.ino
-  participant Driver as ADS1299Plus
-  participant Ring as TxBlockRing
-  participant Bridge as Arduino Bridge
-  participant RX as EEGReceiver
+flowchart TB
+  %% Versión compacta del antiguo sequenceDiagram. Evita un diagrama demasiado ancho
+  %% y facilita su inclusión en una página A4.
 
-  ADS->>MCU: DRDY falling edge
-  MCU->>MCU: ISR mínima: drdy_count++
-  MCU->>Driver: readFrameRDATAC(status24, ch_raw[4])
-  Driver-->>MCU: status24 + muestras signed 24-bit
-  MCU->>MCU: validar STATUS_PREFIX y escalar con LSB_V
-  MCU->>MCU: filtros HP / notch / LP y conversión a µV
-  MCU->>Ring: appendSampleToFillBlock(sample_idx, status, ch_uV)
-  alt sample_count == 8
-    Ring->>Ring: enqueueCompletedBlock()
-  end
-  MCU->>Ring: publishPendingBlocks(max 4)
-  Ring->>Bridge: notify("eeg_block_uV", block_idx, first_sample_idx, sample_count, vals)
-  Bridge->>RX: eeg_block_uV(...)
-  RX->>RX: parsear, validar continuidad y encolar bloque
+  step1["1. ADS1299<br/>DRDY falling edge"]
+  step2["2. sketch.ino<br/>ISR mínima: drdy_count++"]
+  step3["3. loop()<br/>detecta muestra pendiente"]
+  step4["4. ADS1299Plus<br/>readFrameRDATAC(status24, ch_raw[4])"]
+  step5["5. sketch.ino<br/>validación, escalado y filtros"]
+  step6["6. TxBlockRing<br/>appendSampleToFillBlock()"]
+  step7["7. Si hay 8 muestras<br/>enqueueCompletedBlock()"]
+  step8["8. Bridge.notify<br/>eeg_block_uV"]
+  step9["9. EEGReceiver<br/>parsear, validar y encolar bloque"]
+
+  step1 --> step2 --> step3 --> step4 --> step5 --> step6 --> step7 --> step8 --> step9
+
+  note1["No se hace SPI ni Bridge dentro de la ISR"]
+  note2["El DSP no se ejecuta en el callback de recepción"]
+
+  step2 -.-> note1
+  step9 -.-> note2
