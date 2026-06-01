@@ -1,10 +1,5 @@
-%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial", "fontSize": "18px", "primaryColor": "#F8F8F8", "primaryTextColor": "#222222", "primaryBorderColor": "#444444", "lineColor": "#444444", "secondaryColor": "#FFFFFF", "tertiaryColor": "#FFFFFF"}, "flowchart": {"curve": "linear", "nodeSpacing": 35, "rankSpacing": 45, "padding": 8, "htmlLabels": false}}}%%
-flowchart TB
-  b1["Bloque recibido\n8 muestras = 32 ms"] --> conv["add_block_uV\nuV -> V"]
-  conv --> rb["Ring buffer\n4 canales"]
-  rb --> status["valid_samples\nwrite_pos"]
-  status --> ready{"Ventana lista?\n4 s = 1000 muestras"}
-  ready -- "No" --> wait["waiting_for_window"]
-  ready -- "Si" --> hop["Hop de features\n64 muestras = 256 ms"]
-  hop --> feat["compute_live_features\nCH1 principal"]
-  feat --> snap["features + diagnostics\nsnapshot"]
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial", "fontSize": "13px", "primaryColor": "#F8F8F8", "primaryTextColor": "#222222", "primaryBorderColor": "#444444", "lineColor": "#444444", "secondaryColor": "#FFFFFF", "tertiaryColor": "#FFFFFF"}, "flowchart": {"curve": "linear", "nodeSpacing": 18, "rankSpacing": 28, "padding": 4, "htmlLabels": false}}}%%
+flowchart LR
+  b["Bloque\n8 muestras\n32 ms"] --> conv["uV -> V\nadd_block_uV"] --> rb["Ring buffer\n4 canales"] --> ready{"4 s?\n1000 muestras"}
+  ready -- "No" --> wait["waiting\nfor window"]
+  ready -- "Si" --> hop["hop 64\n256 ms"] --> feat["features\nCH1"] --> snap["snapshot"]
