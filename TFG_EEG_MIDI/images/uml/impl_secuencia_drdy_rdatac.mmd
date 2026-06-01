@@ -1,0 +1,22 @@
+sequenceDiagram
+  participant ADS as ADS1299
+  participant MCU as sketch.ino
+  participant Driver as ADS1299Plus
+  participant Ring as TxBlockRing
+  participant Bridge as Arduino Bridge
+  participant RX as EEGReceiver
+
+  ADS->>MCU: DRDY falling edge
+  MCU->>MCU: ISR mínima: drdy_count++
+  MCU->>Driver: readFrameRDATAC(status24, ch_raw[4])
+  Driver-->>MCU: status24 + muestras signed 24-bit
+  MCU->>MCU: validar STATUS_PREFIX y escalar con LSB_V
+  MCU->>MCU: filtros HP / notch / LP y conversión a µV
+  MCU->>Ring: appendSampleToFillBlock(sample_idx, status, ch_uV)
+  alt sample_count == 8
+    Ring->>Ring: enqueueCompletedBlock()
+  end
+  MCU->>Ring: publishPendingBlocks(max 4)
+  Ring->>Bridge: notify("eeg_block_uV", block_idx, first_sample_idx, sample_count, vals)
+  Bridge->>RX: eeg_block_uV(...)
+  RX->>RX: parsear, validar continuidad y encolar bloque
