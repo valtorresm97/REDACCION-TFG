@@ -1,22 +1,17 @@
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "22px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "sequence": {"useMaxWidth": true, "showSequenceNumbers": true, "diagramMarginX": 18, "diagramMarginY": 12, "boxMargin": 8, "noteMargin": 8, "messageMargin": 28}}}%%
 sequenceDiagram
   participant ADS as ADS1299
-  participant MCU as sketch.ino
-  participant Driver as ADS1299Plus
-  participant Ring as TxBlockRing
-  participant Bridge as Arduino Bridge
+  participant MCU as MCU<br/>sketch.ino
+  participant DRV as ADS1299Plus
+  participant BR as Bridge
   participant RX as EEGReceiver
 
-  ADS->>MCU: DRDY falling edge
-  MCU->>MCU: ISR mínima: drdy_count++
-  MCU->>Driver: readFrameRDATAC(status24, ch_raw[4])
-  Driver-->>MCU: status24 + muestras signed 24-bit
-  MCU->>MCU: validar STATUS_PREFIX y escalar con LSB_V
-  MCU->>MCU: filtros HP / notch / LP y conversión a µV
-  MCU->>Ring: appendSampleToFillBlock(sample_idx, status, ch_uV)
-  alt sample_count == 8
-    Ring->>Ring: enqueueCompletedBlock()
-  end
-  MCU->>Ring: publishPendingBlocks(max 4)
-  Ring->>Bridge: notify("eeg_block_uV", block_idx, first_sample_idx, sample_count, vals)
-  Bridge->>RX: eeg_block_uV(...)
-  RX->>RX: parsear, validar continuidad y encolar bloque
+  ADS->>MCU: DRDY
+  MCU->>MCU: ISR: drdy_count++
+  MCU->>DRV: readFrameRDATAC()
+  DRV-->>MCU: status + CH raw
+  MCU->>MCU: validar · escalar · filtrar
+  MCU->>MCU: acumular 8 muestras
+  MCU->>BR: notify eeg_block_uV
+  BR->>RX: bloque EEG
+  RX->>RX: parsear y encolar
