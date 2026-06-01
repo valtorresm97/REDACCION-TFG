@@ -1,11 +1,21 @@
-flowchart LR
-  event["Bridge.notify\neeg_block_uV"] --> rx["EEGReceiver\neeg_block_uV"]
-  rx --> contract["eeg_contract.py\nparse + status"]
-  contract --> queue["Cola de bloques\nBlockItem"]
-  queue --> drain["drain_blocks_to_processor"]
-  drain --> proc["EEGSignalProcessor\nadd_block_uV"]
-  proc --> buffer["Ring buffer\nuV a V"]
-  buffer --> features["compute_live_features\nventana 4 s + hop 64"]
-  features --> dsp["DSPCore\nPSD multitaper + bandas"]
-  dsp --> quality["spectral_quality\nquality gate"]
-  quality --> snapshot["Snapshot runtime\nestado + metricas"]
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial", "fontSize": "18px", "primaryColor": "#F8F8F8", "primaryTextColor": "#222222", "primaryBorderColor": "#444444", "lineColor": "#444444", "secondaryColor": "#FFFFFF", "tertiaryColor": "#FFFFFF"}, "flowchart": {"curve": "linear", "nodeSpacing": 35, "rankSpacing": 45, "padding": 8, "htmlLabels": false}}}%%
+flowchart TB
+  subgraph in["Entrada desde firmware"]
+    event["Bridge.notify\neeg_block_uV"] --> rx["EEGReceiver\ncallback ligero"]
+    rx --> contract["eeg_contract.py\nparse + status"]
+    contract --> queue["Cola de bloques\nBlockItem"]
+  end
+
+  subgraph dsp["Procesado EEG"]
+    drain["drain_blocks_to_processor"] --> proc["EEGSignalProcessor\nadd_block_uV"]
+    proc --> buffer["Ring buffer\nuV a V"]
+    buffer --> features["compute_live_features\n4 s + hop 64"]
+    features --> core["DSPCore\nPSD + bandas"]
+  end
+
+  subgraph out["Estado publicado"]
+    quality["spectral_quality\nquality gate"] --> snapshot["Snapshot runtime\nestado + metricas"]
+  end
+
+  queue --> drain
+  core --> quality
