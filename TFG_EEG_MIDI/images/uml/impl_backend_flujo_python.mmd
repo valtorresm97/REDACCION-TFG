@@ -1,0 +1,11 @@
+flowchart LR
+  event["Bridge.notify\neeg_block_uV"] --> rx["EEGReceiver\neeg_block_uV"]
+  rx --> contract["eeg_contract.py\nparse + status"]
+  contract --> queue["Cola de bloques\nBlockItem"]
+  queue --> drain["drain_blocks_to_processor"]
+  drain --> proc["EEGSignalProcessor\nadd_block_uV"]
+  proc --> buffer["Ring buffer\nuV a V"]
+  buffer --> features["compute_live_features\nventana 4 s + hop 64"]
+  features --> dsp["DSPCore\nPSD multitaper + bandas"]
+  dsp --> quality["spectral_quality\nquality gate"]
+  quality --> snapshot["Snapshot runtime\nestado + metricas"]
