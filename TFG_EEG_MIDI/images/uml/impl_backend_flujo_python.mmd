@@ -1,21 +1,19 @@
-%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial", "fontSize": "18px", "primaryColor": "#F8F8F8", "primaryTextColor": "#222222", "primaryBorderColor": "#444444", "lineColor": "#444444", "secondaryColor": "#FFFFFF", "tertiaryColor": "#FFFFFF"}, "flowchart": {"curve": "linear", "nodeSpacing": 35, "rankSpacing": 45, "padding": 8, "htmlLabels": false}}}%%
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial", "fontSize": "13px", "primaryColor": "#F8F8F8", "primaryTextColor": "#222222", "primaryBorderColor": "#444444", "lineColor": "#444444", "secondaryColor": "#FFFFFF", "tertiaryColor": "#FFFFFF"}, "flowchart": {"curve": "linear", "nodeSpacing": 18, "rankSpacing": 28, "padding": 4, "htmlLabels": false}}}%%
 flowchart TB
-  subgraph in["Entrada desde firmware"]
-    event["Bridge.notify\neeg_block_uV"] --> rx["EEGReceiver\ncallback ligero"]
-    rx --> contract["eeg_contract.py\nparse + status"]
-    contract --> queue["Cola de bloques\nBlockItem"]
+  subgraph entrada["Entrada"]
+    direction LR
+    event["Bridge.notify\neeg_block_uV"] --> rx["EEGReceiver"] --> contract["Contrato\nparser + status"] --> queue["Cola\nBlockItem"]
   end
 
-  subgraph dsp["Procesado EEG"]
-    drain["drain_blocks_to_processor"] --> proc["EEGSignalProcessor\nadd_block_uV"]
-    proc --> buffer["Ring buffer\nuV a V"]
-    buffer --> features["compute_live_features\n4 s + hop 64"]
-    features --> core["DSPCore\nPSD + bandas"]
+  subgraph proceso["Procesamiento"]
+    direction LR
+    drain["drain"] --> proc["Processor\nadd_block_uV"] --> buffer["Ring buffer\nuV -> V"] --> feat["Features\n4 s / hop 64"] --> dsp["DSPCore\nPSD + bandas"]
   end
 
-  subgraph out["Estado publicado"]
-    quality["spectral_quality\nquality gate"] --> snapshot["Snapshot runtime\nestado + metricas"]
+  subgraph salida["Estado"]
+    direction LR
+    quality["Quality gate"] --> snap["Snapshot\nmetricas"]
   end
 
   queue --> drain
-  core --> quality
+  dsp --> quality
