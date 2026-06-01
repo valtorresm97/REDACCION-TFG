@@ -1,0 +1,9 @@
+flowchart LR
+  b1["Bloque 8 muestras\n32 ms"] --> conv["add_block_uV\nuV a V"]
+  conv --> rb["Ring buffer\n4 canales"]
+  rb --> fill["valid_samples\nventana llenandose"]
+  fill --> ready{"4 s disponibles?\n1000 muestras"}
+  ready -- "No" --> wait["waiting_for_window"]
+  ready -- "Si" --> hop["Hop 64 muestras\n256 ms"]
+  hop --> feat["compute_live_features\nCH1 principal"]
+  feat --> snap["features + diagnostics\nsnapshot"]
