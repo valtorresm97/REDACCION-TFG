@@ -128,26 +128,101 @@ En el diseño de la placa estas señales atraviesan un aislador digital \texttt{
 
 \begin{figure}[H]
     \centering
-    \resizebox{0.88\textwidth}{!}{%
-    \begin{tikzpicture}[
-        side/.style={draw, rounded corners, align=center, text width=3.6cm, minimum height=1.0cm, font=\footnotesize},
-        isol/.style={draw, rounded corners, align=center, text width=3.0cm, minimum height=4.9cm, font=\footnotesize, fill=gray!10},
-        arrow/.style={-{Latex[length=3mm]}, thick},
-        sig/.style={font=\scriptsize}
-    ]
-        \node[side] (uno) at (0,0) {Arduino UNO Q, lado no aislado};
-        \node[isol] (iso) at (4.6,0) {ADuM3151, aislamiento digital};
-        \node[side] (ads) at (9.2,0) {ADS1299--4PAGR, lado aislado};
+    \small
 
-        \draw[arrow] (uno.east) ++(0,1.8) -- node[above, sig]{\texttt{SPI1\_SCLK} / \texttt{SPI\_SCLK\_ISO}} (ads.west |- 0,1.8);
-        \draw[arrow] (uno.east) ++(0,1.1) -- node[above, sig]{\texttt{SPI1\_MOSI} / \texttt{SPI\_MOSI\_ISO}} (ads.west |- 0,1.1);
-        \draw[arrow] (ads.west) ++(0,0.4) -- node[above, sig]{\texttt{SPI\_MISO\_ISO} / \texttt{SPI1\_MISO}} (uno.east |- 0,0.4);
-        \draw[arrow] (uno.east) ++(0,-0.3) -- node[above, sig]{\texttt{FE\_SPI\_CS} / \texttt{SPI\_CS\_ISO}} (ads.west |- 0,-0.3);
-        \draw[arrow] (uno.east) ++(0,-1.0) -- node[above, sig]{\texttt{FE\_START} / \texttt{START\_ISO}} (ads.west |- 0,-1.0);
-        \draw[arrow] (uno.east) ++(0,-1.7) -- node[above, sig]{\texttt{FE\_RESET} / \texttt{RESET\_ISO}} (ads.west |- 0,-1.7);
-        \draw[arrow] (ads.west) ++(0,-2.4) -- node[below, sig]{\texttt{DRDY\_ISO} / \texttt{FE\_DRDY}} (uno.east |- 0,-2.4);
-    \end{tikzpicture}}
-    \caption{Comunicación SPI aislada entre Arduino UNO Q y ADS1299--4PAGR. El ADuM3151 separa el lado de control del lado de adquisición, manteniendo las señales SPI y de control necesarias para la lectura continua del conversor.}
+    \setlength{\fboxsep}{6pt}
+
+    \begin{tabular}{p{0.28\textwidth} c p{0.28\textwidth} c p{0.28\textwidth}}
+        \centering
+        \fbox{
+        \begin{minipage}[t][1.8cm][c]{0.25\textwidth}
+            \centering
+            \textbf{Arduino UNO Q}\par
+            Lado de control\par
+            no aislado
+        \end{minipage}
+        }
+        &
+        \centering $\Longrightarrow$
+        &
+        \centering
+        \fbox{
+        \begin{minipage}[t][1.8cm][c]{0.25\textwidth}
+            \centering
+            \textbf{ADuM3151}\par
+            Barrera de\par
+            aislamiento digital
+        \end{minipage}
+        }
+        &
+        \centering $\Longrightarrow$
+        &
+        \centering
+        \fbox{
+        \begin{minipage}[t][1.8cm][c]{0.25\textwidth}
+            \centering
+            \textbf{ADS1299--4PAGR}\par
+            Front-end EEG\par
+            aislado
+        \end{minipage}
+        }
+    \end{tabular}
+
+    \vspace{0.5cm}
+
+    \begin{tabular}{p{0.42\textwidth} c p{0.42\textwidth}}
+        \fbox{
+        \begin{minipage}[t]{0.39\textwidth}
+            \textbf{SPI lado Arduino}\par
+            \texttt{SPI1\_SCLK}\par
+            \texttt{SPI1\_MOSI}\par
+            \texttt{SPI1\_MISO}\par
+            \texttt{FE\_SPI\_CS}
+        \end{minipage}
+        }
+        &
+        \centering $\Longleftrightarrow$
+        &
+        \fbox{
+        \begin{minipage}[t]{0.39\textwidth}
+            \textbf{SPI lado ADS1299}\par
+            \texttt{SPI\_SCLK\_ISO}\par
+            \texttt{SPI\_MOSI\_ISO}\par
+            \texttt{SPI\_MISO\_ISO}\par
+            \texttt{SPI\_CS\_ISO}
+        \end{minipage}
+        }
+        \\[0.45cm]
+
+        \fbox{
+        \begin{minipage}[t]{0.39\textwidth}
+            \textbf{Control y sincronismo}\par
+            \texttt{FE\_START}\par
+            \texttt{FE\_RESET}\par
+            \texttt{FE\_DRDY}
+        \end{minipage}
+        }
+        &
+        \centering $\Longleftrightarrow$
+        &
+        \fbox{
+        \begin{minipage}[t]{0.39\textwidth}
+            \textbf{Control y sincronismo aislado}\par
+            \texttt{START\_ISO}\par
+            \texttt{RESET\_ISO}\par
+            \texttt{DRDY\_ISO}
+        \end{minipage}
+        }
+    \end{tabular}
+
+    \vspace{0.45cm}
+
+    \begin{minipage}{0.88\textwidth}
+        \footnotesize
+        La señal \texttt{DRDY} viaja desde el ADS1299 hacia la Arduino UNO Q e indica que existe una nueva conversión disponible. Las señales \texttt{START}, \texttt{RESET}, \texttt{CS}, \texttt{SCLK} y \texttt{MOSI} se gobiernan desde el lado de control.
+    \end{minipage}
+
+    \caption{Comunicación SPI aislada entre Arduino UNO Q y ADS1299--4PAGR. El ADuM3151 separa el lado de control del lado de adquisición, manteniendo las señales SPI, control y sincronismo necesarias para la lectura continua del conversor.}
     \label{fig:spi_aislado_adum3151}
 \end{figure}
 
