@@ -1,56 +1,35 @@
-%%{init: {"theme": "base", "themeVariables": {"fontSize": "26px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "sequence": {"showSequenceNumbers": false, "mirrorActors": false, "actorMargin": 70, "messageMargin": 72, "boxMargin": 14, "boxTextMargin": 8, "noteMargin": 12}}}%%
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "28px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "sequence": {"showSequenceNumbers": false, "mirrorActors": false, "actorMargin": 90, "messageMargin": 80, "boxMargin": 16, "boxTextMargin": 10, "noteMargin": 14}}}%%
 sequenceDiagram
-  participant Backend as BackendService
-  participant Proc as EEGSignalProcessor
-  participant DSP as DSPCore
-  participant Quality as spectral_quality.py
-  participant Adapter as SonificationFeatureAdapter
-  participant Segment as MusicSegmentBuilder
-  participant Bar as BarGenerator
-  participant Notes as NoteGenerator
-  participant Scheduler as MidiScheduler
-  participant Transport as MidiByteTransport
-  participant Bridge as Arduino Bridge
-  participant MCU as firmware midi_bytes
-  participant UART as Serial1/D1 TX invertido
+  participant B as BackendService
+  participant D as DSP + calidad
+  participant A as Adaptador<br/>sonificación
+  participant G as Generadores<br/>musicales
+  participant S as Scheduler<br/>MIDI
+  participant T as Transporte<br/>Bridge
+  participant F as Firmware<br/>MIDI OUT
 
-  Backend->>Proc: is_window_ready(4 s)
-  alt ventana lista y hop 64 alcanzado
-    Backend->>Proc: compute_live_features(CH1, multitaper)
-    Proc->>DSP: compute_features()
-    DSP-->>Proc: RMS, PSD, bandas y picos
-    Proc-->>Backend: features
-    Backend->>Proc: compute_quality_diagnostics()
-    Backend->>Quality: compute_spectral_quality(features, diagnostics, rx)
-    Quality-->>Backend: SpectralQuality
-    Backend->>Adapter: update(features, quality)
-    Adapter-->>Backend: SonificationFeatures
+  B->>D: ventana CH1 lista<br/>4 s + hop 64
+  D-->>B: features + diagnostics<br/>+ SpectralQuality
+  B->>A: update(features, quality)
+  A-->>B: SonificationFeatures<br/>controles 0..1
+
+  alt calidad válida y periodo de compás
+    B->>G: construir segmento<br/>compás y notas
+    G-->>B: lista NoteEvent
+    B->>S: program_change<br/>+ schedule_notes()
+  else calidad insuficiente
+    B->>B: no generar nuevo compás útil
   end
 
-  alt sonificación válida y periodo de compás cumplido
-    Backend->>Segment: build_live_segment(sonification, scale, main_note)
-    Segment-->>Backend: MusicSegment
-    Backend->>Bar: generate_live_bar(segment)
-    Bar-->>Backend: Bar
-    Backend->>Notes: generate_notes_for_bar(segment, bar)
-    Notes-->>Backend: lista NoteEvent
-    Backend->>Scheduler: schedule_program_change una vez
-    Backend->>Scheduler: schedule_notes(notes, time_origin)
-    Backend->>Backend: actualizar recent_notes para WebUI
-  end
-
-  Backend->>Scheduler: pop_due_events(now, lookahead)
-  Scheduler-->>Backend: MidiLiveEvent list
-  Backend->>Transport: send_events(due_events)
-  loop cada evento MIDI
-    Transport->>Transport: event_to_midi_bytes(event)
-    Transport->>Bridge: call("midi_bytes", n, b0, b1, b2)
-    Bridge->>MCU: midi_bytes(n, b0, b1, b2)
-    MCU->>UART: write bytes a 31250 baudios
-  end
+  B->>S: pop_due_events(now, lookahead)
+  S-->>B: eventos MIDI vencidos
+  B->>T: send_events(events)
+  T->>T: event_to_midi_bytes()
+  T->>F: Bridge.call("midi_bytes", n, b0, b1, b2)
+  F->>F: Serial1/D1 invertido<br/>31250 baudios
 
   opt Panic MIDI
-    Backend->>Scheduler: panic()
-    Scheduler-->>Backend: All Sound Off + All Notes Off
-    Backend->>Transport: send_events(panic_events)
+    B->>S: panic()
+    S-->>T: All Sound Off<br/>All Notes Off
+    T->>F: midi_bytes
   end
