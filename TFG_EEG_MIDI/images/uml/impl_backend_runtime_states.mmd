@@ -1,8 +1,19 @@
 %%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial", "fontSize": "13px", "primaryColor": "#F8F8F8", "primaryTextColor": "#222222", "primaryBorderColor": "#444444", "lineColor": "#444444", "secondaryColor": "#FFFFFF", "tertiaryColor": "#FFFFFF"}, "state": {"nodeSpacing": 18, "rankSpacing": 28, "padding": 4}}}%%
 stateDiagram-v2
-  [*] --> waiting_for_data
-  waiting_for_data --> waiting_for_window: llega bloque
-  waiting_for_window --> receiving: ventana lista
-  receiving --> features_ready: features OK
-  features_ready --> features_ready: nuevo hop
-  features_ready --> waiting_for_window: reset
+  [*] --> boot
+  boot --> waiting_linux: backend + WebUI
+  waiting_linux --> streaming: linux_started
+  streaming --> filling_window: primer bloque
+  filling_window --> features_ready: window_ready
+
+  features_ready --> quality_clean: clean
+  features_ready --> quality_caution: caution / artifact
+  features_ready --> quality_blocked: bad
+
+  quality_clean --> features_ready: nuevo hop
+  quality_caution --> features_ready: nuevo hop
+  quality_blocked --> filling_window: esperar ventana util
+
+  streaming --> error: RX / bridge
+  features_ready --> error: feature / quality
+  error --> [*]
