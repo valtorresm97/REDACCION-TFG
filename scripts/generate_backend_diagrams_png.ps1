@@ -16,6 +16,7 @@ if (Test-Path $PuppeteerConfig) {
 $diagrams = @(
     @{In="images\uml\impl_backend_flujo_python.mmd"; Out="images\uml\impl_backend_flujo_python.png"; W="1400"; H="950"},
     @{In="images\uml\impl_backend_buffer_ventana.mmd"; Out="images\uml\impl_backend_buffer_ventana.png"; W="1400"; H="950"},
+    @{In="images\uml\impl_backend_features_quality.mmd"; Out="images\uml\impl_backend_features_quality.png"; W="1400"; H="850"},
     @{In="images\uml\impl_backend_runtime_states.mmd"; Out="images\uml\impl_backend_runtime_states.png"; W="1300"; H="950"}
 )
 
