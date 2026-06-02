@@ -1,0 +1,21 @@
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 42, "rankSpacing": 55, "curve": "basis"}}}%%
+flowchart LR
+  win["Ventana CH1<br/>4 s · 1000 muestras"]
+
+  subgraph dsp["DSPCore"]
+    direction TB
+    psd["PSD multitaper"] --> bands["Bandpowers<br/>abs + rel"]
+    bands --> feats["Features<br/>RMS · picos · alpha/beta"]
+  end
+
+  subgraph diag["Diagnóstico"]
+    direction TB
+    qdiag["compute_quality_diagnostics()<br/>RMS uV · ptp · 50 Hz · saltos"]
+  end
+
+  quality["spectral_quality<br/>score · state · gate_factor"] --> snapshot["Snapshot runtime<br/>features · diagnostics · quality"]
+
+  win --> psd
+  win --> qdiag
+  feats --> quality
+  qdiag --> quality
