@@ -1,16 +1,56 @@
-%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 42, "rankSpacing": 55, "curve": "basis"}}}%%
-flowchart LR
-  feats["Features EEG<br/>CH1 4 s"] --> quality["Quality gate<br/>score + gate"]
-  quality --> adapter["SonificationFeatureAdapter<br/>normaliza + suaviza"]
-  adapter --> controls["SonificationFeatures<br/>controles 0..1"]
-  controls --> segment["MusicSegmentBuilder<br/>segmento musical"]
-  segment --> bar["BarGenerator<br/>compás + slots"]
-  bar --> note["NoteGenerator<br/>NoteEvent"]
-  note --> sched["MidiScheduler<br/>note on/off"]
-  sched --> transport["MidiByteTransport<br/>bytes MIDI"]
-  transport --> bridge["Bridge.call<br/>midi_bytes"]
-  bridge --> uart["Firmware<br/>Serial1 / D1"]
-  uart --> midi["MIDI OUT<br/>físico"]
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "20px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "sequence": {"showSequenceNumbers": false, "mirrorActors": false, "actorMargin": 42, "messageMargin": 48, "boxMargin": 8, "boxTextMargin": 5, "noteMargin": 8}}}%%
+sequenceDiagram
+  participant Backend as BackendService
+  participant Proc as EEGSignalProcessor
+  participant DSP as DSPCore
+  participant Quality as spectral_quality.py
+  participant Adapter as SonificationFeatureAdapter
+  participant Segment as MusicSegmentBuilder
+  participant Bar as BarGenerator
+  participant Notes as NoteGenerator
+  participant Scheduler as MidiScheduler
+  participant Transport as MidiByteTransport
+  participant Bridge as Arduino Bridge
+  participant MCU as firmware midi_bytes
+  participant UART as Serial1/D1 TX invertido
 
-  classDef data fill:#f7f7f7,stroke:#333333,stroke-width:1px;
-  class feats,quality,adapter,controls,segment,bar,note,sched,transport,bridge,uart,midi data;
+  Backend->>Proc: is_window_ready(4 s)
+  alt ventana lista y hop 64 alcanzado
+    Backend->>Proc: compute_live_features(CH1, multitaper)
+    Proc->>DSP: compute_features()
+    DSP-->>Proc: RMS, PSD, bandas y picos
+    Proc-->>Backend: features
+    Backend->>Proc: compute_quality_diagnostics()
+    Backend->>Quality: compute_spectral_quality(features, diagnostics, rx)
+    Quality-->>Backend: SpectralQuality
+    Backend->>Adapter: update(features, quality)
+    Adapter-->>Backend: SonificationFeatures
+  end
+
+  alt sonificación válida y periodo de compás cumplido
+    Backend->>Segment: build_live_segment(sonification, scale, main_note)
+    Segment-->>Backend: MusicSegment
+    Backend->>Bar: generate_live_bar(segment)
+    Bar-->>Backend: Bar
+    Backend->>Notes: generate_notes_for_bar(segment, bar)
+    Notes-->>Backend: lista NoteEvent
+    Backend->>Scheduler: schedule_program_change una vez
+    Backend->>Scheduler: schedule_notes(notes, time_origin)
+    Backend->>Backend: actualizar recent_notes para WebUI
+  end
+
+  Backend->>Scheduler: pop_due_events(now, lookahead)
+  Scheduler-->>Backend: MidiLiveEvent list
+  Backend->>Transport: send_events(due_events)
+  loop cada evento MIDI
+    Transport->>Transport: event_to_midi_bytes(event)
+    Transport->>Bridge: call("midi_bytes", n, b0, b1, b2)
+    Bridge->>MCU: midi_bytes(n, b0, b1, b2)
+    MCU->>UART: write bytes a 31250 baudios
+  end
+
+  opt Panic MIDI
+    Backend->>Scheduler: panic()
+    Scheduler-->>Backend: All Sound Off + All Notes Off
+    Backend->>Transport: send_events(panic_events)
+  end
