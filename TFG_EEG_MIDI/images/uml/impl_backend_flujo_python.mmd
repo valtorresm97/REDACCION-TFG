@@ -1,19 +1,24 @@
-%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial", "fontSize": "13px", "primaryColor": "#F8F8F8", "primaryTextColor": "#222222", "primaryBorderColor": "#444444", "lineColor": "#444444", "secondaryColor": "#FFFFFF", "tertiaryColor": "#FFFFFF"}, "flowchart": {"curve": "linear", "nodeSpacing": 18, "rankSpacing": 28, "padding": 4, "htmlLabels": false}}}%%
-flowchart TB
-  subgraph entrada["Entrada"]
-    direction LR
-    event["Bridge.notify\neeg_block_uV"] --> rx["EEGReceiver"] --> contract["Contrato\nparser + status"] --> queue["Cola\nBlockItem"]
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial", "fontSize": "13px", "primaryColor": "#F8F8F8", "primaryTextColor": "#222222", "primaryBorderColor": "#444444", "lineColor": "#444444", "secondaryColor": "#FFFFFF", "tertiaryColor": "#FFFFFF"}, "flowchart": {"curve": "linear", "nodeSpacing": 18, "rankSpacing": 24, "padding": 4, "htmlLabels": false}}}%%
+flowchart LR
+  subgraph RX["Recepcion y contrato"]
+    direction TB
+    a["Bridge.notify\neeg_block_uV"] --> b["EEGReceiver\ncallback ligero"]
+    b --> c["eeg_contract.py\nparse + status"]
+    c --> d["Cola\nBlockItem"]
   end
 
-  subgraph proceso["Procesamiento"]
-    direction LR
-    drain["drain"] --> proc["Processor\nadd_block_uV"] --> buffer["Ring buffer\nuV -> V"] --> feat["Features\n4 s / hop 64"] --> dsp["DSPCore\nPSD + bandas"]
+  subgraph BUF["Buffer y DSP"]
+    direction TB
+    e["drain_blocks\nto_processor"] --> f["add_block_uV\nuV -> V"]
+    f --> g["Ring buffer\n4 canales"]
+    g --> h["Ventana CH1\n4 s / hop 64"]
+    h --> i["DSPCore\nPSD multitaper"]
   end
 
-  subgraph salida["Estado"]
-    direction LR
-    quality["Quality gate"] --> snap["Snapshot\nmetricas"]
+  subgraph OUT["Calidad y estado"]
+    direction TB
+    j["diagnostics\n+ spectral_quality"] --> k["Snapshot\n5 Hz"]
   end
 
-  queue --> drain
-  dsp --> quality
+  d --> e
+  i --> j
