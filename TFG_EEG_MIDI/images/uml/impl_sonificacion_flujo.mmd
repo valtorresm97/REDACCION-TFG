@@ -1,0 +1,16 @@
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 42, "rankSpacing": 55, "curve": "basis"}}}%%
+flowchart LR
+  feats["Features EEG<br/>CH1 4 s"] --> quality["Quality gate<br/>score + gate"]
+  quality --> adapter["SonificationFeatureAdapter<br/>normaliza + suaviza"]
+  adapter --> controls["SonificationFeatures<br/>controles 0..1"]
+  controls --> segment["MusicSegmentBuilder<br/>segmento musical"]
+  segment --> bar["BarGenerator<br/>compás + slots"]
+  bar --> note["NoteGenerator<br/>NoteEvent"]
+  note --> sched["MidiScheduler<br/>note on/off"]
+  sched --> transport["MidiByteTransport<br/>bytes MIDI"]
+  transport --> bridge["Bridge.call<br/>midi_bytes"]
+  bridge --> uart["Firmware<br/>Serial1 / D1"]
+  uart --> midi["MIDI OUT<br/>físico"]
+
+  classDef data fill:#f7f7f7,stroke:#333333,stroke-width:1px;
+  class feats,quality,adapter,controls,segment,bar,note,sched,transport,bridge,uart,midi data;
