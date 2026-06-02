@@ -161,10 +161,10 @@ La implementación se apoya en cuatro piezas principales: \texttt{EEGReceiver}, 
 \begin{figure}[H]
     \centering
     \IfFileExists{images/uml/impl_backend_flujo_python.png}{%
-        \includegraphics[width=0.86\textwidth,height=0.40\textheight,keepaspectratio]{images/uml/impl_backend_flujo_python.png}
+        \includegraphics[width=0.82\textwidth,height=0.42\textheight,keepaspectratio]{images/uml/impl_backend_flujo_python.png}
     }{%
         \IfFileExists{images/uml/impl_backend_flujo_python.pdf}{%
-            \includegraphics[width=0.86\textwidth,height=0.40\textheight,keepaspectratio]{images/uml/impl_backend_flujo_python.pdf}
+            \includegraphics[width=0.82\textwidth,height=0.42\textheight,keepaspectratio]{images/uml/impl_backend_flujo_python.pdf}
         }{%
             \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_backend\_flujo\_python.mmd}}}%
         }%
@@ -242,10 +242,10 @@ La extracción de características no comienza hasta que \texttt{is\_window\_rea
 \begin{figure}[H]
     \centering
     \IfFileExists{images/uml/impl_backend_buffer_ventana.png}{%
-        \includegraphics[width=0.84\textwidth,height=0.32\textheight,keepaspectratio]{images/uml/impl_backend_buffer_ventana.png}
+        \includegraphics[width=0.82\textwidth,height=0.32\textheight,keepaspectratio]{images/uml/impl_backend_buffer_ventana.png}
     }{%
         \IfFileExists{images/uml/impl_backend_buffer_ventana.pdf}{%
-            \includegraphics[width=0.84\textwidth,height=0.32\textheight,keepaspectratio]{images/uml/impl_backend_buffer_ventana.pdf}
+            \includegraphics[width=0.82\textwidth,height=0.32\textheight,keepaspectratio]{images/uml/impl_backend_buffer_ventana.pdf}
         }{%
             \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_backend\_buffer\_ventana.mmd}}}%
         }%
@@ -285,20 +285,20 @@ Además del análisis espectral, el procesador calcula diagnósticos observacion
 
 \texttt{BackendService} coordina el ciclo de ejecución: drena bloques desde \texttt{EEGReceiver}, actualiza el buffer, comprueba si corresponde calcular nuevas características, obtiene diagnósticos, evalúa \texttt{spectral\_quality} y publica periódicamente un \textit{snapshot}. Aunque el servicio también se conecta con sonificación, MIDI y visualización, esta subsección se limita al estado necesario para entender el runtime del backend.
 
-El método \texttt{\_build\_snapshot()} construye la vista pública del sistema. El estado principal distingue entre \texttt{waiting\_for\_data}, \texttt{waiting\_for\_window}, \texttt{receiving} y \texttt{features\_ready}. Además, la calidad espectral introduce una condición posterior sobre el uso de la ventana: \texttt{clean}, \texttt{usable\_with\_caution}, \texttt{artifact\_suspected} o \texttt{bad}. La Figura~\ref{fig:impl_backend_runtime_states} sintetiza esta lógica sin representar todavía la generación musical completa.
+El método \texttt{\_build\_snapshot()} construye la vista pública del sistema. El estado principal distingue entre \texttt{waiting\_for\_data}, cuando aún no han llegado bloques; \texttt{waiting\_for\_window}, cuando hay recepción pero no ventana suficiente; \texttt{receiving}, cuando la ventana está lista pero todavía no hay features recientes; y \texttt{features\_ready}, cuando ya existe una extracción espectral disponible. Esta máquina de estados compacta permite interpretar si el sistema está parado, llenando buffer o procesando señal útil.
 
 \begin{figure}[H]
     \centering
     \IfFileExists{images/uml/impl_backend_runtime_states.png}{%
-        \includegraphics[width=0.76\textwidth,height=0.34\textheight,keepaspectratio]{images/uml/impl_backend_runtime_states.png}
+        \includegraphics[width=0.70\textwidth,height=0.30\textheight,keepaspectratio]{images/uml/impl_backend_runtime_states.png}
     }{%
         \IfFileExists{images/uml/impl_backend_runtime_states.pdf}{%
-            \includegraphics[width=0.76\textwidth,height=0.34\textheight,keepaspectratio]{images/uml/impl_backend_runtime_states.pdf}
+            \includegraphics[width=0.70\textwidth,height=0.30\textheight,keepaspectratio]{images/uml/impl_backend_runtime_states.pdf}
         }{%
             \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_backend\_runtime\_states.mmd}}}%
         }%
     }
-    \caption{Estados conceptuales del backend Python y evaluación de calidad. Los estados se derivan del \textit{snapshot} y de las métricas de runtime; no representan una única máquina de estados centralizada como clase.}
+    \caption{Estados principales publicados por el backend Python. El sistema distingue entre espera de datos, llenado de ventana, recepción con ventana disponible y disponibilidad de características espectrales.}
     \label{fig:impl_backend_runtime_states}
 \end{figure}
 
