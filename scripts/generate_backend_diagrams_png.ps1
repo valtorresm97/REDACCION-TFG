@@ -18,7 +18,7 @@ $diagrams = @(
     @{In="images\uml\impl_backend_buffer_ventana.mmd"; Out="images\uml\impl_backend_buffer_ventana.png"; W="1400"; H="950"},
     @{In="images\uml\impl_backend_features_quality.mmd"; Out="images\uml\impl_backend_features_quality.png"; W="1400"; H="850"},
     @{In="images\uml\impl_backend_runtime_states.mmd"; Out="images\uml\impl_backend_runtime_states.png"; W="1300"; H="950"},
-    @{In="images\uml\impl_sonificacion_flujo.mmd"; Out="images\uml\impl_sonificacion_flujo.png"; W="1600"; H="900"},
+    @{In="images\uml\impl_sonificacion_flujo.mmd"; Out="images\uml\impl_sonificacion_flujo.png"; W="1800"; H="1250"},
     @{In="images\uml\impl_sonificacion_controles.mmd"; Out="images\uml\impl_sonificacion_controles.png"; W="1500"; H="1050"},
     @{In="images\uml\impl_sonificacion_quality_gate.mmd"; Out="images\uml\impl_sonificacion_quality_gate.png"; W="1500"; H="1050"},
     @{In="images\uml\impl_sonificacion_segmento_compas_nota.mmd"; Out="images\uml\impl_sonificacion_segmento_compas_nota.png"; W="1600"; H="950"},
