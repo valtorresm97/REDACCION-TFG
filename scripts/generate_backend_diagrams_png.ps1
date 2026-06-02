@@ -11,13 +11,18 @@ if (Test-Path $PuppeteerConfig) {
     $PuppeteerArgs = @()
 }
 
-# Dimensiones armonizadas con los diagramas de 6.1: formato ancho/medio,
-# fuente legible y sin tiras horizontales excesivas.
+# Dimensiones armonizadas con los diagramas de 6.1, 6.2 y 6.3:
+# formato legible, fuente grande y nodos breves.
 $diagrams = @(
     @{In="images\uml\impl_backend_flujo_python.mmd"; Out="images\uml\impl_backend_flujo_python.png"; W="1400"; H="950"},
     @{In="images\uml\impl_backend_buffer_ventana.mmd"; Out="images\uml\impl_backend_buffer_ventana.png"; W="1400"; H="950"},
     @{In="images\uml\impl_backend_features_quality.mmd"; Out="images\uml\impl_backend_features_quality.png"; W="1400"; H="850"},
-    @{In="images\uml\impl_backend_runtime_states.mmd"; Out="images\uml\impl_backend_runtime_states.png"; W="1300"; H="950"}
+    @{In="images\uml\impl_backend_runtime_states.mmd"; Out="images\uml\impl_backend_runtime_states.png"; W="1300"; H="950"},
+    @{In="images\uml\impl_sonificacion_flujo.mmd"; Out="images\uml\impl_sonificacion_flujo.png"; W="1600"; H="900"},
+    @{In="images\uml\impl_sonificacion_controles.mmd"; Out="images\uml\impl_sonificacion_controles.png"; W="1500"; H="1050"},
+    @{In="images\uml\impl_sonificacion_quality_gate.mmd"; Out="images\uml\impl_sonificacion_quality_gate.png"; W="1500"; H="1050"},
+    @{In="images\uml\impl_sonificacion_segmento_compas_nota.mmd"; Out="images\uml\impl_sonificacion_segmento_compas_nota.png"; W="1600"; H="950"},
+    @{In="images\uml\impl_midi_eventos_bytes.mmd"; Out="images\uml\impl_midi_eventos_bytes.png"; W="1600"; H="900"}
 )
 
 foreach ($d in $diagrams) {
@@ -27,4 +32,4 @@ foreach ($d in $diagrams) {
 }
 
 Write-Host "Imágenes generadas:" -ForegroundColor Green
-Get-ChildItem images\uml\impl_backend_*.png | Select-Object Name,Length,LastWriteTime
+Get-ChildItem images\uml\impl_*.png | Select-Object Name,Length,LastWriteTime
