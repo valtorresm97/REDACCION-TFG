@@ -12,9 +12,9 @@ if (Test-Path $PuppeteerConfig) {
 }
 
 $diagrams = @(
-    @{In="images\uml\impl_backend_flujo_python.mmd"; Out="images\uml\impl_backend_flujo_python.png"; W="1400"; H="900"},
-    @{In="images\uml\impl_backend_buffer_ventana.mmd"; Out="images\uml\impl_backend_buffer_ventana.png"; W="1400"; H="700"},
-    @{In="images\uml\impl_backend_runtime_states.mmd"; Out="images\uml\impl_backend_runtime_states.png"; W="1000"; H="650"}
+    @{In="images\uml\impl_backend_flujo_python.mmd"; Out="images\uml\impl_backend_flujo_python.png"; W="1200"; H="850"},
+    @{In="images\uml\impl_backend_buffer_ventana.mmd"; Out="images\uml\impl_backend_buffer_ventana.png"; W="1000"; H="800"},
+    @{In="images\uml\impl_backend_runtime_states.mmd"; Out="images\uml\impl_backend_runtime_states.png"; W="1000"; H="760"}
 )
 
 foreach ($d in $diagrams) {
