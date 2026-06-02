@@ -1,0 +1,17 @@
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 42, "rankSpacing": 55, "curve": "basis"}}}%%
+flowchart LR
+  notes["NoteEvent<br/>t_start, t_end,<br/>pitch, velocity"] --> live["note_to_live_events"]
+  live --> on["MidiLiveEvent<br/>note_on"]
+  live --> off["MidiLiveEvent<br/>note_off"]
+  program["program_change<br/>una vez al inicio"] --> heap["MidiScheduler<br/>heap temporal"]
+  on --> heap
+  off --> heap
+  heap --> due["pop_due_events<br/>now + lookahead"]
+  due --> bytes["event_to_midi_bytes<br/>status + data"]
+  bytes --> transport["MidiByteTransport"]
+  transport --> call["Bridge.call<br/>(midi_bytes, n, b0, b1, b2)"]
+  call --> fw["firmware midi_bytes"]
+  fw --> uart["Serial1 / D1<br/>31250 baudios<br/>TX invertido"]
+  uart --> out["MIDI OUT físico"]
+
+  panic["panic<br/>CC120 + CC123"] --> heap
