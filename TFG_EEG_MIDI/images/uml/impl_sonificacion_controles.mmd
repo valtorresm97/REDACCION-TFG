@@ -1,0 +1,26 @@
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 45, "rankSpacing": 58, "curve": "basis"}}}%%
+flowchart TB
+  subgraph eeg["Entrada EEG ya procesada"]
+    features["Features espectrales<br/>RMS + bandas + picos"]
+    q["Calidad de ventana<br/>score / state / gate"]
+  end
+
+  subgraph user["Configuración musical"]
+    root["Root note<br/>C4 por defecto"]
+    main["Main note<br/>G4 por defecto"]
+    scale["Escala<br/>major / minor / blues..."]
+    midi["Canal + programa<br/>MIDI"]
+    barsec["Duración de compás<br/>MUSIC_BAR_SEC"]
+  end
+
+  features --> adapter["SonificationFeatureAdapter"]
+  q --> adapter
+  adapter --> controls["Controles EEG 0..1<br/>actividad, densidad,<br/>registro, estabilidad,<br/>dinámica, probabilidad"]
+
+  root --> music["Generación musical"]
+  main --> music
+  scale --> music
+  midi --> music
+  barsec --> music
+  controls --> music
+  music --> out["Compases, notas<br/>y eventos MIDI"]
