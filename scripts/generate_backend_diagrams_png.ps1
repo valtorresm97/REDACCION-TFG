@@ -11,10 +11,12 @@ if (Test-Path $PuppeteerConfig) {
     $PuppeteerArgs = @()
 }
 
+# Dimensiones armonizadas con los diagramas de 6.1: formato ancho/medio,
+# fuente legible y sin tiras horizontales excesivas.
 $diagrams = @(
-    @{In="images\uml\impl_backend_flujo_python.mmd"; Out="images\uml\impl_backend_flujo_python.png"; W="1200"; H="850"},
-    @{In="images\uml\impl_backend_buffer_ventana.mmd"; Out="images\uml\impl_backend_buffer_ventana.png"; W="1000"; H="800"},
-    @{In="images\uml\impl_backend_runtime_states.mmd"; Out="images\uml\impl_backend_runtime_states.png"; W="1000"; H="760"}
+    @{In="images\uml\impl_backend_flujo_python.mmd"; Out="images\uml\impl_backend_flujo_python.png"; W="1400"; H="950"},
+    @{In="images\uml\impl_backend_buffer_ventana.mmd"; Out="images\uml\impl_backend_buffer_ventana.png"; W="1400"; H="950"},
+    @{In="images\uml\impl_backend_runtime_states.mmd"; Out="images\uml\impl_backend_runtime_states.png"; W="1300"; H="950"}
 )
 
 foreach ($d in $diagrams) {
