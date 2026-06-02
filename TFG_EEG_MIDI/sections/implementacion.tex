@@ -151,103 +151,181 @@ La clase \texttt{EEGReceiver}, implementada en \texttt{receiver.py}, registra el
 
 Con esta implementación, la frontera entre firmware y Python queda definida de forma precisa: el microcontrolador entrega bloques de ocho muestras, con cuatro canales en microvoltios y estado ADS1299 por muestra; el backend Python valida y encola esos bloques antes de incorporarlos al buffer temporal de señal. La siguiente parte de la implementación describe cómo esos bloques son consumidos por el backend Python y transformados en ventanas de análisis para la extracción de características EEG.
 
+
 \subsection{Implementación del backend Python}
 
-El backend Python constituye la segunda capa ejecutable de la cadena EEG--MIDI. Su entrada ya no son cuentas crudas del ADS1299, sino bloques publicados por el firmware mediante \texttt{Bridge.notify("eeg\_block\_uV")}. Por tanto, esta capa parte de una señal ya reconstruida, filtrada y escalada a microvoltios en el microcontrolador, y asume como responsabilidad principal validar el contrato de transporte, almacenar la señal reciente, calcular características EEG y publicar un estado coherente para el resto del sistema.
+El backend Python constituye la segunda capa ejecutable de la cadena EEG--MIDI. Su entrada no son cuentas crudas del ADS1299, sino bloques ya reconstruidos, filtrados y escalados a microvoltios por el firmware mediante \texttt{Bridge.notify("eeg\_block\_uV")}. A partir de esa frontera, Python asume cuatro responsabilidades: validar el contrato de transporte, conservar una ventana temporal reciente, calcular características espectrales y publicar un estado coherente para los módulos consumidores.
 
-La implementación se organiza alrededor de cuatro piezas: \texttt{EEGReceiver}, que recibe y valida los bloques; \texttt{EEGSignalProcessor}, que mantiene el buffer temporal multicanal; \texttt{DSPCore}, que realiza el cálculo espectral; y \texttt{BackendService}, que coordina el ciclo de ejecución y publica el \textit{snapshot} de estado. La Figura~\ref{fig:impl_backend_flujo_python} resume esta ruta sin entrar todavía en la generación musical ni en la interfaz web, que se describen en apartados posteriores.
+La implementación se apoya en cuatro piezas principales: \texttt{EEGReceiver}, encargado de la recepción y validación de bloques; \texttt{EEGSignalProcessor}, responsable del buffer temporal multicanal; \texttt{DSPCore}, que concentra el cálculo espectral de un canal; y \texttt{BackendService}, que orquesta el ciclo de ejecución y construye el \textit{snapshot}. La Figura~\ref{fig:impl_backend_flujo_python} resume esta organización por capas, evitando representar el backend como una cadena horizontal excesivamente larga.
 
 \begin{figure}[H]
     \centering
-    \IfFileExists{images/uml/impl_backend_flujo_python.pdf}{%
-        \includegraphics[width=0.96\textwidth]{images/uml/impl_backend_flujo_python.pdf}
+    \IfFileExists{images/uml/impl_backend_flujo_python.png}{%
+        \includegraphics[width=0.86\textwidth,height=0.40\textheight,keepaspectratio]{images/uml/impl_backend_flujo_python.png}
     }{%
-        \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_backend\_flujo\_python.mmd}}}%
+        \IfFileExists{images/uml/impl_backend_flujo_python.pdf}{%
+            \includegraphics[width=0.86\textwidth,height=0.40\textheight,keepaspectratio]{images/uml/impl_backend_flujo_python.pdf}
+        }{%
+            \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_backend\_flujo\_python.mmd}}}%
+        }%
     }
-    \caption{Flujo principal del backend Python. El receptor valida y encola bloques \texttt{eeg\_block\_uV}; el procesador los incorpora a un buffer temporal, \texttt{DSPCore} calcula características espectrales y el backend publica un \textit{snapshot} de estado y métricas para los módulos consumidores.}
+    \caption{Flujo principal del backend Python organizado por capas. La recepción valida el contrato \texttt{eeg\_block\_uV}, el procesador mantiene la ventana temporal y el bloque DSP/calidad produce las características y métricas publicadas en el \textit{snapshot}.}
     \label{fig:impl_backend_flujo_python}
 \end{figure}
 
 \subsubsection{Recepción de muestras EEG}
 
-La recepción en Python continúa directamente el contrato cerrado en el firmware. El evento recibido se denomina \texttt{eeg\_block\_uV}, está definido por \texttt{EEG\_BLOCK\_EVENT} y agrupa \texttt{BLOCK\_SAMPLES=8} muestras para \texttt{NUM\_CH=4} canales. Con una frecuencia \texttt{FS\_HZ=250}, cada bloque representa \SI{32}{\milli\second} de señal. La constante \texttt{LSB\_V=2.235e-8} pertenece al escalado físico aplicado desde la adquisición, pero en esta frontera Python recibe ya valores enteros en microvoltios, no cuentas ADC.
+La recepción en Python continúa directamente el contrato cerrado en el firmware. El evento se denomina \texttt{eeg\_block\_uV}, está definido por \texttt{EEG\_BLOCK\_EVENT} y agrupa \texttt{BLOCK\_SAMPLES=8} muestras para \texttt{NUM\_CH=4} canales. Con \texttt{FS\_HZ=250}, cada bloque representa \SI{32}{\milli\second} de señal. La constante \texttt{LSB\_V=2.235e-8} pertenece al escalado físico de la adquisición, pero en esta frontera el backend recibe ya valores enteros en microvoltios, no cuentas ADC.
 
-El archivo \texttt{eeg\_contract.py} centraliza la definición formal del payload compartido entre firmware, backend, capturas y herramientas de análisis. En él se fijan el número de canales, el número máximo de muestras por bloque, la máscara de estado \texttt{STATUS\_MASK=0xF00000} y el prefijo válido \texttt{STATUS\_PREFIX=0xC00000}. La función \texttt{parse\_eeg\_block\_values()} convierte los valores recibidos en una tupla de estados ADS1299 y una matriz de muestras, verificando que \texttt{sample\_count} y la longitud del payload sean coherentes con el contrato.
+El módulo \texttt{eeg\_contract.py} centraliza la definición del payload compartido entre firmware, backend, capturas y herramientas de análisis. En él se fijan, entre otros valores, \texttt{STATUS\_MASK=0xF00000} y \texttt{STATUS\_PREFIX=0xC00000}. La función \texttt{parse\_eeg\_block\_values()} valida \texttt{sample\_count}, longitud del payload y número de canales, y separa el bloque en estados ADS1299 y muestras multicanal.
 
-La clase \texttt{EEGReceiver}, implementada en \texttt{receiver.py}, registra el \textit{callback} \texttt{eeg\_block\_uV()} como punto de entrada de los bloques publicados por Bridge. Este \textit{callback} realiza únicamente trabajo ligero: convierte argumentos a enteros, rechaza índices negativos, valida el payload, comprueba la continuidad de \texttt{block\_idx} y \texttt{first\_sample\_idx}, y aplica \texttt{is\_valid\_ads1299\_status()} a cada estado recibido. Con ello se pueden contabilizar bloques malformados, saltos de bloque, pérdidas estimadas de muestras y estados ADS1299 inválidos sin bloquear la llegada de nuevos datos.
+\texttt{EEGReceiver.eeg\_block\_uV()} actúa como \textit{callback} de entrada. Su trabajo se mantiene ligero: convierte argumentos a enteros, rechaza índices negativos, valida el payload, comprueba continuidad de \texttt{block\_idx} y \texttt{first\_sample\_idx}, aplica \texttt{is\_valid\_ads1299\_status()} y actualiza contadores de bloques malformados, pérdidas estimadas y estados inválidos. Si el bloque es coherente, se encapsula como \texttt{BlockItem} y se introduce en una cola interna.
 
-Una vez validado el bloque, el receptor lo encapsula como \texttt{BlockItem} y lo introduce en una cola interna. Esta cola desacopla la llegada de eventos Bridge del procesamiento posterior: el \textit{callback} no calcula PSD, no extrae características y no actualiza la sonificación. Esta decisión reduce el riesgo de que una operación de coste variable bloquee la recepción, especialmente cuando se acumulan bloques o cuando el cálculo espectral coincide con otras tareas del backend.
-
-El consumo de la cola se realiza fuera del \textit{callback} mediante \texttt{drain\_blocks\_to\_processor()}. Esta función extrae un número limitado de bloques por ciclo, actualiza métricas de drenado y entrega las muestras a \texttt{EEGSignalProcessor.add\_block\_uV()}. De este modo, la frontera de recepción queda definida por tres pasos: validación del contrato, encolado ligero y drenado controlado hacia el procesador de señal.
+El procesamiento digital no se ejecuta dentro del \textit{callback}. El backend vacía la cola en su ciclo normal mediante \texttt{drain\_blocks\_to\_processor()}, entregando bloques completos a \texttt{EEGSignalProcessor.add\_block\_uV()}. Con ello, la recepción queda separada del coste variable del DSP y la frontera MCU--Python se resume en tres operaciones: validar, encolar y drenar.
 
 \subsubsection{Buffer temporal de señal}
 
-El bloque \texttt{EEGSignalProcessor} transforma la secuencia de bloques recibidos en una representación temporal continua. Su entrada son bloques completos en microvoltios, con forma lógica \texttt{(n\_samples, num\_channels)}. Al ejecutar \texttt{add\_block\_uV()}, el procesador convierte los valores de microvoltios a voltios multiplicando por \texttt{1e-6} y los escribe en el buffer mediante \texttt{\_write\_block\_volts()}.
+\texttt{EEGSignalProcessor} transforma la sucesión de bloques recibidos en una señal temporal continua. Su entrada son bloques en microvoltios con forma lógica \texttt{(n\_samples, num\_channels)}. Al llamar a \texttt{add\_block\_uV()}, las muestras se convierten a voltios antes de escribirse en el anillo temporal:
 
-Internamente, el buffer se implementa como un anillo multicanal de tipo \texttt{float32}, con forma \texttt{(num\_channels, buffer\_size)}. Las variables \texttt{write\_pos}, \texttt{valid\_samples} y \texttt{total\_samples\_ingested} describen, respectivamente, la posición de escritura, la cantidad de muestras válidas disponibles y el número total de muestras incorporadas desde el inicio de la sesión. Esta estructura permite conservar la señal reciente sin desplazar continuamente grandes matrices en memoria.
+\[
+\begin{array}{rcl}
+    x_{\mathrm{V}}[n,c] & = & x_{\mu\mathrm{V}}[n,c]\,10^{-6}.
+\end{array}
+\]
 
-La extracción de características no comienza hasta que existe una ventana temporal suficiente. Para ello, \texttt{is\_window\_ready()} comprueba si el buffer contiene las muestras necesarias para la ventana de análisis, mientras que \texttt{get\_buffer\_status()} expone el número de muestras válidas, los segundos disponibles, las muestras requeridas y el estado de preparación de la ventana. Esta distinción entre ``llenando ventana'' y ``ventana lista'' evita interpretar como características estables los primeros instantes de la sesión, cuando todavía no hay señal acumulada suficiente.
+Internamente, el buffer es un anillo \texttt{float32} de forma \texttt{(num\_channels, buffer\_size)}. Las variables \texttt{write\_pos}, \texttt{valid\_samples} y \texttt{total\_samples\_ingested} controlan la posición de escritura, la cantidad de muestras útiles y el histórico de muestras incorporadas. Esta estructura evita desplazar matrices completas y permite extraer siempre la ventana reciente.
 
-Cuando la ventana está disponible, el procesador puede extraer el canal principal mediante \texttt{get\_signal\_window()} o una matriz multicanal reciente mediante \texttt{get\_recent\_multichannel\_window()}. La implementación conserva el contrato de cuatro canales hasta esta capa, lo que mantiene la compatibilidad con capturas y ampliaciones futuras. Sin embargo, la configuración final del sistema utiliza CH1 como canal principal de análisis, por lo que las características espectrales en vivo se calculan sobre \texttt{channel\_idx=0}.
+Las magnitudes temporales principales se concentran en la Tabla~\ref{tab:impl_backend_tiempos}. Para que las cuentas queden trazables en la memoria, las relaciones usadas por el backend se expresan también como:
 
-La Figura~\ref{fig:impl_backend_buffer_ventana} muestra la lógica temporal del buffer: los bloques de \SI{32}{\milli\second} van rellenando el anillo hasta disponer de una ventana de \SI{4}{\second}; después, el backend no recalcula por cada muestra, sino cada \texttt{FEATURE\_HOP\_SAMPLES=64} muestras, equivalente a \SI{256}{\milli\second} a \SI{250}{\hertz}.
+\[
+\begin{array}{rcl}
+    T_{\mathrm{bloque}} & = & \dfrac{\mathrm{BLOCK\_SAMPLES}}{\mathrm{FS\_HZ}}
+    = \dfrac{8}{250}
+    = \SI{0.032}{\second}
+    = \SI{32}{\milli\second},\\[2mm]
+    N_{\mathrm{ventana}} & = & \mathrm{FEATURE\_WINDOW\_SEC}\cdot\mathrm{FS\_HZ}
+    = 4.0\cdot250
+    = 1000~\text{muestras},\\[2mm]
+    T_{\mathrm{hop}} & = & \dfrac{\mathrm{FEATURE\_HOP\_SAMPLES}}{\mathrm{FS\_HZ}}
+    = \dfrac{64}{250}
+    = \SI{0.256}{\second}
+    = \SI{256}{\milli\second},\\[2mm]
+    f_{\mathrm{snapshot}} & = & \dfrac{1}{\mathrm{SNAPSHOT\_PUBLISH\_PERIOD\_SEC}}
+    = \dfrac{1}{0.2}
+    = \SI{5}{\hertz}.
+\end{array}
+\]
+
+\begin{table}[H]
+    \centering
+    \caption{Escalas temporales principales del backend Python.}
+    \label{tab:impl_backend_tiempos}
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabular}{p{0.28\textwidth}p{0.20\textwidth}p{0.40\textwidth}}
+        \hline
+        \textbf{Magnitud} & \textbf{Valor} & \textbf{Interpretación} \\
+        \hline
+        Frecuencia de muestreo & \SI{250}{\hertz} & Ritmo común entre firmware, receptor y procesador. \\
+        Tamaño de bloque & 8 muestras & Agrupación mínima recibida por \texttt{eeg\_block\_uV}. \\
+        Duración de bloque & \SI{32}{\milli\second} & Tiempo representado por cada bloque recibido. \\
+        Ventana de features & \SI{4}{\second} & Señal acumulada usada para el cálculo espectral. \\
+        Tamaño de ventana & 1000 muestras & Número de muestras contenidas en una ventana de \SI{4}{\second}. \\
+        Hop de features & 64 muestras & Desplazamiento entre cálculos sucesivos. \\
+        Duración del hop & \SI{256}{\milli\second} & Periodicidad nominal de actualización de características. \\
+        Snapshot & \SI{0.2}{\second} & Publicación lógica del estado a \SI{5}{\hertz}. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+La extracción de características no comienza hasta que \texttt{is\_window\_ready()} confirma que existe una ventana suficiente. \texttt{get\_buffer\_status()} publica segundos disponibles, muestras válidas y estado de ventana. La implementación conserva el contrato de cuatro canales, aunque la versión final utiliza CH1 como canal principal de análisis, equivalente a \texttt{channel\_idx=0}. La Figura~\ref{fig:impl_backend_buffer_ventana} resume la relación entre bloque, buffer, ventana y hop.
 
 \begin{figure}[H]
     \centering
-    \IfFileExists{images/uml/impl_backend_buffer_ventana.pdf}{%
-        \includegraphics[width=0.92\textwidth]{images/uml/impl_backend_buffer_ventana.pdf}
+    \IfFileExists{images/uml/impl_backend_buffer_ventana.png}{%
+        \includegraphics[width=0.84\textwidth,height=0.32\textheight,keepaspectratio]{images/uml/impl_backend_buffer_ventana.png}
     }{%
-        \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_backend\_buffer\_ventana.mmd}}}%
+        \IfFileExists{images/uml/impl_backend_buffer_ventana.pdf}{%
+            \includegraphics[width=0.84\textwidth,height=0.32\textheight,keepaspectratio]{images/uml/impl_backend_buffer_ventana.pdf}
+        }{%
+            \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_backend\_buffer\_ventana.mmd}}}%
+        }%
     }
-    \caption{Organización temporal del buffer EEG en Python. Los bloques de ocho muestras se convierten a voltios y se escriben en un anillo multicanal; cuando hay una ventana de \SI{4}{\second}, CH1 se extrae periódicamente para el cálculo espectral cada 64 muestras.}
+    \caption{Organización temporal del buffer EEG en Python. Los bloques de ocho muestras se convierten a voltios, se escriben en un anillo multicanal y, al completarse la ventana de \SI{4}{\second}, CH1 se analiza cada 64 muestras.}
     \label{fig:impl_backend_buffer_ventana}
 \end{figure}
 
 \subsubsection{Extracción de características espectrales}
 
-El cálculo de características se activa cuando el buffer contiene una ventana completa. En la configuración implementada, \texttt{FEATURE\_WINDOW\_SEC=4.0}, por lo que a \SI{250}{\hertz} se analizan ventanas de 1000 muestras. El salto entre cálculos viene dado por \texttt{FEATURE\_HOP\_SAMPLES=64}; por tanto, el backend dispone de un presupuesto temporal aproximado de \SI{256}{\milli\second} entre actualizaciones sucesivas de características.
+El cálculo de características se activa cuando hay ventana completa y se cumple el salto de \texttt{FEATURE\_HOP\_SAMPLES=64}. \texttt{compute\_live\_features()} extrae la ventana reciente de CH1 y delega el análisis en \texttt{DSPCore}. Así, \texttt{EEGSignalProcessor} gestiona memoria y selección temporal, mientras que \texttt{DSPCore} se limita al análisis espectral de un canal.
 
-La función \texttt{compute\_live\_features()} de \texttt{EEGSignalProcessor} extrae la ventana reciente de CH1 y delega el análisis en \texttt{DSPCore}. Esta separación mantiene desacopladas dos responsabilidades: el procesador gestiona el almacenamiento temporal y la selección de ventana, mientras que \texttt{DSPCore} calcula la representación espectral y las magnitudes derivadas. En la ruta en vivo se utiliza \texttt{psd\_method="multitaper"}, por lo que la PSD se estima mediante tapers DPSS, una opción adecuada para obtener una estimación espectral más estable en ventanas cortas.
+En la ruta en vivo se utiliza \texttt{psd\_method="multitaper"}. Antes de estimar la PSD, \texttt{DSPCore} aplica un preprocesado robusto sobre la ventana seleccionada; después calcula el espectro, integra potencias por banda y resume la ventana mediante RMS, picos y potencias absolutas/relativas. Las bandas usadas por defecto se muestran en la Tabla~\ref{tab:impl_backend_bandas}. No se interpretan como diagnóstico clínico, sino como variables cuantitativas para describir el contenido espectral reciente y alimentar módulos posteriores.
 
-Antes de estimar la PSD, \texttt{DSPCore} aplica un preprocesado robusto sobre la ventana seleccionada. A continuación calcula el espectro y obtiene potencias por bandas EEG. Las bandas definidas por defecto son delta \SIrange{0.5}{4}{\hertz}, theta \SIrange{4}{8}{\hertz}, alpha \SIrange{8}{13}{\hertz}, beta \SIrange{13}{30}{\hertz} y gamma \SIrange{30}{50}{\hertz}. Estas bandas no se interpretan como diagnóstico clínico; en este sistema actúan como variables cuantitativas para describir el contenido espectral reciente de la señal.
+\begin{table}[H]
+    \centering
+    \caption{Bandas espectrales y características obtenidas por el backend.}
+    \label{tab:impl_backend_bandas}
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabular}{p{0.18\textwidth}p{0.22\textwidth}p{0.48\textwidth}}
+        \hline
+        \textbf{Grupo} & \textbf{Rango o variable} & \textbf{Uso dentro del backend} \\
+        \hline
+        Delta & \SIrange{0.5}{4}{\hertz} & Potencia de baja frecuencia en la ventana reciente. \\
+        Theta & \SIrange{4}{8}{\hertz} & Potencia intermedia baja usada como descriptor espectral. \\
+        Alpha & \SIrange{8}{13}{\hertz} & Banda relevante para contrastar estados de reposo y actividad rítmica. \\
+        Beta & \SIrange{13}{30}{\hertz} & Banda rápida usada por las reglas de sonificación posteriores. \\
+        Gamma & \SIrange{30}{50}{\hertz} & Contenido alto dentro del rango analizado por el sistema. \\
+        Magnitudes & RMS, picos, potencias relativas & Resumen compacto de amplitud y distribución espectral. \\
+        \hline
+    \end{tabular}
+\end{table}
 
-La salida de \texttt{DSPCore.compute\_features()} incluye potencias absolutas por banda, potencias relativas cuando están disponibles, frecuencia pico global, picos por banda y RMS de la ventana. Las potencias relativas permiten comparar la distribución espectral aunque cambie el nivel absoluto de la señal, mientras que el RMS resume la amplitud efectiva de la ventana. Estas características constituyen la representación intermedia que después podrá usar la sonificación, pero en esta etapa todavía no se generan notas ni eventos MIDI.
-
-Además de las características espectrales, el procesador calcula diagnósticos observacionales mediante \texttt{compute\_quality\_diagnostics()}. Entre ellos se incluyen RMS en microvoltios, media, desviación típica, pico a pico, percentiles de amplitud, indicadores de saturación, posible señal plana, saltos bruscos y relación de energía en torno a \SI{50}{\hertz}. Estas métricas no sustituyen al análisis espectral, sino que ayudan a distinguir ventanas fisiológicamente plausibles de ventanas contaminadas por artefactos, deriva, pérdidas de contacto o interferencia eléctrica.
-
-El módulo \texttt{spectral\_quality.py} actúa como una evaluación posterior a las features y al diagnóstico. Su función no es modificar la señal ni recalcular la PSD, sino asignar una calidad a la ventana reciente a partir de las características, los diagnósticos y las métricas de recepción. El resultado resume un \textit{score}, un estado de calidad, penalizaciones o avisos y un factor de puerta que indica si la ventana puede utilizarse con normalidad, atenuarse o congelarse en los módulos posteriores.
+Además del análisis espectral, el procesador calcula diagnósticos observacionales mediante \texttt{compute\_quality\_diagnostics()}: RMS en microvoltios, media, desviación típica, pico a pico, percentiles, saturación, posible señal plana, saltos bruscos y relación de energía en torno a \SI{50}{\hertz}. Después, \texttt{spectral\_quality.py} asigna un \textit{score}, un estado y un factor de puerta. Este bloque no modifica la señal ni recalcula la PSD; solo decide si la ventana reciente puede ser usada por los módulos posteriores con normalidad, atenuación o congelación.
 
 \subsubsection{Publicación de estado y métricas}
 
-La clase \texttt{BackendService}, definida en \texttt{backend\_service.py}, coordina el ciclo de ejecución del backend. En cada iteración drena bloques desde \texttt{EEGReceiver}, actualiza el buffer temporal, comprueba si corresponde calcular nuevas características, obtiene diagnósticos, evalúa \texttt{spectral\_quality} y publica periódicamente un \textit{snapshot} de estado. Aunque en el mismo servicio existen conexiones con sonificación, MIDI y visualización, esta subsección se limita al estado y a las métricas necesarias para entender el runtime del backend.
+\texttt{BackendService} coordina el ciclo de ejecución: drena bloques desde \texttt{EEGReceiver}, actualiza el buffer, comprueba si corresponde calcular nuevas características, obtiene diagnósticos, evalúa \texttt{spectral\_quality} y publica periódicamente un \textit{snapshot}. Aunque el servicio también se conecta con sonificación, MIDI y visualización, esta subsección se limita al estado necesario para entender el runtime del backend.
 
-El método \texttt{\_build\_snapshot()} construye la vista pública del sistema. El estado principal distingue entre \texttt{waiting\_for\_data}, cuando aún no han llegado bloques; \texttt{waiting\_for\_window}, cuando hay recepción pero no ventana suficiente; \texttt{receiving}, cuando la ventana está lista pero todavía no hay features recientes; y \texttt{features\_ready}, cuando ya existe una extracción espectral disponible. Esta máquina de estados compacta permite interpretar si el sistema está parado, llenando buffer o procesando señal útil.
+El método \texttt{\_build\_snapshot()} construye la vista pública del sistema. El estado principal distingue entre \texttt{waiting\_for\_data}, \texttt{waiting\_for\_window}, \texttt{receiving} y \texttt{features\_ready}. Además, la calidad espectral introduce una condición posterior sobre el uso de la ventana: \texttt{clean}, \texttt{usable\_with\_caution}, \texttt{artifact\_suspected} o \texttt{bad}. La Figura~\ref{fig:impl_backend_runtime_states} sintetiza esta lógica sin representar todavía la generación musical completa.
 
-El \textit{snapshot} incluye varios grupos de información: \texttt{config}, \texttt{status}, \texttt{rx}, \texttt{features}, \texttt{diagnostics}, \texttt{spectral\_quality}, \texttt{performance} y otros bloques consumidos por etapas posteriores. Para la implementación del backend son especialmente relevantes las métricas de recepción, cola, buffer, características y calidad. La Tabla~\ref{tab:impl_backend_metricas} resume las más importantes y su finalidad dentro del runtime.
+\begin{figure}[H]
+    \centering
+    \IfFileExists{images/uml/impl_backend_runtime_states.png}{%
+        \includegraphics[width=0.76\textwidth,height=0.34\textheight,keepaspectratio]{images/uml/impl_backend_runtime_states.png}
+    }{%
+        \IfFileExists{images/uml/impl_backend_runtime_states.pdf}{%
+            \includegraphics[width=0.76\textwidth,height=0.34\textheight,keepaspectratio]{images/uml/impl_backend_runtime_states.pdf}
+        }{%
+            \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_backend\_runtime\_states.mmd}}}%
+        }%
+    }
+    \caption{Estados conceptuales del backend Python y evaluación de calidad. Los estados se derivan del \textit{snapshot} y de las métricas de runtime; no representan una única máquina de estados centralizada como clase.}
+    \label{fig:impl_backend_runtime_states}
+\end{figure}
+
+El \textit{snapshot} incluye grupos como \texttt{config}, \texttt{status}, \texttt{rx}, \texttt{features}, \texttt{diagnostics}, \texttt{spectral\_quality} y \texttt{performance}. La Tabla~\ref{tab:impl_backend_metricas} resume las métricas más relevantes para esta sección.
 
 \begin{table}[H]
     \centering
     \caption{Métricas principales publicadas por el backend Python.}
     \label{tab:impl_backend_metricas}
+    \renewcommand{\arraystretch}{1.15}
     \begin{tabular}{p{0.20\textwidth}p{0.38\textwidth}p{0.32\textwidth}}
         \hline
         \textbf{Grupo} & \textbf{Métricas principales} & \textbf{Finalidad} \\
         \hline
         Recepción & \texttt{rx\_frame\_rate\_hz}, \texttt{rx\_block\_rate\_hz}, totales de muestras y bloques, estados inválidos y bloques malformados & Verificar que el contrato MCU--Python se mantiene estable durante la sesión. \\
-        Cola & Ocupación actual en muestras y bloques, pérdidas estimadas y descartes de cola & Detectar retrasos entre la llegada por Bridge y el consumo por el procesador. \\
+        Cola & Ocupación actual, pérdidas estimadas y descartes & Detectar retrasos entre la llegada por Bridge y el consumo por el procesador. \\
         Buffer temporal & Segundos disponibles, muestras válidas, ventana lista y muestras ingeridas & Saber si existe señal suficiente para calcular características espectrales. \\
         Características & RMS, frecuencia pico, picos por banda, banda dominante, relación alpha/beta y potencias por banda & Resumir la ventana EEG reciente para módulos consumidores. \\
-        Diagnóstico/calidad & RMS en \si{\micro\volt}, saturación, flatline, saltos, ratio de \SI{50}{\hertz}, \textit{score}, estado y avisos & Determinar si la ventana debe usarse, atenuarse o congelarse. \\
+        Diagnóstico/calidad & RMS en \si{\micro\volt}, saturación, \textit{flatline}, saltos, ratio de \SI{50}{\hertz}, \textit{score}, estado y avisos & Determinar si la ventana debe usarse, atenuarse o congelarse. \\
         Snapshot/runtime & Periodos de publicación, estado general, configuración activa y errores & Exponer una vista coherente para WebUI, disco, capturas y validación. \\
         \hline
     \end{tabular}
 \end{table}
 
-Las métricas de recepción proceden de \texttt{EEGReceiver.get\_window\_metrics()}. Además de tasas y totales, el receptor acumula tiempos de \textit{callback} y tiempos de drenado, lo que permite comprobar que la recepción se mantiene ligera y que el vaciado de cola no se convierte en un cuello de botella. En paralelo, el procesador aporta métricas de buffer como segundos disponibles, estado de ventana y número de muestras válidas.
+Las métricas de recepción proceden de \texttt{EEGReceiver.get\_window\_metrics()}; incluyen tasas, totales, tiempos de \textit{callback}, tiempos de drenado y ocupación de cola. En paralelo, el procesador aporta estado de buffer y disponibilidad de ventana. El \textit{snapshot} se publica con \texttt{SNAPSHOT\_PUBLISH\_PERIOD\_SEC=0.2}, es decir, aproximadamente a \SI{5}{\hertz}, una frecuencia suficiente para monitorización y validación sin convertir la publicación de estado en la tarea dominante.
 
-El backend publica el \textit{snapshot} con un periodo lógico \texttt{SNAPSHOT\_PUBLISH\_PERIOD\_SEC=0.2}, equivalente a una actualización aproximada de \SI{5}{\hertz}. Esta frecuencia es suficiente para monitorización y validación sin convertir la publicación de estado en una tarea dominante. Según la documentación técnica del proyecto, la capa \texttt{app\_state.py} se encarga de persistir de forma atómica el estado runtime en disco y de proporcionar una lectura segura para la WebUI; por ello, el navegador y las herramientas auxiliares consumen una vista ya agregada, no acceden directamente al buffer ni al receptor.
-
-Con esta organización, el backend Python queda delimitado como una capa de recepción, memoria temporal, extracción espectral y publicación de estado. La generación musical, la interfaz web y la matriz LED se apoyan en las estructuras publicadas por este backend, pero no alteran el contrato \texttt{eeg\_block\_uV}, la frecuencia de muestreo ni el contenido del buffer EEG. Esta separación mantiene la implementación trazable y permite validar cada bloque de forma independiente.
+Con esta organización, el backend Python queda delimitado como una capa de recepción, memoria temporal, extracción espectral y publicación de estado. La generación musical, la interfaz web y la matriz LED se apoyan en las estructuras publicadas por este backend, pero no alteran el contrato \texttt{eeg\_block\_uV}, la frecuencia de muestreo ni el contenido del buffer EEG.
 
 
 \subsection{Implementación de la sonificación}
