@@ -345,27 +345,7 @@ Las métricas de recepción proceden de \texttt{EEGReceiver.get\_window\_metrics
 Con esta organización, el backend Python queda delimitado como una capa de recepción, memoria temporal, extracción espectral y publicación de estado. La generación musical, la interfaz web y la matriz LED se apoyan en las estructuras publicadas por este backend, pero no alteran el contrato \texttt{eeg\_block\_uV}, la frecuencia de muestreo ni el contenido del buffer EEG.
 
 
-\subsection{Implementación de la sonificación}
-
-\subsubsection{Segmentación EEG}
-
-% Pendiente de redacción propia.
-
-\subsubsection{Construcción de segmentos musicales}
-
-% Pendiente de redacción propia.
-
-\subsubsection{Generación de compases}
-
-% Pendiente de redacción propia.
-
-\subsubsection{Generación de notas}
-
-% Pendiente de redacción propia.
-
-\subsubsection{Escritura y transmisión MIDI}
-
-% Pendiente de redacción propia.
+\input{sections/implementacion_sonificacion_6_3}
 
 \subsection{Implementación de la interfaz web}
 
