@@ -31,7 +31,7 @@ render images/uml/impl_backend_buffer_ventana.mmd images/uml/impl_backend_buffer
 render images/uml/impl_backend_features_quality.mmd images/uml/impl_backend_features_quality.png 1400 850
 render images/uml/impl_backend_runtime_states.mmd images/uml/impl_backend_runtime_states.png 1300 950
 
-render images/uml/impl_sonificacion_flujo.mmd images/uml/impl_sonificacion_flujo.png 1600 900
+render images/uml/impl_sonificacion_flujo.mmd images/uml/impl_sonificacion_flujo.png 1800 1250
 render images/uml/impl_sonificacion_controles.mmd images/uml/impl_sonificacion_controles.png 1500 1050
 render images/uml/impl_sonificacion_quality_gate.mmd images/uml/impl_sonificacion_quality_gate.png 1500 1050
 render images/uml/impl_sonificacion_segmento_compas_nota.mmd images/uml/impl_sonificacion_segmento_compas_nota.png 1600 950
