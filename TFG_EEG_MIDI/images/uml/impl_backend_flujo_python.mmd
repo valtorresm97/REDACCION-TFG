@@ -1,4 +1,4 @@
-%%{init: {"theme": "base", "themeVariables": {"fontSize": "22px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 30, "rankSpacing": 38, "curve": "basis"}}}%%
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 38, "rankSpacing": 50, "curve": "basis"}}}%%
 flowchart TB
   subgraph rx["Recepción y contrato"]
     direction LR
@@ -7,18 +7,12 @@ flowchart TB
     contract --> queue["Cola de bloques<br/>BlockItem"]
   end
 
-  subgraph buffer["Buffer temporal"]
+  subgraph runtime["Procesamiento y publicación"]
     direction LR
     drain["drain_blocks<br/>to_processor"] --> ingest["add_block_uV<br/>uV → V"]
     ingest --> ring["Ring buffer<br/>4 canales"]
-    ring --> window["Ventana CH1<br/>4 s · hop 64"]
-  end
-
-  subgraph dsp["DSP, calidad y estado"]
-    direction LR
-    core["DSPCore<br/>PSD multitaper"] --> quality["Diagnóstico<br/>quality gate"]
-    quality --> snapshot["Snapshot runtime<br/>5 Hz"]
+    ring --> dsp["DSPCore<br/>PSD multitaper"]
+    dsp --> snapshot["Quality gate<br/>snapshot 5 Hz"]
   end
 
   queue --> drain
-  window --> core
