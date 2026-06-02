@@ -1,0 +1,20 @@
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 42, "rankSpacing": 55, "curve": "basis"}}}%%
+flowchart LR
+  controls["SonificationFeatures<br/>controles suavizados"] --> builder["MusicSegmentBuilder"]
+  config["ScaleConfig + main note<br/>configuración musical"] --> builder
+  builder --> segment["MusicSegment<br/>cadencia, registro,<br/>tensión, actividad"]
+
+  segment --> barGen["BarGenerator"]
+  barGen --> chord["Acorde diatónico<br/>I / IV / V"]
+  barGen --> slots["16 slots por compás<br/>patrón ON/OFF"]
+  chord --> bar["Bar"]
+  slots --> bar
+
+  bar --> noteGen["NoteGenerator"]
+  segment --> noteGen
+  noteGen --> pitches["Alturas dentro<br/>de escala"]
+  noteGen --> vel["Velocity<br/>acento + EEG"]
+  noteGen --> time["Tiempos<br/>inicio + duración"]
+  pitches --> notes["NoteEvent list"]
+  vel --> notes
+  time --> notes
