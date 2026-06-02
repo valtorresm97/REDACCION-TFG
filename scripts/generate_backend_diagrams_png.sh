@@ -12,15 +12,15 @@ else
   echo "No encuentro ../puppeteer-config.json. Intento usar Puppeteer por defecto." >&2
 fi
 
-npx -y @mermaid-js/mermaid-cli "${ARGS[@]}" -b white -w 1200 -H 850 \
+npx -y @mermaid-js/mermaid-cli "${ARGS[@]}" -b white -w 1400 -H 950 \
   -i images/uml/impl_backend_flujo_python.mmd \
   -o images/uml/impl_backend_flujo_python.png
 
-npx -y @mermaid-js/mermaid-cli "${ARGS[@]}" -b white -w 1000 -H 800 \
+npx -y @mermaid-js/mermaid-cli "${ARGS[@]}" -b white -w 1400 -H 950 \
   -i images/uml/impl_backend_buffer_ventana.mmd \
   -o images/uml/impl_backend_buffer_ventana.png
 
-npx -y @mermaid-js/mermaid-cli "${ARGS[@]}" -b white -w 1000 -H 760 \
+npx -y @mermaid-js/mermaid-cli "${ARGS[@]}" -b white -w 1300 -H 950 \
   -i images/uml/impl_backend_runtime_states.mmd \
   -o images/uml/impl_backend_runtime_states.png
 
