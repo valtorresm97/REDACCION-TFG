@@ -1,14 +1,14 @@
-%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 38, "rankSpacing": 50, "curve": "basis"}}}%%
-flowchart TB
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 42, "rankSpacing": 55, "curve": "basis"}}}%%
+flowchart LR
   subgraph rx["Recepción y contrato"]
-    direction LR
+    direction TB
     event["Bridge.notify<br/>eeg_block_uV"] --> receiver["EEGReceiver<br/>callback ligero"]
     receiver --> contract["eeg_contract.py<br/>parse + status"]
     contract --> queue["Cola de bloques<br/>BlockItem"]
   end
 
   subgraph runtime["Procesamiento y publicación"]
-    direction LR
+    direction TB
     drain["drain_blocks<br/>to_processor"] --> ingest["add_block_uV<br/>uV → V"]
     ingest --> ring["Ring buffer<br/>4 canales"]
     ring --> dsp["DSPCore<br/>PSD multitaper"]
