@@ -1,24 +1,24 @@
-%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial", "fontSize": "13px", "primaryColor": "#F8F8F8", "primaryTextColor": "#222222", "primaryBorderColor": "#444444", "lineColor": "#444444", "secondaryColor": "#FFFFFF", "tertiaryColor": "#FFFFFF"}, "flowchart": {"curve": "linear", "nodeSpacing": 18, "rankSpacing": 24, "padding": 4, "htmlLabels": false}}}%%
-flowchart LR
-  subgraph RX["Recepcion y contrato"]
-    direction TB
-    a["Bridge.notify\neeg_block_uV"] --> b["EEGReceiver\ncallback ligero"]
-    b --> c["eeg_contract.py\nparse + status"]
-    c --> d["Cola\nBlockItem"]
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "22px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 30, "rankSpacing": 38, "curve": "basis"}}}%%
+flowchart TB
+  subgraph rx["Recepción y contrato"]
+    direction LR
+    event["Bridge.notify<br/>eeg_block_uV"] --> receiver["EEGReceiver<br/>callback ligero"]
+    receiver --> contract["eeg_contract.py<br/>parse + status"]
+    contract --> queue["Cola de bloques<br/>BlockItem"]
   end
 
-  subgraph BUF["Buffer y DSP"]
-    direction TB
-    e["drain_blocks\nto_processor"] --> f["add_block_uV\nuV -> V"]
-    f --> g["Ring buffer\n4 canales"]
-    g --> h["Ventana CH1\n4 s / hop 64"]
-    h --> i["DSPCore\nPSD multitaper"]
+  subgraph buffer["Buffer temporal"]
+    direction LR
+    drain["drain_blocks<br/>to_processor"] --> ingest["add_block_uV<br/>uV → V"]
+    ingest --> ring["Ring buffer<br/>4 canales"]
+    ring --> window["Ventana CH1<br/>4 s · hop 64"]
   end
 
-  subgraph OUT["Calidad y estado"]
-    direction TB
-    j["diagnostics\n+ spectral_quality"] --> k["Snapshot\n5 Hz"]
+  subgraph dsp["DSP, calidad y estado"]
+    direction LR
+    core["DSPCore<br/>PSD multitaper"] --> quality["Diagnóstico<br/>quality gate"]
+    quality --> snapshot["Snapshot runtime<br/>5 Hz"]
   end
 
-  d --> e
-  i --> j
+  queue --> drain
+  window --> core
