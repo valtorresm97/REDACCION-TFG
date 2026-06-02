@@ -1,35 +1,25 @@
-%%{init: {"theme": "base", "themeVariables": {"fontSize": "28px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "sequence": {"showSequenceNumbers": false, "mirrorActors": false, "actorMargin": 90, "messageMargin": 80, "boxMargin": 16, "boxTextMargin": 10, "noteMargin": 14}}}%%
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "sequence": {"useMaxWidth": true, "showSequenceNumbers": true, "mirrorActors": false, "diagramMarginX": 18, "diagramMarginY": 12, "actorMargin": 54, "messageMargin": 34, "boxMargin": 8, "boxTextMargin": 6, "noteMargin": 8}}}%%
 sequenceDiagram
-  participant B as BackendService
-  participant D as DSP + calidad
-  participant A as Adaptador<br/>sonificación
-  participant G as Generadores<br/>musicales
-  participant S as Scheduler<br/>MIDI
-  participant T as Transporte<br/>Bridge
-  participant F as Firmware<br/>MIDI OUT
+  participant BE as BackendService
+  participant DSP as DSP + calidad
+  participant SON as Sonificación
+  participant MUS as Motor musical
+  participant MIDI as MIDI + firmware
 
-  B->>D: ventana CH1 lista<br/>4 s + hop 64
-  D-->>B: features + diagnostics<br/>+ SpectralQuality
-  B->>A: update(features, quality)
-  A-->>B: SonificationFeatures<br/>controles 0..1
+  BE->>DSP: ventana CH1 lista
+  DSP-->>BE: features + diagnostics + quality
+  BE->>SON: adaptar features a controles
+  SON-->>BE: SonificationFeatures 0..1
 
   alt calidad válida y periodo de compás
-    B->>G: construir segmento<br/>compás y notas
-    G-->>B: lista NoteEvent
-    B->>S: program_change<br/>+ schedule_notes()
-  else calidad insuficiente
-    B->>B: no generar nuevo compás útil
+    BE->>MUS: segmento · compás · notas
+    MUS-->>BE: lista NoteEvent
+    BE->>MIDI: schedule + midi_bytes
+    MIDI->>MIDI: note_on/off → Serial1 D1
+  else ventana no fiable
+    BE->>BE: no generar nuevo compás
   end
 
-  B->>S: pop_due_events(now, lookahead)
-  S-->>B: eventos MIDI vencidos
-  B->>T: send_events(events)
-  T->>T: event_to_midi_bytes()
-  T->>F: Bridge.call("midi_bytes", n, b0, b1, b2)
-  F->>F: Serial1/D1 invertido<br/>31250 baudios
-
   opt Panic MIDI
-    B->>S: panic()
-    S-->>T: All Sound Off<br/>All Notes Off
-    T->>F: midi_bytes
+    BE->>MIDI: All Sound Off + All Notes Off
   end
