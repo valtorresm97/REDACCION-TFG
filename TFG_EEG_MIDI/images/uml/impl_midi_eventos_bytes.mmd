@@ -1,17 +1,42 @@
 %%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 42, "rankSpacing": 55, "curve": "basis"}}}%%
-flowchart LR
-  notes["NoteEvent<br/>t_start, t_end,<br/>pitch, velocity"] --> live["note_to_live_events"]
-  live --> noteOn["MidiLiveEvent<br/>note_on"]
-  live --> noteOff["MidiLiveEvent<br/>note_off"]
-  program["program_change<br/>una vez al inicio"] --> schedulerHeap["MidiScheduler<br/>heap temporal"]
+flowchart TB
+  subgraph musical["Nivel musical"]
+    notes["NoteEvent<br/>t_start, t_end<br/>pitch, velocity"]
+    live["note_to_live_events"]
+    noteOn["MidiLiveEvent<br/>note_on"]
+    noteOff["MidiLiveEvent<br/>note_off"]
+  end
+
+  subgraph scheduler["Planificación temporal"]
+    program["program_change<br/>inicio"]
+    panic["panic<br/>CC120 + CC123"]
+    schedulerHeap["MidiScheduler<br/>heap temporal"]
+    dueEvents["pop_due_events<br/>now + lookahead"]
+  end
+
+  subgraph transportLayer["Transporte MIDI"]
+    midiBytes["event_to_midi_bytes<br/>status + data"]
+    transport["MidiByteTransport"]
+    bridgeCall["Bridge call<br/>midi_bytes n b0 b1 b2"]
+  end
+
+  subgraph firmware["Firmware y salida física"]
+    firmwareHandler["firmware<br/>midi_bytes"]
+    uartOut["Serial1 / D1<br/>31250 baudios<br/>TX invertido"]
+    physicalOut["MIDI OUT físico"]
+  end
+
+  notes --> live
+  live --> noteOn
+  live --> noteOff
   noteOn --> schedulerHeap
   noteOff --> schedulerHeap
-  schedulerHeap --> dueEvents["pop_due_events<br/>now + lookahead"]
-  dueEvents --> midiBytes["event_to_midi_bytes<br/>status + data"]
-  midiBytes --> transport["MidiByteTransport"]
-  transport --> bridgeCall["Bridge call<br/>midi_bytes n b0 b1 b2"]
-  bridgeCall --> firmwareHandler["firmware<br/>midi_bytes"]
-  firmwareHandler --> uartOut["Serial1 / D1<br/>31250 baudios<br/>TX invertido"]
-  uartOut --> physicalOut["MIDI OUT físico"]
-
-  panic["panic<br/>CC120 + CC123"] --> schedulerHeap
+  program --> schedulerHeap
+  panic --> schedulerHeap
+  schedulerHeap --> dueEvents
+  dueEvents --> midiBytes
+  midiBytes --> transport
+  transport --> bridgeCall
+  bridgeCall --> firmwareHandler
+  firmwareHandler --> uartOut
+  uartOut --> physicalOut
