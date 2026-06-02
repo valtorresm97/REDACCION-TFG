@@ -1,22 +1,19 @@
-%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 38, "rankSpacing": 50, "curve": "basis"}}}%%
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 44, "rankSpacing": 58, "curve": "basis"}}}%%
 flowchart TB
-  subgraph input["Ingesta"]
+  subgraph memoria["Ingesta y memoria temporal"]
     direction LR
     block["Bloque EEG<br/>8 muestras · 32 ms"] --> convert["add_block_uV()<br/>uV → V"]
     convert --> ring["Ring buffer<br/>4 canales"]
+    ring --> ready{"¿4 s disponibles?<br/>1000 muestras"}
   end
 
-  subgraph window["Ventana de análisis"]
+  subgraph analisis["Ventana y extracción periódica"]
     direction LR
-    ready{"¿4 s disponibles?<br/>1000 muestras"} -- "No" --> wait["waiting_for_window"]
-    ready -- "Sí" --> ch1["Ventana reciente<br/>CH1 principal"]
-  end
-
-  subgraph features["Extracción periódica"]
-    direction LR
-    hop["Hop<br/>64 muestras · 256 ms"] --> live["compute_live_features()<br/>PSD + bandas"]
+    wait["waiting_for_window"]
+    ch1["Ventana CH1<br/>señal reciente"] --> hop["Hop<br/>64 muestras · 256 ms"]
+    hop --> live["compute_live_features()<br/>PSD + bandas"]
     live --> snap["features + diagnostics<br/>snapshot"]
   end
 
-  ring --> ready
-  ch1 --> hop
+  ready -- "No" --> wait
+  ready -- "Sí" --> ch1
