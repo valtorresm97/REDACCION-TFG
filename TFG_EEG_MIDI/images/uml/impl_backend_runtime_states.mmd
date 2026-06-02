@@ -1,29 +1,17 @@
-%%{init: {"theme": "base", "themeVariables": {"fontSize": "20px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "state": {"nodeSpacing": 28, "rankSpacing": 36, "padding": 6}}}%%
-stateDiagram-v2
-  state "Arranque" as boot
-  state "Espera Linux" as waiting_linux
-  state "Streaming" as streaming
-  state "Llenando ventana" as filling_window
-  state "Features listas" as features_ready
-  state "Ventana usable" as usable
-  state "Atenuar / cautela" as caution
-  state "Bloqueada" as blocked
-  state "Error" as error
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "22px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 38, "rankSpacing": 50, "curve": "basis"}}}%%
+flowchart TB
+  boot["Arranque"] --> wait["Espera Linux"]
+  wait --> stream["Streaming"]
+  stream --> fill["Llenando ventana"]
+  fill --> ready["Features listas"]
 
-  [*] --> boot
-  boot --> waiting_linux: backend + WebUI
-  waiting_linux --> streaming: linux_started
-  streaming --> filling_window: primer bloque
-  filling_window --> features_ready: window_ready
+  ready --> clean["Ventana usable<br/>clean"]
+  ready --> caution["Atenuar / cautela<br/>caution · artifact"]
+  ready --> blocked["Bloqueada<br/>bad"]
 
-  features_ready --> usable: clean
-  features_ready --> caution: caution / artifact
-  features_ready --> blocked: bad
+  clean --> stream
+  caution --> stream
+  blocked --> fill
 
-  usable --> streaming: siguiente hop
-  caution --> streaming: siguiente hop
-  blocked --> filling_window: esperar ventana útil
-
-  streaming --> error: RX / Bridge
-  features_ready --> error: feature / quality
-  error --> [*]
+  stream --> err["Error<br/>RX / Bridge"]
+  ready --> err2["Error<br/>feature / quality"]
