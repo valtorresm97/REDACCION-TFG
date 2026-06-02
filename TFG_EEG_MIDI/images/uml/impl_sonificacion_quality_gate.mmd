@@ -1,0 +1,15 @@
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 45, "rankSpacing": 58, "curve": "basis"}}}%%
+flowchart TB
+  features["Features EEG<br/>bandas + RMS + picos"] --> quality["compute_spectral_quality<br/>score + state + gate_factor"]
+  diag["Diagnósticos<br/>RMS uV, PTP,<br/>saturación, saltos,<br/>50 Hz"] --> quality
+  rx["Métricas RX<br/>pérdidas, drops,<br/>status inválido"] --> quality
+
+  quality --> clean{"¿Ventana usable?"}
+  clean -->|clean / caution| full["Sonificación activa<br/>gate alto"]
+  clean -->|artifact_suspected| atten["Atenuación<br/>actividad y densidad reducidas"]
+  clean -->|bad / no_features| freeze["No se genera<br/>nuevo material musical"]
+
+  full --> adapter["SonificationFeatureAdapter"]
+  atten --> adapter
+  freeze --> wait["Esperar siguiente<br/>ventana válida"]
+  adapter --> controls["Controles suavizados<br/>para segmento musical"]
