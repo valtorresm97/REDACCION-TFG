@@ -1,10 +1,10 @@
 \subsection{Implementación del firmware de adquisición}
 
-El firmware de adquisición constituye la primera capa ejecutable del sistema. Su papel es transformar la señal digital entregada por el ADS1299 en bloques EEG coherentes para el backend Python. Para ello configura el convertidor, espera a que haya una nueva conversión disponible, lee el frame por SPI, reconstruye las muestras, las escala físicamente, aplica un filtrado digital básico y publica bloques mediante el evento \texttt{eeg\_block\_uV}.
+El firmware de adquisición constituye la primera capa ejecutable del sistema. Su papel es transformar la salida digital del ADS1299 en una señal EEG preparada para el backend Python. Para ello configura el convertidor, espera a que haya una nueva conversión disponible, lee el frame por SPI, reconstruye las muestras, las escala a unidades físicas, aplica un filtrado digital básico y agrupa los datos en bloques mediante el evento \texttt{eeg\_block\_uV}.
 
-Esta frontera es importante para entender la implementación. El microcontrolador no calcula bandas espectrales, no estima estados cerebrales y no decide la música. Su salida es una secuencia de muestras EEG en microvoltios, ya agrupadas en bloques. A partir de esa frontera, Python valida el contrato, mantiene el buffer temporal, calcula características DSP y alimenta la sonificación.
+Dentro del flujo general del sistema, esta capa se encarga de las tareas más cercanas al hardware y al tiempo real. El microcontrolador asegura que las muestras lleguen a Python con una cadencia coherente, en microvoltios y con una estructura de bloque estable. A partir de esos bloques, el backend Python realiza el almacenamiento temporal, el análisis espectral, la evaluación de calidad y la generación de parámetros para la sonificación.
 
-La Figura~\ref{fig:impl_firmware_flujo_adquisicion} debe leerse como una cadena de transformación de datos. La entrada es el frame nativo del ADS1299; la salida es un bloque \texttt{eeg\_block\_uV} comprensible por el backend.
+La Figura~\ref{fig:impl_firmware_flujo_adquisicion} resume esta cadena de transformación de datos, desde el frame nativo del ADS1299 hasta el bloque \texttt{eeg\_block\_uV} consumido por el backend Python.
 
 \begin{figure}[H]
     \centering
