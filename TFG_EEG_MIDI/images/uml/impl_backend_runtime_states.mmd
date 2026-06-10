@@ -1,19 +1,19 @@
-%%{init: {"theme": "base", "themeVariables": {"fontSize": "22px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 38, "rankSpacing": 50, "curve": "basis"}}}%%
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 42, "rankSpacing": 55, "curve": "basis"}}}%%
 flowchart LR
-  subgraph runtime["Estado de ejecución<br/><tt>status.state</tt>"]
+  subgraph runtime["Estado del runtime"]
     direction TB
-    r0["waiting_for_data<br/>Sin bloques EEG"] --> r1["waiting_for_window<br/>Recepción activa<br/>ventana todavía incompleta"]
-    r1 --> r2["receiving<br/>Ventana disponible<br/>sin features recientes"]
-    r2 --> r3["features_ready<br/>Features calculadas"]
+    r0["waiting_for_data<br/>sin bloques"] --> r1["waiting_for_window<br/>llenando 4 s"]
+    r1 --> r2["receiving<br/>ventana disponible"]
+    r2 --> r3["features_ready<br/>features publicadas"]
   end
 
-  subgraph quality["Estado de calidad<br/><tt>spectral_quality.state</tt>"]
+  subgraph quality["Calidad de la ventana"]
     direction TB
-    q0["no_features<br/>Sin ventana/features"] --> q1{"Ventana evaluada"}
-    q1 --> q2["clean<br/>Uso normal"]
-    q1 --> q3["usable_with_caution<br/>Atenuación leve"]
-    q1 --> q4["artifact_suspected<br/>Artefacto probable"]
-    q1 --> q5["bad<br/>Congelar o bloquear"]
+    q0["no_features<br/>sin evaluación"] --> q1["compute_spectral_quality()"]
+    q1 --> q2["clean<br/>uso normal"]
+    q1 --> q3["usable_with_caution<br/>atenuación leve"]
+    q1 --> q4["artifact_suspected<br/>atenuar"]
+    q1 --> q5["bad<br/>congelar"]
   end
 
   r3 -. "features + diagnostics" .-> q1
