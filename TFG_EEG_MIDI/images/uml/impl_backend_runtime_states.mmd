@@ -1,17 +1,19 @@
 %%{init: {"theme": "base", "themeVariables": {"fontSize": "22px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 38, "rankSpacing": 50, "curve": "basis"}}}%%
-flowchart TB
-  boot["Arranque"] --> wait["Espera Linux"]
-  wait --> stream["Streaming"]
-  stream --> fill["Llenando ventana"]
-  fill --> ready["Features listas"]
+flowchart LR
+  subgraph runtime["Estado de ejecución<br/><tt>status.state</tt>"]
+    direction TB
+    r0["waiting_for_data<br/>Sin bloques EEG"] --> r1["waiting_for_window<br/>Recepción activa<br/>ventana todavía incompleta"]
+    r1 --> r2["receiving<br/>Ventana disponible<br/>sin features recientes"]
+    r2 --> r3["features_ready<br/>Features calculadas"]
+  end
 
-  ready --> clean["Ventana usable<br/>clean"]
-  ready --> caution["Atenuar / cautela<br/>caution · artifact"]
-  ready --> blocked["Bloqueada<br/>bad"]
+  subgraph quality["Estado de calidad<br/><tt>spectral_quality.state</tt>"]
+    direction TB
+    q0["no_features<br/>Sin ventana/features"] --> q1{"Ventana evaluada"}
+    q1 --> q2["clean<br/>Uso normal"]
+    q1 --> q3["usable_with_caution<br/>Atenuación leve"]
+    q1 --> q4["artifact_suspected<br/>Artefacto probable"]
+    q1 --> q5["bad<br/>Congelar o bloquear"]
+  end
 
-  clean --> stream
-  caution --> stream
-  blocked --> fill
-
-  stream --> err["Error<br/>RX / Bridge"]
-  ready --> err2["Error<br/>feature / quality"]
+  r3 -. "features + diagnostics" .-> q1
