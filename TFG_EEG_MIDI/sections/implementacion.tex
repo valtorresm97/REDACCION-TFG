@@ -200,49 +200,27 @@ Internamente, el procesador emplea un \textit{ring buffer} o buffer circular de 
 
 El contrato multicanal se mantiene durante todo el proceso: el buffer conserva cuatro canales aunque la versión final utilice CH1 como canal principal de análisis. En el código, CH1 se selecciona mediante \texttt{channel\_idx=0}, ya que los índices de Python comienzan en cero. El resto de canales se preservan en la estructura de datos, en las capturas y en el contrato de transporte, pero no se presentan como cuatro canales EEG activos de análisis final.
 
-La extracción de características no comienza hasta que existe una ventana temporal suficiente. En este sistema, la ventana de análisis tiene una duración de \SI{4}{\second}. A \SI{250}{\hertz}, esto equivale a 1000 muestras. Una vez llena la ventana, las características no se recalculan muestra a muestra, sino cada \texttt{FEATURE\_HOP\_SAMPLES=64} muestras. Este salto, denominado \textit{hop}, equivale a \SI{256}{\milli\second}. La Tabla~\ref{tab:impl_backend_tiempos} resume las escalas temporales principales.
-
-\[
-\begin{array}{rcl}
-    T_{\mathrm{bloque}} & = & \dfrac{\mathrm{BLOCK\_SAMPLES}}{\mathrm{FS\_HZ}}
-    = \dfrac{8}{250}
-    = \SI{0.032}{\second}
-    = \SI{32}{\milli\second},\\[2mm]
-    N_{\mathrm{ventana}} & = & \mathrm{FEATURE\_WINDOW\_SEC}\cdot\mathrm{FS\_HZ}
-    = 4.0\cdot250
-    = 1000~\text{muestras},\\[2mm]
-    T_{\mathrm{hop}} & = & \dfrac{\mathrm{FEATURE\_HOP\_SAMPLES}}{\mathrm{FS\_HZ}}
-    = \dfrac{64}{250}
-    = \SI{0.256}{\second}
-    = \SI{256}{\milli\second},\\[2mm]
-    f_{\mathrm{snapshot}} & = & \dfrac{1}{\mathrm{SNAPSHOT\_PUBLISH\_PERIOD\_SEC}}
-    = \dfrac{1}{0.2}
-    = \SI{5}{\hertz}.
-\end{array}
-\]
+La extracción de características no comienza hasta que existe una ventana temporal suficiente. En este sistema, la ventana de análisis tiene una duración de \SI{4}{\second}. A \SI{250}{\hertz}, esto equivale a 1000 muestras. Una vez llena la ventana, las características no se recalculan muestra a muestra, sino cada \texttt{FEATURE\_HOP\_SAMPLES=64} muestras. Este salto, denominado \textit{hop}, equivale a \SI{256}{\milli\second}. Estas escalas temporales se resumen en la Tabla~\ref{tab:impl_backend_tiempos}.
 
 \begin{table}[H]
     \centering
     \caption{Escalas temporales principales del backend Python.}
     \label{tab:impl_backend_tiempos}
     \renewcommand{\arraystretch}{1.15}
-    \begin{tabular}{p{0.30\textwidth}p{0.20\textwidth}p{0.40\textwidth}}
+    \begin{tabular}{p{0.30\textwidth}p{0.22\textwidth}p{0.38\textwidth}}
         \hline
-        \textbf{Magnitud} & \textbf{Valor} & \textbf{Interpretación} \\
+        \textbf{Elemento} & \textbf{Valor} & \textbf{Papel en el backend} \\
         \hline
         Frecuencia de muestreo & \SI{250}{\hertz} & Ritmo común entre firmware, receptor y procesador. \\
-        Tamaño de bloque & 8 muestras & Agrupación mínima recibida por \texttt{eeg\_block\_uV}. \\
-        Duración de bloque & \SI{32}{\milli\second} & Tiempo representado por cada bloque recibido. \\
-        Ventana de features & \SI{4}{\second} & Tramo reciente de señal usado para el cálculo espectral. \\
-        Tamaño de ventana & 1000 muestras & Número de muestras contenidas en una ventana de \SI{4}{\second}. \\
-        Hop de features & 64 muestras & Desplazamiento entre cálculos sucesivos. \\
-        Duración del hop & \SI{256}{\milli\second} & Periodicidad nominal de actualización de características EEG. \\
-        Snapshot & \SI{0.2}{\second} & Publicación lógica del estado a \SI{5}{\hertz}; no marca la cadencia de generación musical. \\
+        Bloque de entrada & 8 muestras, \SI{32}{\milli\second} & Unidad mínima recibida mediante \texttt{eeg\_block\_uV}. \\
+        Ventana de análisis & \SI{4}{\second}, 1000 muestras & Tramo de señal usado para calcular características espectrales. \\
+        Hop de features & 64 muestras, \SI{256}{\milli\second} & Cadencia nominal de actualización de características EEG, aproximadamente \SI{3.9}{\hertz}. \\
+        Snapshot & \SI{0.2}{\second}, \SI{5}{\hertz} & Publicación de la vista pública del estado; no marca la cadencia de generación musical. \\
         \hline
     \end{tabular}
 \end{table}
 
-Conviene distinguir estas cadencias dentro del backend. La recepción de bloques EEG se produce cada \SI{32}{\milli\second}, ya que cada evento contiene 8 muestras a \SI{250}{\hertz}. El cálculo de características espectrales se actualiza cada \texttt{FEATURE\_HOP\_SAMPLES=64} muestras, es decir, cada \SI{256}{\milli\second}, aproximadamente a \SI{3.9}{\hertz}. En cambio, el \textit{snapshot} se reconstruye cada \SI{0.2}{\second}, a \SI{5}{\hertz}, y actúa como vista pública del estado del backend para WebUI, capturas y validación. Esta frecuencia de publicación no implica que se genere música nueva a \SI{5}{\hertz}; la generación musical sigue una cadencia propia, asociada a la duración del compás musical.
+Por tanto, el backend maneja varias cadencias simultáneas. Los bloques EEG llegan cada \SI{32}{\milli\second}; las características espectrales se recalculan aproximadamente cada \SI{256}{\milli\second}; y el \textit{snapshot} se reconstruye cada \SI{0.2}{\second} para WebUI, capturas y validación. Esta última frecuencia no significa que se genere música nueva a \SI{5}{\hertz}; la generación musical sigue una cadencia propia, asociada a la duración del compás musical.
 
 La Figura~\ref{fig:impl_backend_buffer_ventana} resume la relación entre bloque, buffer circular, ventana de análisis y hop de actualización.
 
