@@ -206,21 +206,20 @@ La extracción de características no comienza hasta que existe una ventana temp
     \centering
     \caption{Escalas temporales principales del backend Python.}
     \label{tab:impl_backend_tiempos}
-    \renewcommand{\arraystretch}{1.15}
+    \renewcommand{\arraystretch}{1.12}
     \begin{tabular}{p{0.30\textwidth}p{0.22\textwidth}p{0.38\textwidth}}
         \hline
         \textbf{Elemento} & \textbf{Valor} & \textbf{Papel en el backend} \\
         \hline
-        Frecuencia de muestreo & \SI{250}{\hertz} & Ritmo común entre firmware, receptor y procesador. \\
-        Bloque de entrada & 8 muestras, \SI{32}{\milli\second} & Unidad mínima recibida mediante \texttt{eeg\_block\_uV}. \\
-        Ventana de análisis & \SI{4}{\second}, 1000 muestras & Tramo de señal usado para calcular características espectrales. \\
-        Hop de features & 64 muestras, \SI{256}{\milli\second} & Cadencia nominal de actualización de características EEG, aproximadamente \SI{3.9}{\hertz}. \\
-        Snapshot & \SI{0.2}{\second}, \SI{5}{\hertz} & Publicación de la vista pública del estado; no marca la cadencia de generación musical. \\
+        Bloque de entrada & 8 muestras, \SI{32}{\milli\second} & Unidad recibida mediante \texttt{eeg\_block\_uV}. \\
+        Ventana de análisis & \SI{4}{\second}, 1000 muestras & Tramo usado para calcular características espectrales. \\
+        Hop de features & 64 muestras, \SI{256}{\milli\second} & Actualización nominal de características EEG, aproximadamente \SI{3.9}{\hertz}. \\
+        Snapshot & \SI{0.2}{\second}, \SI{5}{\hertz} & Publicación de la vista pública; no marca la cadencia musical. \\
         \hline
     \end{tabular}
 \end{table}
 
-Por tanto, el backend maneja varias cadencias simultáneas. Los bloques EEG llegan cada \SI{32}{\milli\second}; las características espectrales se recalculan aproximadamente cada \SI{256}{\milli\second}; y el \textit{snapshot} se reconstruye cada \SI{0.2}{\second} para WebUI, capturas y validación. Esta última frecuencia no significa que se genere música nueva a \SI{5}{\hertz}; la generación musical sigue una cadencia propia, asociada a la duración del compás musical.
+Por tanto, el backend maneja varias cadencias simultáneas. Los bloques EEG llegan cada \SI{32}{\milli\second}; las características espectrales se recalculan aproximadamente cada \SI{256}{\milli\second}; y el \textit{snapshot} se reconstruye cada \SI{0.2}{\second} para WebUI, capturas y validación. Es decir, las características EEG y los controles internos de sonificación se actualizan nominalmente unas \SI{3.9}{\hertz}, no a \SI{5}{\hertz}. Esta última frecuencia solo corresponde a la publicación del estado; la generación musical sigue una cadencia propia, asociada a la duración del compás musical.
 
 La Figura~\ref{fig:impl_backend_buffer_ventana} resume la relación entre bloque, buffer circular, ventana de análisis y hop de actualización.
 
@@ -245,24 +244,21 @@ La base matemática del análisis espectral, la densidad espectral de potencia, 
 
 Cuando la ventana está completa y se cumple el salto de 64 muestras, \texttt{compute\_live\_features()} extrae la ventana reciente de CH1 y delega el cálculo en \texttt{DSPCore}. De esta forma, \texttt{EEGSignalProcessor} se encarga de la memoria temporal y de la selección de ventana, mientras que \texttt{DSPCore} se limita al análisis espectral de una señal unidimensional.
 
-En la ruta en vivo se utiliza \texttt{psd\_method="multitaper"}. Antes de estimar la PSD, \texttt{DSPCore} aplica un preprocesado robusto sobre la ventana seleccionada. Después calcula la PSD, integra potencia por bandas y resume la ventana mediante un conjunto compacto de características. En la ruta de tiempo real no se publica el espectro completo, sino un diccionario de \textit{features} preparado para ser consumido por el resto del sistema. La Tabla~\ref{tab:impl_backend_features} resume las claves principales.
+En la ruta en vivo se utiliza \texttt{psd\_method="multitaper"}. Antes de estimar la PSD, \texttt{DSPCore} aplica un preprocesado robusto sobre la ventana seleccionada. Después calcula la PSD, integra potencia por bandas y resume la ventana mediante un diccionario de \textit{features}. En la ruta de tiempo real no se publica el espectro completo, sino un conjunto compacto de variables preparado para ser consumido por el resto del sistema. La Tabla~\ref{tab:impl_backend_features} resume estas salidas sin listar cada clave de forma exhaustiva.
 
 \begin{table}[H]
     \centering
-    \caption{Diccionario principal de características espectrales generado por el backend.}
+    \caption{Resumen compacto de características espectrales generadas por el backend.}
     \label{tab:impl_backend_features}
-    \renewcommand{\arraystretch}{1.0}
-    \begin{tabular}{p{0.24\textwidth}p{0.25\textwidth}p{0.41\textwidth}}
+    \renewcommand{\arraystretch}{1.12}
+    \begin{tabular}{p{0.30\textwidth}p{0.58\textwidth}}
         \hline
-        \textbf{Grupo} & \textbf{Clave} & \textbf{Significado} \\
+        \textbf{Grupo de salida} & \textbf{Información conservada} \\
         \hline
-        Amplitud global & \texttt{rms} & Valor eficaz de la ventana preprocesada. Resume la energía temporal de la señal analizada. \\
-        Pico espectral global & \texttt{peak\_freq} & Frecuencia de máxima potencia dentro de la PSD estimada. \\
-        Picos por banda & \texttt{peak\_delta}, \texttt{peak\_theta}, \texttt{peak\_alpha}, \texttt{peak\_beta}, \texttt{peak\_gamma} & Frecuencia dominante dentro de cada banda, cuando existe contenido suficiente en el rango correspondiente. \\
-        Potencia absoluta & \texttt{bandpower\_abs} & Diccionario con la potencia integrada en delta, theta, alpha, beta y gamma. \\
-        Potencia relativa & \texttt{bandpower\_rel} & Diccionario normalizado que expresa la contribución relativa de cada banda respecto a la potencia total considerada. \\
-        Banda dominante & \texttt{dominant\_band} & Banda con mayor potencia relativa en la ventana reciente. Se calcula al construir el \textit{snapshot}. \\
-        Relación alpha/beta & \texttt{alpha\_beta\_ratio} & Cociente entre potencia relativa alpha y beta. Se publica como descriptor complementario, no como indicador clínico. \\
+        Amplitud y pico global & Valor eficaz de la ventana y frecuencia de máxima potencia. Incluye \texttt{rms} y \texttt{peak\_freq}. \\
+        Potencia por bandas & Potencias absolutas y relativas en delta, theta, alpha, beta y gamma, junto con los picos dominantes por banda. \\
+        Descriptores derivados & Banda dominante y relación alpha/beta, usadas como resumen adicional de la distribución espectral. \\
+        Uso posterior & Variables de entrada para calidad, WebUI, capturas y sonificación; no se emplean como indicadores clínicos. \\
         \hline
     \end{tabular}
 \end{table}
@@ -273,16 +269,16 @@ Además de las características espectrales, el procesador calcula un segundo bl
 
 \begin{table}[H]
     \centering
-    \caption{Diferencia entre características, diagnósticos y evaluación de calidad.}
+    \caption{Salidas principales de análisis y control de calidad.}
     \label{tab:impl_backend_diagnostics_quality}
-    \renewcommand{\arraystretch}{1.15}
-    \begin{tabular}{p{0.22\textwidth}p{0.36\textwidth}p{0.32\textwidth}}
+    \renewcommand{\arraystretch}{1.12}
+    \begin{tabular}{p{0.24\textwidth}p{0.30\textwidth}p{0.36\textwidth}}
         \hline
-        \textbf{Bloque} & \textbf{Contenido principal} & \textbf{Finalidad} \\
+        \textbf{Bloque} & \textbf{Qué resume} & \textbf{Para qué se usa} \\
         \hline
-        \texttt{features} & \texttt{rms}, picos espectrales, potencias absolutas y relativas por banda, banda dominante y relación alpha/beta & Describir la ventana EEG reciente mediante variables compactas. \\
-        \texttt{diagnostics} & \texttt{rms\_uv}, \texttt{mean\_uv}, \texttt{std\_uv}, \texttt{ptp\_uv}, percentiles, \texttt{saturation\_fraction}, \texttt{flatline}, \texttt{abrupt\_jumps}, \texttt{line\_50\_ratio} y avisos & Detectar problemas observacionales de señal sin modificar el pipeline DSP. \\
-        \texttt{spectral\_quality} & \texttt{score}, \texttt{state}, \texttt{gate\_factor}, \texttt{valid\_for\_sonification}, \texttt{freeze\_recommended}, \texttt{warnings} y penalizaciones & Decidir si la ventana puede alimentar los módulos posteriores con normalidad, atenuación o congelación. \\
+        \texttt{features} & Contenido espectral de la ventana: RMS, picos y potencias por banda. & Alimentar la WebUI, las capturas y la sonificación. \\
+        \texttt{diagnostics} & Estado observacional de la señal: amplitud, offset, saturación, señal plana, saltos y ruido de red. & Detectar problemas de adquisición sin modificar el DSP. \\
+        \texttt{spectral\_quality} & Puntuación, estado y factor de puerta derivados de \texttt{features}, \texttt{diagnostics} y recepción. & Decidir si las features se usan con normalidad, atenuación o bloqueo. \\
         \hline
     \end{tabular}
 \end{table}
@@ -327,25 +323,21 @@ El estado principal del runtime se publica dentro de \texttt{status.state}. Este
     \label{fig:impl_backend_runtime_states}
 \end{figure}
 
-La diferencia entre estado del runtime y estado de calidad es importante. \texttt{status.state} indica si el sistema está esperando datos, llenando la ventana o con características disponibles. En cambio, \texttt{spectral\_quality.state} indica si la última ventana EEG parece limpia, utilizable con precaución, sospechosa de artefacto o no recomendable para sonificación.
+La diferencia entre estado del runtime y estado de calidad es importante. \texttt{status.state} indica si el sistema está esperando datos, llenando la ventana o con características disponibles. En cambio, \texttt{spectral\_quality.state} indica si la última ventana EEG parece limpia, utilizable con precaución, sospechosa de artefacto o no recomendable para sonificación. La Tabla~\ref{tab:impl_backend_estados} agrupa estos estados sin repetir la lógica mostrada en la figura.
 
 \begin{table}[H]
     \centering
     \caption{Estados principales publicados por el backend.}
     \label{tab:impl_backend_estados}
-    \renewcommand{\arraystretch}{1.15}
-    \begin{tabular}{p{0.25\textwidth}p{0.25\textwidth}p{0.40\textwidth}}
+    \renewcommand{\arraystretch}{1.12}
+    \begin{tabular}{p{0.28\textwidth}p{0.27\textwidth}p{0.35\textwidth}}
         \hline
-        \textbf{Bloque} & \textbf{Estado} & \textbf{Significado} \\
+        \textbf{Bloque} & \textbf{Estados} & \textbf{Interpretación} \\
         \hline
-        \texttt{status} & \texttt{waiting\_for\_data} & Todavía no se han recibido bloques EEG desde el firmware. \\
-        \texttt{status} & \texttt{waiting\_for\_window} & Hay recepción, pero aún no se han acumulado \SI{4}{\second} de señal. \\
-        \texttt{status} & \texttt{receiving} & La ventana está disponible, pero todavía no existen features recientes. \\
-        \texttt{status} & \texttt{features\_ready} & Existe una extracción espectral disponible para los módulos consumidores. \\
-        \texttt{spectral\_quality} & \texttt{clean} & Ventana considerada adecuada para uso normal. \\
-        \texttt{spectral\_quality} & \texttt{usable\_with\_caution} & Ventana utilizable, pero con alguna penalización leve. \\
-        \texttt{spectral\_quality} & \texttt{artifact\_suspected} & Ventana sospechosa; se recomienda atenuar su efecto. \\
-        \texttt{spectral\_quality} & \texttt{bad} & Ventana no recomendable; puede activarse congelación o bloqueo de la sonificación. \\
+        \texttt{status} & \texttt{waiting\_for\_data}, \texttt{waiting\_for\_window} & El backend espera datos o acumula la ventana mínima de \SI{4}{\second}. \\
+        \texttt{status} & \texttt{receiving}, \texttt{features\_ready} & La ventana existe y puede haber características disponibles para los consumidores. \\
+        \texttt{spectral\_quality} & \texttt{clean}, \texttt{usable\_with\_caution} & La ventana puede usarse con normalidad o con penalización leve. \\
+        \texttt{spectral\_quality} & \texttt{artifact\_suspected}, \texttt{bad} & La ventana requiere atenuación, congelación o bloqueo de la sonificación. \\
         \hline
     \end{tabular}
 \end{table}
@@ -375,20 +367,16 @@ El \textit{snapshot} se organiza como un diccionario con varios grupos. La Tabla
     \centering
     \caption{Grupos principales del \textit{snapshot} publicado por el backend Python.}
     \label{tab:impl_backend_snapshot}
-    \renewcommand{\arraystretch}{1.15}
-    \begin{tabular}{p{0.22\textwidth}p{0.36\textwidth}p{0.32\textwidth}}
+    \renewcommand{\arraystretch}{1.12}
+    \begin{tabular}{p{0.25\textwidth}p{0.31\textwidth}p{0.34\textwidth}}
         \hline
-        \textbf{Grupo} & \textbf{Contenido principal} & \textbf{Finalidad} \\
+        \textbf{Grupo} & \textbf{Contenido} & \textbf{Finalidad} \\
         \hline
-        \texttt{config} & \texttt{fs\_hz}, \texttt{num\_ch}, \texttt{feature\_window\_sec}, \texttt{feature\_hop\_samples}, \texttt{psd\_method}, \texttt{channel\_idx} & Registrar la configuración activa del backend. \\
-        \texttt{status} & Estado general, disponibilidad de ventana y último índice de muestra recibido & Indicar si el sistema espera datos, llena buffer o dispone de features. \\
-        \texttt{rx} & Tasas de recepción, totales de frames y bloques, pérdidas, cola, bloques malformados y estados inválidos & Vigilar la estabilidad del contrato MCU--Python. \\
-        \texttt{features} & RMS, picos, potencias por banda, banda dominante y relación alpha/beta & Exponer el resumen espectral de la ventana reciente. \\
-        \texttt{diagnostics} & Métricas de amplitud en \si{\micro\volt}, percentiles, saturación, señal plana, saltos, ratio de \SI{50}{\hertz} y avisos & Evaluar observacionalmente la calidad de la ventana. \\
-        \texttt{spectral\_quality} & Puntuación, estado, factor de puerta, validez para sonificación, recomendación de congelación y penalizaciones & Regular el uso de las features por los módulos posteriores. \\
-        \texttt{capture} & Estado de captura y metadatos asociados & Permitir adquisición y registro de sesiones reales. \\
-        \texttt{performance} & Periodos de publicación y cadencias principales del runtime & Documentar los ritmos de actualización del sistema. \\
-        \texttt{errors} & Contadores de errores acumulados en generación musical o bombeo MIDI & Facilitar depuración y validación. \\
+        \texttt{config/status} & Configuración activa y fase del runtime. & Indicar con qué parámetros trabaja el backend y si ya hay ventana o features. \\
+        \texttt{rx} & Tasas de recepción, pérdidas, cola, bloques malformados y estados inválidos. & Vigilar la estabilidad del contrato MCU--Python. \\
+        \texttt{features/diagnostics} & Resumen espectral y métricas observacionales de la ventana reciente. & Exponer el estado de la señal sin publicar el espectro completo. \\
+        \texttt{spectral\_quality} & Puntuación, estado, factor de puerta y validez para sonificación. & Regular el uso de las features por módulos posteriores. \\
+        \texttt{capture/performance/errors} & Estado de captura, cadencias principales y contadores de errores. & Facilitar validación experimental y depuración. \\
         \hline
     \end{tabular}
 \end{table}
