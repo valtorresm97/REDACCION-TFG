@@ -15,7 +15,7 @@ El firmware de adquisición constituye la primera capa ejecutable del sistema. S
 
 Dentro del flujo general del sistema, esta capa se encarga de las tareas más cercanas al hardware y al tiempo real. El microcontrolador asegura que las muestras lleguen a Python con una cadencia coherente, en microvoltios y con una estructura de bloque estable. A partir de esos bloques, el backend Python realiza el almacenamiento temporal, el análisis espectral, la evaluación de calidad y la generación de parámetros para la sonificación.
 
-La Figura~\ref{fig:impl_firmware_flujo_adquisicion} resume esta cadena de transformación de datos, desde el frame nativo del ADS1299 hasta el bloque \texttt{eeg\_block\_uV} consumido por el backend Python.
+La Figura~\ref{fig:impl_firmware_flujo_adquisicion} resume esta cadena de transformación, desde el frame nativo del ADS1299 hasta el bloque \texttt{eeg\_block\_uV} consumido por el backend Python.
 
 \begin{figure}[H]
     \centering
@@ -28,17 +28,13 @@ La Figura~\ref{fig:impl_firmware_flujo_adquisicion} resume esta cadena de transf
     \label{fig:impl_firmware_flujo_adquisicion}
 \end{figure}
 
-La implementación se reparte en varios archivos. \texttt{sketch.ino} actúa como programa principal: inicializa Bridge, Monitor, ADS1299, filtros y handlers de comunicación, y ejecuta el bucle de adquisición. La clase \texttt{ADS1299\_SafeSPI} encapsula el transporte SPI de bajo nivel. El driver \texttt{ADS1299Plus} implementa la secuencia de arranque, los comandos, el acceso a registros y la lectura de frames. El archivo \texttt{ADS1299\_Registers.h} recoge comandos, direcciones y máscaras del ADS1299 con nombres legibles. Por último, \texttt{filters.h} contiene el acondicionamiento digital en el microcontrolador y \texttt{streaming.h} define la estructura de bloque, la cola de transmisión y la publicación hacia Linux.
+La implementación se reparte en varios archivos. \texttt{sketch.ino} actúa como programa principal: inicializa Bridge, Monitor, ADS1299, filtros y handlers de comunicación, y ejecuta el bucle de adquisición. \texttt{ADS1299\_SafeSPI} encapsula el transporte SPI de bajo nivel; \texttt{ADS1299Plus} implementa la secuencia de arranque, los comandos, el acceso a registros y la lectura de frames; \texttt{ADS1299\_Registers.h} recoge comandos y direcciones con nombres legibles; y \texttt{filters.h} y \texttt{streaming.h} contienen, respectivamente, el acondicionamiento digital y la publicación de bloques hacia Linux.
 
 \subsubsection{Configuración del ADS1299}
 
-El ADS1299-4 es un convertidor analógico-digital de cuatro canales con 24 bits de resolución, orientado a señales EEG y biopotenciales. Internamente integra un amplificador de ganancia programable, una referencia de tensión, un oscilador y un filtro digital de decimación. La comunicación con el microcontrolador se realiza mediante una interfaz compatible con SPI, por lo que el firmware puede configurar registros y leer muestras mediante comandos digitales.
+El ADS1299-4 es un convertidor analógico-digital de cuatro canales con 24 bits de resolución, orientado a señales EEG y biopotenciales. Integra amplificador de ganancia programable, referencia de tensión, oscilador y filtro digital de decimación. En este proyecto trabaja a \SI{250}{\hertz}, con ganancia 24 y referencia interna de \SI{4.5}{\volt}, de modo que genera una muestra nueva aproximadamente cada \SI{4}{\milli\second}.
 
-En este proyecto el ADS1299 trabaja a \SI{250}{\hertz}, con ganancia 24 y referencia interna de \SI{4.5}{\volt}. La ganancia 24 se utiliza porque las señales EEG son de muy baja amplitud y deben amplificarse antes de la conversión digital. La tasa de \SI{250}{\hertz} fija el ritmo común de adquisición: el convertidor produce una muestra nueva aproximadamente cada \SI{4}{\milli\second}. Aunque el dispositivo permite otras tasas de datos, en esta implementación se usa una única frecuencia global para todos los canales.
-
-La configuración se realiza en dos niveles. Primero, \texttt{ADS1299Plus::begin()} deja el dispositivo en un estado conocido: configura pines, inicializa SPI, aplica \texttt{RESET}, detiene conversiones previas, entra en \texttt{SDATAC} y lee el registro de identificación. Esta lectura permite comprobar que el dispositivo pertenece a la familia ADS1299 y que la variante detectada es de cuatro canales, coherente con el contrato de adquisición usado por firmware y Python.
-
-Después, \texttt{configureDefaults()} programa una configuración base mediante registros como \texttt{CONFIG1}, \texttt{CONFIG2}, \texttt{CONFIG3}, \texttt{CHnSET}, \texttt{BIAS\_SENSP}, \texttt{BIAS\_SENSN}, \texttt{LOFF\_SENSP} y \texttt{LOFF\_SENSN}. Estos nombres proceden del mapa de registros del ADS1299 y evitan que el código principal dependa de valores binarios opacos. Los comandos principales empleados por el driver son \texttt{RESET}, \texttt{START}, \texttt{STOP}, \texttt{RDATAC}, \texttt{SDATAC}, \texttt{RREG} y \texttt{WREG}. \texttt{RREG} y \texttt{WREG} se usan para leer y escribir registros; \texttt{SDATAC} detiene la lectura continua durante la configuración; y \texttt{RDATAC} activa el modo de lectura continua usado durante la adquisición.
+La configuración se realiza primero dejando el dispositivo en un estado conocido mediante \texttt{ADS1299Plus::begin()}: se inicializa SPI, se aplica \texttt{RESET}, se detienen conversiones previas, se entra en \texttt{SDATAC} y se lee el registro de identificación. Después, \texttt{configureDefaults()} programa los registros principales, como \texttt{CONFIG1}, \texttt{CONFIG2}, \texttt{CONFIG3}, \texttt{CHnSET}, \texttt{BIAS\_SENSP}, \texttt{BIAS\_SENSN}, \texttt{LOFF\_SENSP} y \texttt{LOFF\_SENSN}. Esta organización evita que el código principal dependa de valores binarios dispersos.
 
 En la versión final del prototipo se utiliza \texttt{ADS\_DIAGNOSTIC\_MODE=5}. Este modo mantiene CH1 como canal EEG principal, con entrada normal y ganancia 24. Los canales CH2--CH4 permanecen dentro del frame para conservar el contrato estructural de cuatro canales, pero se configuran apagados o cortocircuitados y no se interpretan como canales EEG activos finales. La derivación de BIAS se limita a CH1P y CH1N, y la detección \textit{lead-off} se desactiva durante la captura final para no inyectar señales diagnósticas en la señal usada para la sonificación.
 
@@ -75,7 +71,7 @@ La Figura~\ref{fig:impl_secuencia_drdy_rdatac} resume esta secuencia. La clave e
 \begin{figure}[H]
     \centering
     \IfFileExists{images/uml/impl_secuencia_drdy_rdatac.pdf}{%
-        \includegraphics[width=0.98\textwidth]{images/uml/impl_secuencia_drdy_rdatac.pdf}
+        \includegraphics[width=0.90\textwidth]{images/uml/impl_secuencia_drdy_rdatac.pdf}
     }{%
         \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_secuencia\_drdy\_rdatac.mmd}}}%
     }
@@ -85,9 +81,9 @@ La Figura~\ref{fig:impl_secuencia_drdy_rdatac} resume esta secuencia. La clave e
 
 \subsubsection{Reconstrucción, escalado y filtrado de muestras}
 
-Cada frame RDATAC comienza con un campo de estado de 24 bits. El firmware valida que los bits más significativos coincidan con el prefijo esperado \texttt{0xC00000}. Esta comprobación permite detectar frames incoherentes o problemas de sincronía en la comunicación SPI antes de que la muestra avance por la cadena.
+Cada frame RDATAC comienza con un campo de estado de 24 bits. El firmware valida que los bits más significativos coincidan con el prefijo esperado \texttt{0xC00000}. Esta comprobación permite detectar frames incoherentes o problemas de sincronía en la comunicación SPI.
 
-Después del estado aparecen las muestras de canal. Cada canal se transmite como tres bytes en orden \textit{MSB first}. El driver reconstruye esos tres bytes mediante \texttt{unpack24()} y realiza la extensión de signo a 32 bits. Este paso es necesario porque el ADS1299 entrega valores con signo: una muestra negativa debe seguir siendo negativa al almacenarse como \texttt{int32\_t}. Si no se extendiera correctamente el bit de signo, una muestra negativa podría interpretarse como un valor positivo de gran magnitud.
+Después del estado aparecen las muestras de canal. Cada canal se transmite como tres bytes en orden \textit{MSB first}. El driver reconstruye esos tres bytes mediante \texttt{unpack24()} y realiza la extensión de signo a 32 bits. Este paso es necesario porque el ADS1299 entrega valores con signo; sin esta extensión, una muestra negativa podría interpretarse como un valor positivo de gran magnitud.
 
 Una vez reconstruido el valor digital de cada canal, el firmware aplica el factor de conversión \texttt{LSB\_V}. En la configuración utilizada, este factor vale \SI{2.235e-8}{\volt} por unidad digital del ADC. Por tanto, la conversión inicial a tensión se expresa como:
 
@@ -96,16 +92,15 @@ Una vez reconstruido el valor digital de cada canal, el firmware aplica el facto
 \]
 
 donde \(c_{\mathrm{ADC}}\) es el valor digital con signo reconstruido a partir del frame RDATAC.
-La señal resultante todavía se mantiene en voltios dentro del microcontrolador para aplicar el acondicionamiento digital. La cadena de filtrado se aplica por canal y consta de tres etapas: un bloque de eliminación de continua o paso alto de \SI{0.5}{\hertz}, un filtro de muesca centrado en \SI{50}{\hertz} y un filtro paso bajo de \SI{40}{\hertz}. El primer filtro reduce la deriva lenta de línea base, el segundo atenúa la interferencia de red eléctrica y el tercero limita el contenido de alta frecuencia antes del análisis posterior.
 
-Tras el filtrado, la muestra se convierte a microvoltios enteros mediante \texttt{volts\_to\_uV\_i32()}. Esta conversión deja la señal en una unidad natural para EEG y simplifica el contrato con Python: el backend ya no recibe cuentas crudas del ADC, sino valores físicos en microvoltios.
+La señal resultante se mantiene en voltios para aplicar el acondicionamiento digital: eliminación de continua o paso alto de \SI{0.5}{\hertz}, muesca de \SI{50}{\hertz} y paso bajo de \SI{40}{\hertz}. Tras el filtrado, la muestra se convierte a microvoltios enteros mediante \texttt{volts\_to\_uV\_i32()}, de forma que el backend recibe valores físicos en microvoltios y no valores digitales crudos del ADC.
 
 La Figura~\ref{fig:impl_frame_rdatac_a_bloque_uv} muestra la transformación entre el frame nativo del ADS1299 y el bloque que finalmente recibe Python. La figura ayuda a distinguir dos niveles: un frame RDATAC representa una muestra multicanal; un bloque \texttt{eeg\_block\_uV} agrupa ocho frames ya validados, escalados y filtrados.
 
 \begin{figure}[H]
     \centering
     \IfFileExists{images/uml/impl_frame_rdatac_a_bloque_uv.pdf}{%
-        \includegraphics[width=0.90\textwidth]{images/uml/impl_frame_rdatac_a_bloque_uv.pdf}
+        \includegraphics[width=0.80\textwidth]{images/uml/impl_frame_rdatac_a_bloque_uv.pdf}
     }{%
         \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_frame\_rdatac\_a\_bloque\_uv.mmd}}}%
     }
@@ -115,9 +110,9 @@ La Figura~\ref{fig:impl_frame_rdatac_a_bloque_uv} muestra la transformación ent
 
 \subsubsection{Agrupación y envío de bloques hacia Linux}
 
-El firmware no publica una notificación por cada muestra individual. En su lugar, acumula ocho muestras filtradas en la estructura \texttt{EegBlockUV}, definida en \texttt{streaming.h}. Con una frecuencia de muestreo de \SI{250}{\hertz}, cada muestra representa \SI{4}{\milli\second} y cada bloque de ocho muestras representa \SI{32}{\milli\second}.
+El firmware no publica una notificación por cada muestra individual. En su lugar, acumula ocho muestras filtradas en la estructura \texttt{EegBlockUV}, definida en \texttt{streaming.h}. Con una frecuencia de muestreo de \SI{250}{\hertz}, cada bloque representa \SI{32}{\milli\second} de señal.
 
-Cada bloque contiene una cabecera con \texttt{block\_idx}, \texttt{first\_sample\_idx} y \texttt{sample\_count}. Después incluye, para cada una de las ocho muestras, el \texttt{status} del ADS1299 y los cuatro canales expresados en microvoltios. Esta estructura es el contrato entre el firmware y Python.
+Cada bloque contiene una cabecera con \texttt{block\_idx}, \texttt{first\_sample\_idx} y \texttt{sample\_count}. Después incluye, para cada una de las ocho muestras, el \texttt{status} del ADS1299 y los cuatro canales expresados en microvoltios. Esta estructura define el contrato entre el firmware y Python.
 
 \begin{table}[H]
     \centering
@@ -135,11 +130,9 @@ Cada bloque contiene una cabecera con \texttt{block\_idx}, \texttt{first\_sample
     \end{tabular}
 \end{table}
 
-Cuando un bloque se completa, se introduce en una cola circular \texttt{TxBlockRing}. Esta cola desacopla la adquisición de la publicación por Bridge. Bridge es el mecanismo de comunicación entre el microcontrolador y el entorno Linux/Python de la UNO Q. Gracias a la cola, el firmware puede seguir adquiriendo muestras aunque el envío de un bloque concreto tarde algo más que una iteración del bucle.
+Cuando un bloque se completa, se introduce en una cola circular \texttt{TxBlockRing}. Esta cola desacopla la adquisición de la publicación por Bridge y permite que el firmware siga adquiriendo aunque el envío de un bloque tarde algo más que una iteración del bucle. La publicación se realiza mediante \texttt{Bridge.notify("eeg\_block\_uV", ...)}, enviando la cabecera y las ocho muestras del bloque.
 
-La publicación se realiza mediante \texttt{Bridge.notify("eeg\_block\_uV", ...)}. En cada notificación se envía la cabecera del bloque y los datos de las ocho muestras. Además, el firmware limita el número de bloques publicados por iteración para evitar ráfagas excesivas hacia Linux.
-
-La Figura~\ref{fig:impl_payload_eeg_block_uv} representa la estructura lógica del payload. Esta figura es especialmente importante porque cualquier cambio en este formato obligaría a modificar de forma coordinada el firmware, el receptor Python, las capturas CSV y las herramientas de validación.
+La Figura~\ref{fig:impl_payload_eeg_block_uv} representa la estructura lógica del payload. Cualquier cambio en este formato obligaría a modificar de forma coordinada el firmware, el receptor Python, las capturas CSV y las herramientas de validación.
 
 \begin{figure}[H]
     \centering
@@ -152,29 +145,10 @@ La Figura~\ref{fig:impl_payload_eeg_block_uv} representa la estructura lógica d
     \label{fig:impl_payload_eeg_block_uv}
 \end{figure}
 
-En el lado Python, el contrato se centraliza en \texttt{eeg\_contract.py}. Este módulo define el nombre del evento, la frecuencia de muestreo, el número de canales, el tamaño de bloque, la máscara de estado del ADS1299 y el número esperado de campos. La función \texttt{parse\_eeg\_block\_values()} valida la longitud del payload y separa estados y muestras.
-
-La clase \texttt{EEGReceiver}, implementada en \texttt{receiver.py}, registra el \textit{callback} \texttt{eeg\_block\_uV}. Este \textit{callback} se mantiene deliberadamente ligero: convierte argumentos a enteros, valida el payload, comprueba continuidad de índices, cuenta estados ADS1299 inválidos y encola el bloque completo. El procesamiento digital no se ejecuta dentro del \textit{callback}; el backend drena después la cola mediante \texttt{drain\_blocks\_to\_processor()} y entrega los bloques al procesador con \texttt{add\_block\_uV()}.
-
-Con esta implementación, la frontera firmware--Python queda definida de forma precisa. El microcontrolador entrega bloques de ocho muestras, con cuatro canales en microvoltios y estado ADS1299 por muestra. Python valida y almacena esos bloques antes de transformarlos en ventanas de análisis. La siguiente parte del capítulo describe cómo el backend consume esta señal ya estructurada para calcular características espectrales y métricas de calidad.
-
-
-El firmware de adquisición constituye la primera capa ejecutable del sistema. Su función es convertir la salida digital del ADS1299 en un flujo de bloques EEG coherente para el backend Python. Esta capa no calcula características espectrales ni toma decisiones musicales; su responsabilidad es configurar el \textit{front-end} de adquisición, leer las conversiones disponibles, reconstruir las muestras, aplicar un acondicionamiento digital básico, escalar la señal a microvoltios y publicar bloques mediante el contrato \texttt{eeg\_block\_uV}.
+En el lado Python, el contrato se centraliza en \texttt{eeg\_contract.py}. Este módulo define el nombre del evento, la frecuencia de muestreo, el número de canales, el tamaño de bloque, la máscara de estado del ADS1299 y el número esperado de campos. La función \texttt{parse\_eeg\_block\_values()} valida la longitud del payload y separa estados y muestras. Por su parte, \texttt{EEGReceiver} registra el \textit{callback} \texttt{eeg\_block\_uV}, valida continuidad de índices y encola los bloques para que el backend los entregue después al procesador mediante \texttt{drain\_blocks\_to\_processor()}.
 
 Con esta implementación, la relación entre firmware y backend Python queda definida de forma precisa. El microcontrolador entrega bloques de ocho muestras, con cuatro canales en microvoltios y estado ADS1299 por muestra. Python valida y almacena esos bloques antes de transformarlos en ventanas de análisis. La siguiente parte del capítulo describe cómo el backend consume esta señal ya estructurada para calcular características espectrales y métricas de calidad.
 
-La Figura~\ref{fig:impl_firmware_flujo_adquisicion} resume el flujo de datos de esta primera etapa. La figura no pretende repetir la arquitectura general del sistema, sino detallar qué transformaciones se producen dentro del firmware antes de que el backend Python reciba la señal.
-
-\begin{figure}[H]
-    \centering
-    \IfFileExists{images/uml/impl_firmware_flujo_adquisicion.pdf}{%
-        \includegraphics[width=0.92\textwidth]{images/uml/impl_firmware_flujo_adquisicion.pdf}
-    }{%
-        \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_firmware\_flujo\_adquisicion.mmd}}}%
-    }
-    \caption{Flujo de adquisición implementado en el firmware. El microcontrolador lee frames RDATAC del ADS1299, valida el campo de estado, reconstruye las muestras de 24 bits, las escala, aplica filtrado digital y publica bloques de 8 muestras hacia Linux.}
-    \label{fig:impl_firmware_flujo_adquisicion}
-\end{figure}
 
 
 
