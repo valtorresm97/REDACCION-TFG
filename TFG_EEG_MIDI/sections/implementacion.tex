@@ -240,11 +240,11 @@ La Figura~\ref{fig:impl_backend_buffer_ventana} resume la relación entre bloque
 
 \subsubsection{Extracción de características espectrales}
 
-La base matemática del análisis espectral, la densidad espectral de potencia, el cálculo de potencia por bandas y el método multitaper se ha introducido en el apartado de Conceptos previos. En esta sección se documenta cómo se integra ese análisis dentro del backend Python.
+La base matemática de la densidad espectral de potencia, el cálculo de potencia por bandas y el método multitaper se ha introducido en Conceptos previos. Aquí se describe únicamente cómo se integra ese análisis en la ruta de ejecución del backend.
 
-Cuando la ventana está completa y se cumple el salto de 64 muestras, \texttt{compute\_live\_features()} extrae la ventana reciente de CH1 y delega el cálculo en \texttt{DSPCore}. De esta forma, \texttt{EEGSignalProcessor} se encarga de la memoria temporal y de la selección de ventana, mientras que \texttt{DSPCore} se limita al análisis espectral de una señal unidimensional.
+Cuando la ventana está completa y se cumple el salto de 64 muestras, \texttt{compute\_live\_features()} extrae la ventana reciente de CH1 y delega el análisis en \texttt{DSPCore}. Así, \texttt{EEGSignalProcessor} conserva la responsabilidad de memoria y selección temporal, mientras que \texttt{DSPCore} concentra el cálculo espectral de la señal unidimensional.
 
-En la ruta en vivo se utiliza \texttt{psd\_method="multitaper"}. Antes de estimar la PSD, \texttt{DSPCore} aplica un preprocesado robusto sobre la ventana seleccionada. Después calcula la PSD, integra potencia por bandas y resume la ventana mediante un diccionario de \textit{features}. En la ruta de tiempo real no se publica el espectro completo, sino un conjunto compacto de variables preparado para ser consumido por el resto del sistema. La Tabla~\ref{tab:impl_backend_features} resume estas salidas sin listar cada clave de forma exhaustiva.
+En la ruta en vivo se utiliza \texttt{psd\_method="multitaper"}. \texttt{DSPCore} preprocesa la ventana, estima la PSD, integra la potencia por bandas y devuelve un diccionario compacto de \textit{features}. No se publica el espectro completo en cada actualización: se exponen solo variables resumidas, suficientes para WebUI, capturas, calidad y sonificación. La Tabla~\ref{tab:impl_backend_features} agrupa estas salidas sin convertir la memoria en una documentación exhaustiva de la API interna.
 
 \begin{table}[H]
     \centering
@@ -263,9 +263,9 @@ En la ruta en vivo se utiliza \texttt{psd\_method="multitaper"}. Antes de estima
     \end{tabular}
 \end{table}
 
-Las bandas empleadas por el backend son delta, theta, alpha, beta y gamma, con rangos coherentes con los descritos en Conceptos previos. En esta implementación se usan como descriptores cuantitativos de la ventana reciente y como entrada algorítmica para módulos posteriores. No se emplean para realizar diagnóstico clínico ni para inferir estados médicos del usuario.
+Las bandas delta, theta, alpha, beta y gamma se usan como descriptores cuantitativos de la ventana reciente y como entrada algorítmica para módulos posteriores. Su uso en este TFG es funcional y experimental, no clínico.
 
-Además de las características espectrales, el procesador calcula un segundo bloque de información denominado \texttt{diagnostics}. Este bloque no describe el contenido musical ni espectral de la señal, sino su estado observacional: amplitud en microvoltios, offset, dispersión, posibles saturaciones, señal plana, saltos bruscos y presencia relativa de energía en torno a \SI{50}{\hertz}. La Tabla~\ref{tab:impl_backend_diagnostics_quality} separa las tres salidas principales de esta etapa.
+Además de las \textit{features}, el procesador genera \texttt{diagnostics}, que resume el estado observacional de la señal: amplitud en microvoltios, offset, dispersión, saturación, señal plana, saltos bruscos y presencia relativa de energía en torno a \SI{50}{\hertz}. A partir de \texttt{features}, \texttt{diagnostics}, métricas de recepción y disponibilidad de ventana, \texttt{spectral\_quality.py} calcula una puntuación, un estado y un factor de puerta. Esta capa no recalcula la PSD ni altera la señal; solo decide cómo de fiable es la última ventana para alimentar los módulos posteriores.
 
 \begin{table}[H]
     \centering
@@ -282,8 +282,6 @@ Además de las características espectrales, el procesador calcula un segundo bl
         \hline
     \end{tabular}
 \end{table}
-
-El módulo \texttt{spectral\_quality.py} combina \texttt{features}, \texttt{diagnostics}, métricas de recepción y disponibilidad de ventana. A partir de esa información asigna una puntuación de calidad, un estado y un factor de puerta. Este bloque no recalcula la PSD ni altera la señal EEG; actúa como una capa de protección del runtime para evitar que ventanas con artefactos evidentes alimenten sin control a la sonificación.
 
 La Figura~\ref{fig:impl_backend_features_quality} resume esta separación entre cálculo espectral, diagnóstico observacional y evaluación de calidad.
 
@@ -304,9 +302,9 @@ La Figura~\ref{fig:impl_backend_features_quality} resume esta separación entre 
 
 \subsubsection{Publicación de estado y métricas}
 
-\texttt{BackendService} coordina el ciclo de ejecución del backend. En cada iteración drena bloques desde \texttt{EEGReceiver}, actualiza el buffer temporal, comprueba si corresponde calcular nuevas características, obtiene diagnósticos, evalúa \texttt{spectral\_quality} y publica periódicamente un \textit{snapshot}. El \textit{snapshot} es una vista estructurada del estado actual del sistema, consumida por la interfaz web, las herramientas de captura, los registros en disco y los módulos posteriores.
+\texttt{BackendService} coordina el ciclo de ejecución del backend: drena bloques desde \texttt{EEGReceiver}, actualiza el buffer temporal, calcula nuevas características cuando corresponde, evalúa la calidad espectral y publica periódicamente un \textit{snapshot}. Este \textit{snapshot} es la vista estructurada que consumen la WebUI, las herramientas de captura, los registros en disco y los módulos posteriores.
 
-El estado principal del runtime se publica dentro de \texttt{status.state}. Este estado no indica la calidad de la señal, sino la fase de ejecución en la que se encuentra el backend. La Figura~\ref{fig:impl_backend_runtime_states} muestra, en paralelo, la diferencia entre los estados de ejecución y los estados de calidad espectral.
+El estado principal del runtime se publica dentro de \texttt{status.state}. Este estado no indica calidad de señal, sino fase de ejecución. La Figura~\ref{fig:impl_backend_runtime_states} muestra esta diferencia frente a \texttt{spectral\_quality.state}, que resume la fiabilidad de la última ventana analizada.
 
 \begin{figure}[H]
     \centering
@@ -323,7 +321,7 @@ El estado principal del runtime se publica dentro de \texttt{status.state}. Este
     \label{fig:impl_backend_runtime_states}
 \end{figure}
 
-La diferencia entre estado del runtime y estado de calidad es importante. \texttt{status.state} indica si el sistema está esperando datos, llenando la ventana o con características disponibles. En cambio, \texttt{spectral\_quality.state} indica si la última ventana EEG parece limpia, utilizable con precaución, sospechosa de artefacto o no recomendable para sonificación. La Tabla~\ref{tab:impl_backend_estados} agrupa estos estados sin repetir la lógica mostrada en la figura.
+La Tabla~\ref{tab:impl_backend_estados} resume los estados principales sin repetir la lógica de transición mostrada en la figura.
 
 \begin{table}[H]
     \centering
@@ -342,7 +340,7 @@ La diferencia entre estado del runtime y estado de calidad es importante. \textt
     \end{tabular}
 \end{table}
 
-Antes de detallar los grupos publicados, conviene señalar que el \textit{snapshot} no introduce una etapa nueva de procesado, sino que actúa como una vista agrupada del estado del backend. En él se reúnen la configuración activa del sistema, el estado de ejecución, las métricas de recepción, las características espectrales calculadas, los diagnósticos observacionales, la evaluación de calidad y cierta información auxiliar de captura, rendimiento y errores. De esta forma, los módulos consumidores no acceden directamente al receptor, al buffer o al núcleo DSP, sino a una representación coherente y actualizada del estado global del backend.
+El \textit{snapshot} no introduce una etapa nueva de procesado: agrupa configuración, estado de ejecución, recepción, características, diagnósticos, calidad y datos auxiliares de captura, rendimiento y errores. De esta forma, los consumidores no acceden directamente al receptor, al buffer o al núcleo DSP, sino a una representación coherente del estado global del backend.
 
 La Figura~\ref{fig:impl_backend_snapshot_schema} resume esta organización del \textit{snapshot} como punto de salida común del backend Python.
 
@@ -361,7 +359,7 @@ La Figura~\ref{fig:impl_backend_snapshot_schema} resume esta organización del \
     \label{fig:impl_backend_snapshot_schema}
 \end{figure}
 
-El \textit{snapshot} se organiza como un diccionario con varios grupos. La Tabla~\ref{tab:impl_backend_snapshot} resume los más relevantes para la implementación del backend.
+La Tabla~\ref{tab:impl_backend_snapshot} recoge los grupos principales del \textit{snapshot}. La agrupación por bloques mantiene la trazabilidad técnica sin listar cada clave interna del diccionario.
 
 \begin{table}[H]
     \centering
@@ -381,9 +379,9 @@ El \textit{snapshot} se organiza como un diccionario con varios grupos. La Tabla
     \end{tabular}
 \end{table}
 
-Las métricas de recepción proceden de \texttt{EEGReceiver.get\_window\_metrics()}. Incluyen tasas de frames y bloques, totales recibidos, pérdidas estimadas, bloques malformados, estados ADS1299 inválidos, ocupación de cola y descartes. Estas métricas permiten detectar si el backend recibe datos de forma estable o si existe acumulación entre la llegada por Bridge y el consumo por el procesador.
+Las métricas de recepción proceden de \texttt{EEGReceiver.get\_window\_metrics()} e incluyen tasas, pérdidas estimadas, bloques malformados, estados ADS1299 inválidos, ocupación de cola y descartes. Son las variables que permiten comprobar si el contrato MCU--Python se mantiene estable durante la ejecución.
 
-El \textit{snapshot} se publica con \texttt{SNAPSHOT\_PUBLISH\_PERIOD\_SEC=0.2}, aproximadamente a \SI{5}{\hertz}. Esta frecuencia corresponde a la actualización de la vista pública del backend para monitorización, visualización y validación. No debe confundirse con la cadencia del cálculo espectral, que viene dada por el \textit{hop} de 64 muestras, ni con la cadencia de generación musical, que se define en la etapa de sonificación.
+Como se indicó al describir las cadencias del backend, \texttt{SNAPSHOT\_PUBLISH\_PERIOD\_SEC=0.2} fija una publicación aproximada a \SI{5}{\hertz}. Esa frecuencia pertenece a la vista pública del estado, no al cálculo espectral ni a la generación musical.
 
 Con esta organización, el backend Python queda delimitado como una capa de recepción, memoria temporal, extracción espectral, diagnóstico observacional y publicación de estado. La generación musical, la interfaz web y la matriz LED se apoyan en las estructuras publicadas por este backend, pero no alteran el contrato \texttt{eeg\_block\_uV}, la frecuencia de muestreo ni el contenido del buffer EEG.
 
