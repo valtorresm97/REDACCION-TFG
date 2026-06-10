@@ -158,7 +158,7 @@ A partir de esos bloques, el backend asume cuatro responsabilidades principales:
 
 La implementación se apoya en cuatro piezas principales. \texttt{EEGReceiver} recibe y valida los bloques procedentes del firmware. \texttt{EEGSignalProcessor} mantiene el buffer temporal multicanal y extrae ventanas recientes de señal. \texttt{DSPCore} concentra el cálculo espectral de CH1. Finalmente, \texttt{BackendService} coordina el ciclo de ejecución, drena la cola de recepción, actualiza características y construye el \textit{snapshot} público del sistema. La Figura~\ref{fig:impl_backend_flujo_python} resume esta organización por capas.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \IfFileExists{images/uml/impl_backend_flujo_python.png}{%
         \includegraphics[width=0.98\textwidth]{images/uml/impl_backend_flujo_python.png}
@@ -202,10 +202,11 @@ El contrato multicanal se mantiene durante todo el proceso: el buffer conserva c
 
 La extracción de características no comienza hasta que existe una ventana temporal suficiente. En este sistema, la ventana de análisis tiene una duración de \SI{4}{\second}. A \SI{250}{\hertz}, esto equivale a 1000 muestras. Una vez llena la ventana, las características no se recalculan muestra a muestra, sino cada \texttt{FEATURE\_HOP\_SAMPLES=64} muestras. Este salto, denominado \textit{hop}, equivale a \SI{256}{\milli\second}. Estas escalas temporales se resumen en la Tabla~\ref{tab:impl_backend_tiempos}.
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{Escalas temporales principales del backend Python.}
     \label{tab:impl_backend_tiempos}
+    \small
     \renewcommand{\arraystretch}{1.12}
     \begin{tabular}{p{0.30\textwidth}p{0.22\textwidth}p{0.38\textwidth}}
         \hline
@@ -223,7 +224,7 @@ Por tanto, el backend maneja varias cadencias simultáneas. Los bloques EEG lleg
 
 La Figura~\ref{fig:impl_backend_buffer_ventana} resume la relación entre bloque, buffer circular, ventana de análisis y hop de actualización.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \IfFileExists{images/uml/impl_backend_buffer_ventana.png}{%
         \includegraphics[width=0.50\textwidth]{images/uml/impl_backend_buffer_ventana.png}
@@ -246,10 +247,11 @@ Cuando la ventana está completa y se cumple el salto de 64 muestras, \texttt{co
 
 En la ruta en vivo se utiliza \texttt{psd\_method="multitaper"}. \texttt{DSPCore} preprocesa la ventana, estima la PSD, integra la potencia por bandas y devuelve un diccionario compacto de \textit{features}. No se publica el espectro completo en cada actualización: se exponen solo variables resumidas, suficientes para WebUI, capturas, calidad y sonificación. La Tabla~\ref{tab:impl_backend_features} agrupa estas salidas sin convertir la memoria en una documentación exhaustiva de la API interna.
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{Resumen compacto de características espectrales generadas por el backend.}
     \label{tab:impl_backend_features}
+    \small
     \renewcommand{\arraystretch}{1.12}
     \begin{tabular}{p{0.30\textwidth}p{0.58\textwidth}}
         \hline
@@ -267,10 +269,11 @@ Las bandas delta, theta, alpha, beta y gamma se usan como descriptores cuantitat
 
 Además de las \textit{features}, el procesador genera \texttt{diagnostics}, que resume el estado observacional de la señal: amplitud en microvoltios, offset, dispersión, saturación, señal plana, saltos bruscos y presencia relativa de energía en torno a \SI{50}{\hertz}. A partir de \texttt{features}, \texttt{diagnostics}, métricas de recepción y disponibilidad de ventana, \texttt{spectral\_quality.py} calcula una puntuación, un estado y un factor de puerta. Esta capa no recalcula la PSD ni altera la señal; solo decide cómo de fiable es la última ventana para alimentar los módulos posteriores.
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{Salidas principales de análisis y control de calidad.}
     \label{tab:impl_backend_diagnostics_quality}
+    \small
     \renewcommand{\arraystretch}{1.12}
     \begin{tabular}{p{0.24\textwidth}p{0.30\textwidth}p{0.36\textwidth}}
         \hline
@@ -285,7 +288,7 @@ Además de las \textit{features}, el procesador genera \texttt{diagnostics}, que
 
 La Figura~\ref{fig:impl_backend_features_quality} resume esta separación entre cálculo espectral, diagnóstico observacional y evaluación de calidad.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \IfFileExists{images/uml/impl_backend_features_quality.png}{%
         \includegraphics[width=0.98\textwidth]{images/uml/impl_backend_features_quality.png}
@@ -306,7 +309,7 @@ La Figura~\ref{fig:impl_backend_features_quality} resume esta separación entre 
 
 El estado principal del runtime se publica dentro de \texttt{status.state}. Este estado no indica calidad de señal, sino fase de ejecución. La Figura~\ref{fig:impl_backend_runtime_states} muestra esta diferencia frente a \texttt{spectral\_quality.state}, que resume la fiabilidad de la última ventana analizada.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \IfFileExists{images/uml/impl_backend_runtime_states.png}{%
         \includegraphics[width=0.96\textwidth]{images/uml/impl_backend_runtime_states.png}
@@ -323,10 +326,11 @@ El estado principal del runtime se publica dentro de \texttt{status.state}. Este
 
 La Tabla~\ref{tab:impl_backend_estados} resume los estados principales sin repetir la lógica de transición mostrada en la figura.
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{Estados principales publicados por el backend.}
     \label{tab:impl_backend_estados}
+    \small
     \renewcommand{\arraystretch}{1.12}
     \begin{tabular}{p{0.28\textwidth}p{0.27\textwidth}p{0.35\textwidth}}
         \hline
@@ -344,7 +348,7 @@ El \textit{snapshot} no introduce una etapa nueva de procesado: agrupa configura
 
 La Figura~\ref{fig:impl_backend_snapshot_schema} resume esta organización del \textit{snapshot} como punto de salida común del backend Python.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \IfFileExists{images/uml/impl_backend_snapshot_schema.png}{%
         \includegraphics[width=0.98\textwidth]{images/uml/impl_backend_snapshot_schema.png}
@@ -361,10 +365,11 @@ La Figura~\ref{fig:impl_backend_snapshot_schema} resume esta organización del \
 
 La Tabla~\ref{tab:impl_backend_snapshot} recoge los grupos principales del \textit{snapshot}. La agrupación por bloques mantiene la trazabilidad técnica sin listar cada clave interna del diccionario.
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{Grupos principales del \textit{snapshot} publicado por el backend Python.}
     \label{tab:impl_backend_snapshot}
+    \small
     \renewcommand{\arraystretch}{1.12}
     \begin{tabular}{p{0.25\textwidth}p{0.31\textwidth}p{0.34\textwidth}}
         \hline
