@@ -1,0 +1,20 @@
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "22px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 38, "rankSpacing": 50, "curve": "basis"}}}%%
+flowchart TB
+  snapshot["BackendService._build_snapshot()<br/>vista pública del backend"]
+
+  snapshot --> config["config<br/>fs_hz · num_ch · window · hop · psd_method"]
+  snapshot --> status["status<br/>state · window_ready · last_sample_idx"]
+  snapshot --> rx["rx<br/>tasas · totales · pérdidas · cola"]
+  snapshot --> features["features<br/>rms · peak_freq · bandpowers · dominant_band"]
+  snapshot --> diagnostics["diagnostics<br/>rms_uV · ptp · flatline · jumps · 50 Hz"]
+  snapshot --> quality["spectral_quality<br/>score · state · gate_factor · freeze"]
+  snapshot --> capture["capture<br/>estado de captura"]
+  snapshot --> performance["performance<br/>periodos · cadencias"]
+  snapshot --> errors["errors<br/>errores acumulados"]
+
+  features --> consumers["Consumidores posteriores"]
+  diagnostics --> consumers
+  quality --> consumers
+  consumers --> web["WebUI"]
+  consumers --> sonif["Sonificación"]
+  consumers --> captures["Capturas / validación"]
