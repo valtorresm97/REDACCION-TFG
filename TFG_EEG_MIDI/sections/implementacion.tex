@@ -153,38 +153,40 @@ Con esta implementación, la relación entre firmware y backend Python queda def
 
 \subsection{Implementación del backend Python}
 
-El backend Python constituye la segunda capa ejecutable de la cadena EEG--MIDI. A diferencia del firmware, esta capa no trabaja con bytes RDATAC ni con cuentas crudas del ADS1299, sino con bloques de señal ya reconstruidos, filtrados y escalados a microvoltios. La frontera entre ambas capas queda definida por el evento \texttt{Bridge.notify("eeg\_block\_uV")}, que entrega al runtime Python bloques de muestras EEG con una estructura fija.
+El backend Python constituye la segunda capa ejecutable de la cadena EEG--MIDI. A diferencia del firmware, esta trabaja con bloques de la señal EEG ya reconstruidos, filtrados y escalados a microvoltios. El puente entre las capas de adquisición por parte del microcontrolador y de procesado por parte del microprocesador queda definida por el evento \texttt{Bridge.notify\,(	extquotedbl eeg\_block\_uV\textquotedbl)}, que entrega al runtime Python bloques de muestras EEG con una estructura fija.
 
-A partir de esa frontera, el backend asume cuatro responsabilidades principales: validar que los bloques recibidos respetan el contrato acordado, conservar una memoria temporal reciente de la señal, extraer características espectrales de la ventana disponible y publicar un estado coherente para los módulos consumidores. Entre estos consumidores se encuentran la interfaz web, las herramientas de captura y validación, y la etapa de sonificación descrita posteriormente. La sonificación no recibe muestras crudas, sino características, diagnósticos y estado de calidad generados por el backend.
+A partir de la toma de bloques de muestras, el backend asume cuatro responsabilidades principales: validar que los bloques recibidos respetan el contrato acordado, conservar una memoria temporal reciente de la señal, extraer características espectrales de la ventana disponible y publicar un estado coherente para los módulos consumidores. Entre estos consumidores se encuentran la interfaz web, las herramientas de captura y validación, y la etapa de sonificación descrita posteriormente. La sonificación no recibe muestras crudas, sino características, diagnósticos y estado de calidad generados por el backend.
 
 La implementación se apoya en cuatro piezas principales. \texttt{EEGReceiver} se encarga de recibir y validar los bloques procedentes del firmware. \texttt{EEGSignalProcessor} mantiene el buffer temporal multicanal y extrae ventanas recientes de señal. \texttt{DSPCore} concentra el cálculo espectral de un canal. Finalmente, \texttt{BackendService} coordina el ciclo de ejecución, drena la cola de recepción, actualiza características y construye el \textit{snapshot} público del sistema. La Figura~\ref{fig:impl_backend_flujo_python} resume esta organización por capas.
 
 \begin{figure}[H]
     \centering
+\IfFileExists{images/uml/impl_backend_flujo_python.png}{%
+    \includegraphics[width=1\textwidth]{images/uml/impl_backend_flujo_python.png}
+}{%
     \IfFileExists{images/uml/impl_backend_flujo_python.pdf}{%
-        \includegraphics[width=0.95\textwidth,height=0.36\textheight,keepaspectratio]{images/uml/impl_backend_flujo_python.pdf}
+        \includegraphics[width=0.98\textwidth]{images/uml/impl_backend_flujo_python.pdf}
     }{%
-        \IfFileExists{images/uml/impl_backend_flujo_python.png}{%
-            \includegraphics[width=0.95\textwidth,height=0.36\textheight,keepaspectratio]{images/uml/impl_backend_flujo_python.png}
-        }{%
-            \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_backend\_flujo\_python.mmd}}}%
-        }%
-    }
+        \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_backend\_flujo\_python.mmd}}}%
+    }%
+}
     \caption{Flujo principal del backend Python organizado por capas. La recepción valida el contrato \texttt{eeg\_block\_uV}, el procesador mantiene la ventana temporal y el bloque DSP/calidad produce las características y métricas publicadas en el \textit{snapshot}.}
     \label{fig:impl_backend_flujo_python}
 \end{figure}
 
+```latex
 \subsubsection{Recepción de muestras EEG}
 
-La recepción en Python continúa el contrato cerrado en el firmware. El evento de entrada se denomina \texttt{eeg\_block\_uV} y está definido por la constante \texttt{EEG\_BLOCK\_EVENT}. Cada evento agrupa \texttt{BLOCK\_SAMPLES=8} muestras para \texttt{NUM\_CH=4} canales. Con una frecuencia de muestreo \texttt{FS\_HZ=250}, cada bloque representa \SI{32}{\milli\second} de señal EEG.
+La recepción en Python comienza en la frontera definida con el firmware. El microcontrolador no envía muestras aisladas, sino bloques completos mediante el evento \texttt{eeg\_block\_uV}. Cada bloque contiene 8 muestras de 4 canales, por lo que, con una frecuencia de muestreo de \SI{250}{\hertz}, representa aproximadamente \SI{32}{\milli\second} de señal EEG.
 
-El módulo \texttt{eeg\_contract.py} centraliza la definición del formato compartido entre firmware, backend, capturas y herramientas de análisis. En esta definición se fijan el número de canales, el número de muestras por bloque y las constantes necesarias para validar el estado ADS1299 asociado a cada muestra. La función \texttt{parse\_eeg\_block\_values()} comprueba que el bloque recibido tenga la longitud esperada, que el número de muestras sea coherente y que el contenido pueda separarse correctamente en estados ADS1299 y muestras multicanal.
+El formato de este evento se centraliza en el módulo \texttt{eeg\_contract.py}. Este archivo actúa como contrato común entre firmware, backend, capturas y herramientas de análisis: fija la frecuencia de muestreo, el número de canales, el tamaño de bloque y las reglas mínimas para comprobar que el payload recibido puede interpretarse correctamente. De esta forma, si el firmware o las herramientas de análisis cambian el formato de los datos, el punto de validación queda localizado en un único módulo.
 
-La función \texttt{EEGReceiver.eeg\_block\_uV()} actúa como \textit{callback} de entrada. En este contexto, un \textit{callback} es una función que se ejecuta automáticamente cuando el runtime recibe un evento desde el firmware. Por este motivo debe mantenerse ligera: su tarea no es calcular la PSD ni generar música, sino validar el bloque, registrar incidencias y encolarlo para su procesamiento posterior.
+La entrada real al backend se realiza mediante el método \texttt{EEGReceiver.eeg\_block\_uV()}. Este método funciona como \textit{callback}: se ejecuta automáticamente cuando llega un nuevo bloque desde Bridge. Su función se mantiene deliberadamente ligera. No calcula características espectrales ni genera música, sino que comprueba que el bloque recibido es coherente y lo prepara para ser procesado después por el resto del backend.
 
-En concreto, el receptor convierte los argumentos recibidos a enteros, rechaza índices negativos, valida el payload mediante \texttt{parse\_eeg\_block\_values()}, comprueba la continuidad de \texttt{block\_idx} y \texttt{first\_sample\_idx}, verifica el prefijo de estado ADS1299 mediante \texttt{is\_valid\_ads1299\_status()} y actualiza contadores de bloques malformados, pérdidas estimadas, estados inválidos y ocupación de cola. Si el bloque es coherente, se encapsula como \texttt{BlockItem} y se introduce en una cola interna.
+Durante esta validación, el receptor comprueba tres aspectos principales: que el payload tiene la estructura esperada, que los índices de bloque y de muestra mantienen continuidad temporal, y que el campo de estado del ADS1299 presenta el prefijo válido. Si se detectan problemas, el backend actualiza contadores de diagnóstico, como bloques malformados, pérdidas estimadas o estados inválidos. Si el bloque es correcto, se encapsula como \texttt{BlockItem} y se introduce en una cola interna.
 
-La cola desacopla la llegada de datos desde el firmware del procesamiento digital posterior. El \textit{callback} solo valida y encola; el backend vacía la cola en su ciclo normal mediante \texttt{drain\_blocks\_to\_processor()}, entregando bloques completos a \texttt{EEGSignalProcessor.add\_block\_uV()}. Con esta separación, el coste variable del DSP no bloquea la recepción de nuevos eventos.
+Esta cola es importante porque desacopla la recepción de datos del procesamiento digital. El \textit{callback} solo valida y encola; posteriormente, en el ciclo normal de ejecución, el backend vacía la cola mediante \texttt{drain\_blocks\_to\_processor()} y entrega los bloques completos a \texttt{EEGSignalProcessor.add\_block\_uV()}. Con esta separación, una operación más costosa, como el cálculo espectral, no bloquea la llegada de nuevos eventos desde el firmware.
+```
 
 \subsubsection{Buffer temporal de señal}
 
@@ -247,22 +249,22 @@ La Figura~\ref{fig:impl_backend_buffer_ventana} resume la relación entre bloque
 
 \begin{figure}[H]
     \centering
+\IfFileExists{images/uml/impl_backend_buffer_ventana.png}{%
+    \includegraphics[width=0.45\textwidth]{images/uml/impl_backend_buffer_ventana.png}
+}{%
     \IfFileExists{images/uml/impl_backend_buffer_ventana.pdf}{%
-        \includegraphics[width=0.95\textwidth,height=0.38\textheight,keepaspectratio]{images/uml/impl_backend_buffer_ventana.pdf}
+        \includegraphics[width=0.98\textwidth]{images/uml/impl_backend_buffer_ventana.pdf}
     }{%
-        \IfFileExists{images/uml/impl_backend_buffer_ventana.png}{%
-            \includegraphics[width=1\textwidth,height=0.70\textheight,keepaspectratio]{images/uml/impl_backend_buffer_ventana.png}
-        }{%
-            \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_backend\_buffer\_ventana.mmd}}}%
-        }%
-    }
+        \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_backend\_buffer\_ventana.mmd}}}%
+    }%
+}
     \caption{Organización temporal del buffer EEG en Python. Los bloques de ocho muestras se convierten a voltios, se escriben en un anillo multicanal y, al completarse la ventana de \SI{4}{\second}, CH1 se analiza cada 64 muestras.}
     \label{fig:impl_backend_buffer_ventana}
 \end{figure}
 
 \subsubsection{Extracción de características espectrales}
 
-La base matemática del análisis espectral, la densidad espectral de potencia, el cálculo de potencia por bandas y el método multitaper se ha introducido en el apartado de Conceptos previos. En esta sección se documenta únicamente cómo se integra ese análisis dentro del backend Python.
+La base matemática del análisis espectral, la densidad espectral de potencia, el cálculo de potencia por bandas y el método multitaper se ha introducido en el apartado de Conceptos previos. En esta sección se documenta cómo se integra ese análisis dentro del backend Python.
 
 Cuando la ventana está completa y se cumple el salto de 64 muestras, \texttt{compute\_live\_features()} extrae la ventana reciente de CH1 y delega el cálculo en \texttt{DSPCore}. De esta forma, \texttt{EEGSignalProcessor} se encarga de la memoria temporal y de la selección de ventana, mientras que \texttt{DSPCore} se limita al análisis espectral de una señal unidimensional.
 
@@ -272,7 +274,7 @@ En la ruta en vivo se utiliza \texttt{psd\_method="multitaper"}. Antes de estima
     \centering
     \caption{Diccionario principal de características espectrales generado por el backend.}
     \label{tab:impl_backend_features}
-    \renewcommand{\arraystretch}{1.15}
+    \renewcommand{\arraystretch}{1.0}
     \begin{tabular}{p{0.24\textwidth}p{0.25\textwidth}p{0.41\textwidth}}
         \hline
         \textbf{Grupo} & \textbf{Clave} & \textbf{Significado} \\
@@ -314,15 +316,15 @@ La Figura~\ref{fig:impl_backend_features_quality} resume esta separación entre 
 
 \begin{figure}[H]
     \centering
+\IfFileExists{images/uml/impl_backend_features_quality.png}{%
+    \includegraphics[width=0.98\textwidth]{images/uml/impl_backend_features_quality.png}
+}{%
     \IfFileExists{images/uml/impl_backend_features_quality.pdf}{%
-        \includegraphics[width=0.95\textwidth,height=0.34\textheight,keepaspectratio]{images/uml/impl_backend_features_quality.pdf}
+        \includegraphics[width=0.98\textwidth]{images/uml/impl_backend_features_quality.pdf}
     }{%
-        \IfFileExists{images/uml/impl_backend_features_quality.png}{%
-            \includegraphics[width=0.95\textwidth,height=0.34\textheight,keepaspectratio]{images/uml/impl_backend_features_quality.png}
-        }{%
-            \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_backend\_features\_quality.mmd}}}%
-        }%
-    }
+        \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_backend\_features\_quality.mmd}}}%
+    }%
+}
     \caption{Separación entre extracción espectral, diagnóstico observacional y evaluación de calidad en el backend Python. La ventana CH1 alimenta \texttt{DSPCore}; las características y diagnósticos se combinan después en \texttt{spectral\_quality} antes de publicarse en el \textit{snapshot}.}
     \label{fig:impl_backend_features_quality}
 \end{figure}
