@@ -1,0 +1,54 @@
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 42, "rankSpacing": 55, "curve": "basis"}}}%%
+flowchart LR
+  subgraph controls["SonificationFeatures"]
+    density["band_driven_density<br/>densidad 0..1"]
+    register["spectral_register<br/>registro 0..1"]
+    tension["beta_gamma_drive<br/>tensión 0..1"]
+    stability["alpha_stability<br/>estabilidad 0..1"]
+    activity["rms_beta_activity<br/>actividad 0..1"]
+    velocity["rms_band_velocity<br/>dinámica 0..1"]
+    probability["band_note_probability<br/>probabilidad 0..1"]
+    valid["valid<br/>estado válido"]
+  end
+
+  subgraph config["Configuración musical"]
+    scale["ScaleConfig<br/>escala activa"]
+    main["main_note_midi<br/>nota principal"]
+    time["t_start + duración<br/>MUSIC_BAR_SEC"]
+  end
+
+  builder["MusicSegmentBuilder"]
+
+  density --> builder
+  register --> builder
+  tension --> builder
+  stability --> builder
+  activity --> builder
+  velocity --> builder
+  probability --> builder
+  valid --> builder
+  scale --> builder
+  main --> builder
+  time --> builder
+
+  builder --> cadence["rhythm_cadence<br/>LOW / MEDIUM / HIGH<br/>con histéresis"]
+  builder --> regOut["register_hint"]
+  builder --> tenOut["tension"]
+  builder --> stabOut["harmonic_stability"]
+  builder --> actOut["activity"]
+  builder --> velOut["velocity_factor"]
+  builder --> probOut["note_probability"]
+  builder --> validOut["valid"]
+  builder --> musicFrame["scale + main_note_midi<br/>marco musical fijo"]
+
+  cadence --> segment["MusicSegment<br/>estado musical del siguiente compás"]
+  regOut --> segment
+  tenOut --> segment
+  stabOut --> segment
+  actOut --> segment
+  velOut --> segment
+  probOut --> segment
+  validOut --> segment
+  musicFrame --> segment
+
+  segment --> bar["Entrada para BarGenerator<br/>acorde + patrón rítmico"]
