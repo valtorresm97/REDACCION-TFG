@@ -1,16 +1,21 @@
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "36px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 70, "rankSpacing": 85, "curve": "basis"}}}%%
 flowchart LR
-  subgraph header["Cabecera del bloque"]
-    h1["block_idx"]
-    h2["first_sample_idx"]
-    h3["sample_count"]
-  end
 
-  subgraph samples["Datos: 8 muestras"]
-    s0["muestra 0<br/>status, ch1_uV, ch2_uV, ch3_uV, ch4_uV"]
-    s1["..."]
-    s7["muestra 7<br/>status, ch1_uV, ch2_uV, ch3_uV, ch4_uV"]
-  end
+subgraph header["Cabecera del bloque"]
+direction TB
+h1["block_idx"]
+h2["first_sample_idx"]
+h3["sample_count"]
+end
 
-  header --> samples
-  total["Total: 3 + 8 × (1 + 4) = 43 valores"]
-  samples --> total
+subgraph samples["8 muestras"]
+direction TB
+s0["muestra 0<br/>status + ch1_uV + ch2_uV<br/>ch3_uV + ch4_uV"]
+s1["..."]
+s7["muestra 7<br/>status + ch1_uV + ch2_uV<br/>ch3_uV + ch4_uV"]
+end
+
+total["Payload total<br/>3 + 8 × (1 + 4) = 43 valores"]
+
+header --> samples
+samples --> total
