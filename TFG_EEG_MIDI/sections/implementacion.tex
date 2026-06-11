@@ -385,11 +385,15 @@ Con esta organización, el backend Python queda delimitado como una capa de rece
 
 \subsection{Implementación de la sonificación}
 
-La sonificación constituye la tercera capa ejecutable de la cadena EEG--MIDI. Su entrada no son muestras crudas ni ventanas temporales de señal, sino el resultado ya producido por el backend descrito en la sección anterior: características espectrales, diagnósticos observacionales y estado de calidad de la ventana. A partir de esta representación intermedia, el sistema construye controles musicales normalizados, genera una estructura musical jerárquica y finalmente programa mensajes MIDI para la salida física.
+La sonificación constituye la tercera capa ejecutable de la cadena EEG--MIDI. En las secciones anteriores se ha descrito cómo el firmware adquiere la señal EEG real y cómo el backend Python la transforma en una ventana reciente de características espectrales y métricas de calidad. A partir de ese punto, la sonificación no vuelve a trabajar con muestras crudas ni recalcula la PSD: utiliza el estado EEG ya resumido por el backend para generar música en tiempo real.
 
-La ruta implementada evita una traducción directa de una banda EEG a una nota concreta. En su lugar, el sistema separa tres tipos de información: las características derivadas del EEG, la evaluación de calidad de la ventana y la configuración musical elegida por el usuario o fijada por el backend. Con esta separación, el EEG modula variables como actividad, densidad, registro, estabilidad, dinámica y probabilidad de nota, mientras que elementos como la escala, la nota raíz, la nota principal, el canal MIDI y el programa se mantienen como parámetros musicales de configuración.
+La función de esta capa es transformar una representación compacta de la señal en controles musicales. Estos controles son valores normalizados que indican, por ejemplo, cuánta actividad, tensión, densidad rítmica, estabilidad, registro o dinámica debe tener la salida musical. Por tanto, el sistema no realiza una traducción literal del tipo ``el valor de la potencia de una banda EEG equivale a una nota concreta''. En su lugar, las bandas EEG, el RMS, la frecuencia pico y la calidad de la ventana modifican parámetros musicales de alto nivel.
 
-La Figura~\ref{fig:impl_sonificacion_flujo} resume el flujo principal implementado. La figura debe leerse como continuación directa de la sección 6.2: el bloque DSP y el \textit{quality gate} ya han producido sus salidas, y la sonificación comienza en \texttt{SonificationFeatureAdapter}.
+La generación musical mantiene separadas dos fuentes de información. Por un lado, el EEG aporta controles variables en el tiempo. Por otro lado, la configuración musical fija el marco sobre el que se genera la música: escala, nota raíz, nota principal, canal MIDI, programa instrumental y duración del compás. Esta separación evita interpretar la sonificación como una lectura clínica directa de la señal y permite entenderla como un mapeo algorítmico entre características EEG y comportamiento musical.
+
+El flujo completo puede resumirse así: las características EEG y el estado de calidad se adaptan mediante \texttt{SonificationFeatureAdapter}; el resultado se almacena en una estructura \texttt{SonificationFeatures}; después se construye un segmento musical, se genera un compás, se crean notas y finalmente esas notas se programan como eventos MIDI. En la última etapa, los eventos se convierten en bytes MIDI y se envían al firmware mediante \texttt{Bridge.call("midi\_bytes")}, desde donde salen por la UART asociada al conector MIDI físico.
+
+La Figura~\ref{fig:impl_sonificacion_flujo} resume esta ruta. Debe leerse como continuación directa de la sección 6.2: el bloque de procesamiento ya ha calculado las características y la calidad de la ventana, y la sonificación empieza cuando ese estado interno se convierte en controles musicales.
 
 \begin{figure}[H]
     \centering
@@ -402,9 +406,10 @@ La Figura~\ref{fig:impl_sonificacion_flujo} resume el flujo principal implementa
             \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_sonificacion\_flujo.mmd}}}%
         }%
     }
-    \caption{Flujo principal de sonificación implementado. Las características EEG y la calidad de señal se transforman en controles musicales, después en segmentos, compases, notas y finalmente en eventos MIDI enviados al firmware mediante \texttt{midi\_bytes}.}
+    \caption{Flujo principal de sonificación implementado. El estado EEG calculado por el backend se transforma primero en controles musicales; después se genera una estructura musical formada por segmento, compás y notas; finalmente, las notas se programan como eventos MIDI, se convierten a bytes y se envían al firmware mediante \texttt{midi\_bytes}.}
     \label{fig:impl_sonificacion_flujo}
 \end{figure}
+
 
 \subsubsection{Segmentación EEG}
 
