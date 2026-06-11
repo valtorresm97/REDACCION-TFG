@@ -191,7 +191,7 @@ Esta cola desacopla la recepción del procesamiento digital. El receptor solo va
 
 \subsubsection{Buffer temporal de señal}
 
-\texttt{EEGSignalProcessor} transforma la sucesión de bloques recibidos en una señal temporal continua. Cada bloque llega en microvoltios con forma lógica \texttt{(n\_samples, num\_channels)}. Antes de escribir las muestras en memoria, el backend las convierte a voltios:
+\texttt{EEGSignalProcessor} transforma la sucesión de bloques recibidos en una señal temporal continua. Cada bloque llega en microvoltios y contiene 8 muestras consecutivas de los canales disponibles. Antes de escribir las muestras en memoria, el backend las convierte a voltios:
 
 \[
 x_{\mathrm{V}}[n,c] =
@@ -252,7 +252,7 @@ Cuando la ventana está completa y se cumple el salto de 64 muestras, \texttt{co
 
 En la ruta en vivo se utiliza \texttt{psd\_method="multitaper"}. \texttt{DSPCore} preprocesa la ventana, estima la PSD, integra la potencia por bandas y devuelve un diccionario compacto de \textit{features}. La entrada al bloque de sonificacion y bloques posteriores no son los valores del espectro al completo. En su lugar, el backend mantiene un conjunto compacto de variables características de la señal. Estas variables se usan internamente para evaluar la calidad y actualizar los controles de sonificación, y también pueden publicarse de forma resumida para visualización, captura y validación.
 
-
+La Tabla ~\ref{tab:impl_backend_features} resume el contenido general del diccionario generado por \texttt{DSPCore} a partir de la ventana de CH1 denominado \texttt{features}. Se actualiza cada vez que se recalcula la PSD, y resume aspectos clave de la distribución espectral de la señal.
 \begin{table}[!htbp]
     \centering
     \caption{Resumen de características espectrales generadas por el backend.}
@@ -271,7 +271,7 @@ En la ruta en vivo se utiliza \texttt{psd\_method="multitaper"}. \texttt{DSPCore
     \end{tabular}
 \end{table}
 
-La Tabla ~\ref{tab:impl_backend_features} resume el contenido general del diccionario generado por \texttt{DSPCore} a partir de la ventana de CH1 denominado \texttt{features}. Se actualiza cada vez que se recalcula la PSD, y resume aspectos clave de la distribución espectral de la señal.
+
 
 Además de las \textit{features}, el procesador genera \texttt{diagnostics}, que resume el estado observacional de la señal: amplitud en microvoltios, offset, dispersión, saturación, señal plana, saltos bruscos y presencia relativa de energía en torno a \SI{50}{\hertz}. A partir de \texttt{features}, \texttt{diagnostics}, métricas de recepción y disponibilidad de ventana, \texttt{spectral\_quality.py} calcula una puntuación, un estado y un factor de puerta. Esta capa no recalcula la PSD ni altera la señal; su papel es valorar la fiabilidad de la última ventana analizada antes de que sus características se usen en las etapas posteriores.
 
