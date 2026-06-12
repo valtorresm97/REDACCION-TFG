@@ -597,15 +597,57 @@ En resumen, \texttt{MusicSegmentBuilder} convierte los controles de sonificació
 
 \subsubsection{Generación de compases}
 
-El siguiente nivel de la jerarquía es el compás. \texttt{BarGenerator} recibe un \texttt{MusicSegment} y produce un objeto \texttt{Bar}. Este objeto contiene el índice del compás, tiempos de inicio y fin, la raíz del acorde, las notas del acorde, un patrón de posiciones activas y una envolvente musical sintética. El compás funciona como puente entre controles continuos y notas individuales.
+Una vez construido el \texttt{MusicSegment}, el siguiente paso consiste en generar el compás que servirá como base para las notas. En esta implementación, un compás no se entiende todavía como una partitura completa, sino como una plantilla temporal. Esa plantilla divide la duración del compás en 16 posiciones: cuatro pulsos y cuatro subdivisiones por pulso. Cada posición puede quedar activa, si debe generarse una nota más adelante, o inactiva, si debe permanecer en silencio.
 
-La implementación usa una cuadrícula de 16 posiciones por compás: cuatro pulsos con cuatro subdivisiones por pulso. Cada posición puede estar activa o en silencio. El primer slot se fuerza como ancla musical para que el compás tenga un punto de referencia estable. El número objetivo de notas depende de la cadencia rítmica \texttt{LOW}, \texttt{MEDIUM} o \texttt{HIGH}, y se ajusta ligeramente con la actividad estimada.
+La clase encargada de esta etapa es \texttt{BarGenerator}. Su entrada es un \texttt{MusicSegment} ya validado y su salida es un objeto \texttt{Bar}. Este objeto contiene el intervalo temporal del compás, el acorde de referencia, el patrón de posiciones activas y un perfil interno de intensidad. Las alturas concretas, las duraciones finales de las notas y los mensajes MIDI no se generan todavía; esos pasos se realizan posteriormente en \texttt{NoteGenerator} y en el bloque MIDI.
 
-Los pesos de selección de slots combinan reglas musicales y controles EEG. La base favorece el primer pulso, los tiempos principales y ciertas subdivisiones. Después, la actividad incrementa la probabilidad global de eventos, la tensión favorece síncopas u \textit{offbeats}, y \texttt{band\_note\_probability} ajusta la probabilidad general de activar posiciones. Por tanto, el EEG no decide manualmente cada slot, sino que modifica una distribución musical ponderada.
+La primera decisión de \texttt{BarGenerator} es armónica. A partir de la escala configurada, el generador construye una tríada diatónica. La elección del grado depende principalmente de la estabilidad armónica y de la tensión recibidas desde \texttt{MusicSegment}. Cuando la estabilidad es alta y la tensión es baja, el sistema tiende a un acorde más estable. Cuando la estabilidad baja o la tensión aumenta, el compás puede desplazarse hacia un grado con mayor tensión. Para evitar cambios constantes entre acordes por pequeñas variaciones de la señal, se aplica histéresis armónica.
 
-En paralelo, el compás selecciona un acorde diatónico a partir de la escala activa. La estabilidad armónica y la tensión determinan si se tiende a un grado estable, intermedio o de mayor tensión. La implementación utiliza histéresis armónica para evitar saltos continuos entre grados por cambios pequeños de la señal. Esto mantiene una salida más coherente en tiempo real.
+La segunda decisión es rítmica. El campo \texttt{rhythm\_cadence}, calculado en la etapa anterior, indica si el compás debe tener una cadencia baja, media o alta. Esta cadencia fija una cantidad base de posiciones activas. En la implementación, las cadencias \texttt{LOW}, \texttt{MEDIUM} y \texttt{HIGH} se corresponden con patrones de baja, media y alta densidad, respectivamente. Después, la actividad puede ajustar ligeramente esa cantidad: con actividad alta se permite añadir alguna posición más, mientras que con actividad baja se reduce la densidad del compás.
 
-La Figura~\ref{fig:impl_sonificacion_segmento_compas_nota} resume la relación entre segmento, compás y notas. La misma figura se utiliza también como guía para la subsección siguiente, porque muestra que las notas se generan después de disponer de escala, acorde, patrón rítmico y controles musicales.
+El patrón rítmico se construye sobre una cuadrícula de 16 posiciones. El primer slot se fuerza siempre como posición activa para que el compás tenga un punto de apoyo claro. Las demás posiciones se eligen mediante pesos. El sistema da más importancia al inicio del compás y a los pulsos principales, pero también puede activar subdivisiones intermedias. Los controles EEG modifican esos pesos: la actividad aumenta la presencia global del patrón, la tensión favorece posiciones desplazadas u \textit{offbeats}, y \texttt{note\_probability} regula la probabilidad general de activar posiciones.
+
+Además del patrón de posiciones, el compás incluye un perfil interno de intensidad denominado en el código \texttt{amplitude\_slots}. Este campo no representa amplitud EEG por posición. Es un perfil musical usado para acentuar unas posiciones más que otras y para mantener compatibilidad con la etapa de generación de notas. Por ejemplo, el inicio del compás recibe más intensidad, los pulsos principales reciben una intensidad intermedia y las posiciones internas reciben una intensidad menor. Después, el factor \texttt{velocity\_factor} y la actividad modulan suavemente ese perfil.
+
+La Tabla~\ref{tab:impl_bar_generator_bar} resume los campos principales del objeto \texttt{Bar}. La tabla debe leerse como la salida de esta etapa: el compás ya contiene una estructura rítmica y armónica, pero todavía no contiene notas MIDI completas.
+
+\begin{table}[H]
+    \centering
+    \caption{Información generada por \texttt{BarGenerator} en el objeto \texttt{Bar}.}
+    \label{tab:impl_bar_generator_bar}
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \renewcommand{\arraystretch}{1.10}
+    \begin{tabular}{p{0.27\textwidth}p{0.31\textwidth}p{0.33\textwidth}}
+        \hline
+        \textbf{Campo en \texttt{Bar}} & \textbf{Cómo se obtiene} & \textbf{Papel en la generación musical} \\
+        \hline
+        \texttt{index} &
+        Índice del compás generado. &
+        Permite ordenar los compases dentro de la secuencia musical. \\
+        \texttt{t\_start} y \texttt{t\_end} &
+        Intervalo temporal heredado de \texttt{MusicSegment}. &
+        Define cuándo empieza y termina el compás. \\
+        \texttt{chord\_root\_midi} &
+        Raíz del acorde elegido dentro de la escala. &
+        Actúa como referencia armónica del compás. \\
+        \texttt{chord\_pitches} &
+        Tríada diatónica construida desde el grado seleccionado. &
+        Proporciona las notas de acorde usadas por el generador de notas. \\
+        \texttt{note\_positions} &
+        Patrón de 16 posiciones activas o inactivas. &
+        Indica en qué posiciones del compás podrán aparecer notas. \\
+        \texttt{stability} &
+        Valor de estabilidad armónica usado en la elección del acorde. &
+        Conserva la relación entre el estado EEG y la decisión armónica. \\
+        \texttt{amplitude\_slots} &
+        Perfil interno de intensidad por posición. &
+        Ayuda a acentuar unas posiciones más que otras en la etapa de notas. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+La Figura~\ref{fig:impl_sonificacion_segmento_compas_nota} resume la relación entre el segmento musical, el compás y las notas. En esta lectura, \texttt{MusicSegment} aporta el estado musical derivado del EEG; \texttt{BarGenerator} lo transforma en una plantilla de compás con acorde y patrón rítmico; y \texttt{NoteGenerator} utiliza esa plantilla para crear notas concretas.
 
 \begin{figure}[H]
     \centering
@@ -621,6 +663,10 @@ La Figura~\ref{fig:impl_sonificacion_segmento_compas_nota} resume la relación e
     \caption{Jerarquía musical empleada por la sonificación. Los controles EEG suavizados y la configuración musical construyen un segmento; el segmento genera un compás con acorde y patrón rítmico; el generador de notas produce eventos \texttt{NoteEvent}.}
     \label{fig:impl_sonificacion_segmento_compas_nota}
 \end{figure}
+
+En resumen, \texttt{BarGenerator} convierte el estado musical del segmento en una plantilla de compás. Esta plantilla indica qué acorde se usará, qué posiciones estarán activas y qué intensidad relativa tendrá cada posición. A partir de esa estructura, la siguiente etapa ya puede decidir qué notas concretas se generan, en qué altura, con qué duración y con qué \textit{velocity} MIDI.
+
+
 
 \subsubsection{Generación de notas}
 
