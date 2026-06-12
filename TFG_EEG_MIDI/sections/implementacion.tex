@@ -611,6 +611,20 @@ Además del patrón de posiciones, \texttt{BarGenerator} calcula un mapa de acen
 
 Este mapa parte de una regla musical fija: el inicio del compás recibe más acento, los pulsos principales reciben un acento intermedio y otras posiciones reciben menos acento. Después, en la generación de notas, las posiciones activas se ajustan con \texttt{velocity\_factor}, mientras que \texttt{activity} eleva ligeramente el nivel general del mapa.
 
+La Figura~\ref{fig:impl_bar_generator_ejemplo_compas} muestra un ejemplo conceptual del objeto \texttt{Bar} generado en esta etapa. La figura no representa una única salida fija del sistema, sino una forma visual de entender la plantilla producida por \texttt{BarGenerator}: referencia armónica, posiciones activas y mapa de acentos.
+
+\begin{figure}[H]
+    \centering
+    \IfFileExists{images/uml/impl_bar_generator_ejemplo_compas.pdf}{%
+        \makebox[\textwidth][c]{%
+            \includegraphics[width=1.28\textwidth,height=0.58\textheight,keepaspectratio]{images/uml/impl_bar_generator_ejemplo_compas.pdf}%
+        }%
+    }{%
+        \fbox{\parbox{0.9\textwidth}{\centering Figura pendiente: \texttt{images/uml/impl\_bar\_generator\_ejemplo\_compas.pdf}}}%
+    }
+    \caption{Ejemplo conceptual de compás generado por \texttt{BarGenerator}. El objeto \texttt{Bar} conserva la referencia armónica, el patrón de posiciones activas y el mapa de acentos, pero todavía no contiene notas finales.}
+    \label{fig:impl_bar_generator_ejemplo_compas}
+\end{figure}
 
 La Tabla~\ref{tab:impl_bar_generator_bar} resume los campos principales del objeto \texttt{Bar}. La tabla debe leerse como la salida de esta etapa: el compás ya tiene una referencia armónica, un patrón rítmico y un mapa de acentos, pero las notas concretas se generan en la etapa siguiente.
 
@@ -650,29 +664,25 @@ La Tabla~\ref{tab:impl_bar_generator_bar} resume los campos principales del obje
     \end{tabular}
 \end{table}
 
-
-
-
-
 En resumen, \texttt{BarGenerator} convierte el estado musical del segmento en una plantilla de compás. Esta plantilla no contiene todavía notas finales, sino tres elementos que serán usados por la etapa siguiente: una referencia armónica, un patrón de posiciones donde podrán aparecer notas y un mapa de acentos. A partir de esa estructura, \texttt{NoteGenerator} decidirá qué nota concreta se coloca en cada posición activa, con qué duración y con qué \textit{velocity} MIDI.
+
 
 
 \subsubsection{Generación de notas}
 
-Una vez generado el compás, el siguiente paso consiste en convertir su plantilla en notas concretas. La clase encargada de esta etapa es \texttt{NoteGenerator}. Su entrada está formada por dos objetos: el \texttt{MusicSegment}, que conserva los controles musicales derivados del EEG, y el \texttt{Bar}, que contiene el acorde, las posiciones marcadas y el mapa de acentos del compás. La salida es una lista de objetos \texttt{NoteEvent}.
+Una vez generado el compás, la etapa siguiente consiste en convertir su plantilla en notas concretas. Esta tarea la realiza \texttt{NoteGenerator}, que recibe como entrada el \texttt{MusicSegment} y el \texttt{Bar}. El primero conserva los controles musicales derivados del EEG, mientras que el segundo aporta la referencia armónica, las posiciones activas y el mapa de acentos del compás. La salida de esta etapa es una lista ordenada de objetos \texttt{NoteEvent}.
 
-La idea principal es que el compás define cuándo puede sonar algo, mientras que \texttt{NoteGenerator} decide qué nota suena en cada posición marcada, cuánto dura y con qué intensidad MIDI. Por tanto, esta etapa transforma una plantilla rítmica y armónica en eventos musicales individuales. Cada \texttt{NoteEvent} contiene el instante de inicio, el instante de fin, la nota MIDI, la \textit{velocity}, el canal y el programa instrumental.
+La idea principal es que el compás define cuándo puede sonar algo, mientras que \texttt{NoteGenerator} decide qué nota suena en cada posición marcada, cuánto dura y con qué intensidad MIDI. Por tanto, esta etapa transforma una plantilla rítmica y armónica en eventos musicales individuales.
 
 La Figura~\ref{fig:impl_sonificacion_segmento_compas_nota} resume esta relación. El \texttt{MusicSegment} conserva los controles derivados del EEG; el \texttt{Bar} aporta la plantilla de compás; y \texttt{NoteGenerator} completa esa plantilla generando eventos \texttt{NoteEvent}.
 
-
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \IfFileExists{images/uml/impl_sonificacion_segmento_compas_nota.png}{%
-        \includegraphics[width=0.98\textwidth,height=0.46\textheight,keepaspectratio]{images/uml/impl_sonificacion_segmento_compas_nota.png}
+        \includegraphics[width=0.96\textwidth,height=0.46\textheight,keepaspectratio]{images/uml/impl_sonificacion_segmento_compas_nota.png}
     }{%
         \IfFileExists{images/uml/impl_sonificacion_segmento_compas_nota.pdf}{%
-            \includegraphics[width=0.98\textwidth,height=0.46\textheight,keepaspectratio]{images/uml/impl_sonificacion_segmento_compas_nota.pdf}
+            \includegraphics[width=0.96\textwidth,height=0.46\textheight,keepaspectratio]{images/uml/impl_sonificacion_segmento_compas_nota.pdf}
         }{%
             \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_sonificacion\_segmento\_compas\_nota.mmd}}}%
         }%
@@ -681,17 +691,32 @@ La Figura~\ref{fig:impl_sonificacion_segmento_compas_nota} resume esta relación
     \label{fig:impl_sonificacion_segmento_compas_nota}
 \end{figure}
 
-El generador recorre las 16 posiciones del compás, pero solo actúa sobre las posiciones marcadas en \texttt{note\_positions}. Las posiciones vacías se omiten y producen silencio. Para cada posición activa se calcula primero su intervalo temporal. La nota empieza en la posición correspondiente del compás y termina en la siguiente posición activa. Si no existe otra posición marcada después, la nota se mantiene hasta el final del compás. Esta regla garantiza que cada nota tenga un inicio y un final definidos antes de pasar al scheduler MIDI.
+El primer paso de \texttt{NoteGenerator} es recorrer las 16 posiciones del compás y actuar únicamente sobre aquellas marcadas en \texttt{note\_positions}. Las posiciones vacías se omiten y producen silencio. Para cada posición activa se calcula el intervalo temporal de la nota: el inicio coincide con la posición marcada y el final se fija en la siguiente posición activa o, si no existe, en el final del compás. Esta regla garantiza que cada nota tenga un instante de inicio y un instante de fin antes de pasar al \textit{scheduler} MIDI.
 
-Después se decide qué nota MIDI debe sonar. El sistema no elige cualquier nota posible, sino notas pertenecientes a la escala configurada. Primero se calcula un centro melódico alrededor de la nota principal. Este centro se desplaza mediante \texttt{register\_hint}: valores bajos desplazan la melodía hacia registros más graves, valores intermedios la mantienen cerca de la nota principal y valores altos la llevan hacia registros más agudos. Así, el EEG puede modificar el registro de la melodía sin cambiar la escala ni la nota principal configurada.
+La Figura~\ref{fig:impl_note_generator_ejemplo_notas} muestra un ejemplo conceptual de esta conversión. Las posiciones activas del compás se transforman en eventos \texttt{NoteEvent}; cada evento contiene el instante de inicio, el instante de fin, la nota MIDI y la \textit{velocity} calculada.
 
-A partir de ese centro, \texttt{NoteGenerator} construye una lista de notas candidatas dentro de la escala. Estas candidatas se separan en dos grupos. Las notas de acorde son las que pertenecen al acorde elegido para el compás y funcionan como puntos de apoyo. Las notas de paso son otras notas de la escala que permiten movimiento entre esos puntos de apoyo. De esta forma, las posiciones principales del compás tienden a usar notas del acorde, mientras que las posiciones intermedias pueden usar notas de paso cuando existen candidatas adecuadas.
+\begin{figure}[H]
+    \centering
+    \IfFileExists{images/uml/impl_note_generator_ejemplo_notas.pdf}{%
+        \makebox[\textwidth][c]{%
+            \includegraphics[width=1.18\textwidth,height=0.62\textheight,keepaspectratio]{images/uml/impl_note_generator_ejemplo_notas.pdf}%
+        }%
+    }{%
+        \fbox{\parbox{0.9\textwidth}{\centering Figura pendiente: \texttt{images/uml/impl\_note\_generator\_ejemplo\_notas.pdf}}}%
+    }
+    \caption{Ejemplo conceptual de generación de eventos \texttt{NoteEvent}. \texttt{NoteGenerator} recorre las posiciones activas del compás, calcula duración, nota MIDI y \textit{velocity}, y produce una lista de eventos musicales de alto nivel preparada para el scheduler MIDI.}
+    \label{fig:impl_note_generator_ejemplo_notas}
+\end{figure}
 
-La señal EEG también influye en la elección de la nota. El control \texttt{tension} desplaza el objetivo melódico: con mayor tensión, el sistema tiende a explorar notas algo más altas dentro del rango permitido. Además, la actividad, la tensión y \texttt{note\_probability} aumentan la variedad de candidatos, evitando que la melodía repita siempre las mismas notas. Aun así, el generador conserva continuidad melódica mediante una memoria de la nota anterior. Si una nota candidata queda demasiado lejos de la anterior, se acerca por octavas o se sustituye por una nota más centrada. Con tensión baja se favorecen saltos pequeños; con tensión alta se permiten saltos algo mayores.
+Una vez definido el intervalo temporal, se elige la nota MIDI que debe sonar. El sistema no selecciona cualquier altura posible, sino notas pertenecientes a la escala configurada. Para ello, primero calcula un centro melódico alrededor de la nota principal. Este centro se desplaza mediante \texttt{register\_hint}: valores bajos llevan la melodía hacia registros graves, valores intermedios la mantienen cerca de la nota principal y valores altos la desplazan hacia registros agudos. De este modo, el EEG puede modificar el registro sin cambiar la escala ni la nota principal configurada.
 
-La intensidad final de cada nota se calcula mediante la \textit{velocity} MIDI. Se combina el mapa de acentos almacenado en \texttt{amplitude\_slots}, generado en el compás, con el control EEG \texttt{velocity\_factor}. El valor \texttt{velocity\_factor} permite que la señal EEG aumente o reduzca la intensidad final. El resultado se acota entre una velocidad mínima y máxima para evitar notas demasiado débiles o excesivamente fuertes.
+A partir de ese centro, \texttt{NoteGenerator} construye una lista de notas candidatas dentro de la escala. Estas candidatas se separan en notas de acorde y notas de paso. Las notas de acorde pertenecen al acorde elegido en el compás y funcionan como puntos de apoyo; las notas de paso permiten movimiento melódico entre esos apoyos. Por ello, las posiciones principales tienden a usar notas del acorde, mientras que las posiciones intermedias pueden emplear notas de paso cuando existen candidatas adecuadas.
 
-En el primer slot del compás, el sistema puede generar el acorde completo como marcador armónico. Esto significa que, en lugar de crear una sola nota, puede crear varias notas simultáneas pertenecientes al acorde. Este acorde completo no se reproduce en todos los compases, sino solo en situaciones concretas: al inicio de la generación, cuando ha pasado un periodo mínimo sin reforzar la armonía o cuando los controles musicales derivados del EEG cambian de forma suficientemente brusca. Para detectar este último caso, el backend compara el estado actual de actividad, tensión, registro y estabilidad armónica con el estado usado en el último acorde. Si el cambio acumulado supera un umbral, el acorde se interpreta como una señal musical de transición. De este modo, los acordes completos sirven para marcar cambios relevantes del estado EEG sin saturar continuamente la salida.
+Los controles derivados del EEG modifican esta elección. El control \texttt{tension} desplaza el objetivo melódico y permite explorar notas algo más altas dentro del rango permitido. Además, la actividad, la tensión y \texttt{note\_probability} aumentan la variedad de candidatos para evitar una melodía excesivamente repetitiva. Aun así, el generador conserva continuidad mediante una memoria de la nota anterior: si una candidata queda demasiado lejos, se aproxima por octavas o se sustituye por una nota más centrada. Con tensión baja se favorecen saltos pequeños; con tensión alta se permiten saltos algo mayores.
+
+La intensidad final de cada nota se calcula mediante la \textit{velocity} MIDI. Para ello, \texttt{NoteGenerator} combina el mapa de acentos \texttt{amplitude\_slots}, generado en el compás, con el control EEG \texttt{velocity\_factor}. El mapa de acentos aporta la diferencia relativa entre posiciones del compás, mientras que \texttt{velocity\_factor} permite aumentar o reducir la intensidad global de la nota. El resultado se acota entre una velocidad mínima y máxima para evitar notas demasiado débiles o excesivamente fuertes.
+
+En el primer slot del compás, el sistema puede generar el acorde completo como marcador armónico. En ese caso, se crean varios \texttt{NoteEvent} simultáneos pertenecientes al acorde. Este refuerzo no aparece en todos los compases, sino solo al inicio, tras un periodo mínimo sin reforzar la armonía o cuando los controles musicales derivados del EEG cambian de forma suficientemente brusca. Para detectarlo, el backend compara la actividad, la tensión, el registro y la estabilidad armónica actuales con los usados en el último acorde. Si el cambio acumulado supera un umbral, el acorde actúa como señal musical de transición.
 
 La Tabla~\ref{tab:impl_note_generator_noteevent} resume la información generada en cada \texttt{NoteEvent}. Esta estructura todavía no es un mensaje MIDI en bytes; representa una nota musical de alto nivel que será programada temporalmente en la etapa siguiente.
 
@@ -728,44 +753,46 @@ La Tabla~\ref{tab:impl_note_generator_noteevent} resume la información generada
     \end{tabular}
 \end{table}
 
-Como resultado de esta etapa, el sistema obtiene una lista ordenada de \texttt{NoteEvent}. Cada elemento de la lista representa una nota ya definida a nivel musical: cuándo empieza, cuándo termina, qué nota MIDI debe sonar, con qué \textit{velocity}, por qué canal y con qué programa instrumental. Por tanto, \texttt{NoteGenerator} transforma la plantilla del compás en una secuencia temporal de notas preparada para el scheduler MIDI.
+Como resultado, \texttt{NoteGenerator} transforma la plantilla del compás en una secuencia temporal de \texttt{NoteEvent}. En esa secuencia, las posiciones marcadas del \texttt{Bar} se convierten en instantes de inicio, la distancia hasta la siguiente posición marcada fija la duración, el acorde y la escala limitan las notas posibles, y los controles del \texttt{MusicSegment} ajustan el registro, la tensión, la variedad melódica y la intensidad. La conversión final a mensajes \texttt{note\_on} y \texttt{note\_off} se realiza después, en el \textit{scheduler} MIDI.
 
-En esa secuencia, las posiciones marcadas del \texttt{Bar} se convierten en instantes de inicio; la distancia hasta la siguiente posición marcada fija la duración; el acorde y la escala limitan las notas posibles; y los controles del \texttt{MusicSegment} ajustan el registro, la tensión, la variedad melódica y la intensidad. Si se activa el acorde completo en el primer slot, pueden generarse varios \texttt{NoteEvent} simultáneos. La conversión final a mensajes \texttt{note\_on} y \texttt{note\_off} no se realiza en esta etapa, sino en el scheduler MIDI descrito en el apartado siguiente.
 
 \subsubsection{Escritura y transmisión MIDI}
 
-La escritura MIDI se divide en dos niveles. El primer nivel es musical y trabaja con \texttt{NoteEvent}; el segundo nivel es MIDI y trabaja con eventos temporizados y bytes. Esta separación permite que \texttt{NoteGenerator} no tenga que conocer el transporte físico, y que \texttt{MidiByteTransport} no tenga que conocer las reglas de generación musical.
+La última etapa de la sonificación convierte las notas generadas en mensajes MIDI reales. Hasta este punto, el sistema trabaja con objetos \texttt{NoteEvent}, que describen notas a nivel musical: cuándo empiezan, cuándo terminan, qué nota MIDI debe sonar, con qué \textit{velocity} y por qué canal. Sin embargo, la salida MIDI física no recibe objetos Python, sino bytes. Por tanto, esta etapa traduce la secuencia musical generada por \texttt{NoteGenerator} a mensajes MIDI que el firmware puede enviar por la UART del prototipo.
 
-\texttt{MidiScheduler}, implementado en \texttt{midi\_live.py}, transforma cada \texttt{NoteEvent} en dos eventos MIDI vivos: un \texttt{note\_on} en el inicio de la nota y un \texttt{note\_off} en su final. Además, el backend programa un \texttt{program\_change} una sola vez al inicio para fijar el programa MIDI de salida. Los eventos se almacenan en una cola temporal ordenada por \texttt{due\_time}, usando el reloj monotónico del sistema.
+El primer bloque de esta etapa es \texttt{MidiScheduler}, implementado en \texttt{midi\_live.py}. Su función es tomar cada \texttt{NoteEvent} y programar las órdenes necesarias para que esa nota suene durante su intervalo temporal. El instante \texttt{t\_start} se usa para programar el comienzo de la nota y el instante \texttt{t\_end} para programar su apagado. De esta forma, la duración de cada nota queda controlada antes de convertirla a bytes MIDI.
 
-En cada iteración del backend, \texttt{\_pump\_midi()} llama a \texttt{pop\_due\_events(now, lookahead\_sec=MIDI\_LOOKAHEAD\_SEC)}. El \textit{lookahead} de \SI{0.02}{\second} permite extraer eventos ligeramente por adelantado, de modo que el transporte y el firmware dispongan de margen para emitirlos sin bloquear el ciclo principal. El scheduler no envía nada por sí mismo: solo decide qué eventos están vencidos o próximos a vencer.
+Estas órdenes se guardan en una cola temporal. En cada iteración del backend, la función \texttt{\_pump\_midi()} consulta esa cola y extrae los eventos que deben enviarse. Para ello no se toma solo el instante actual, sino una pequeña ventana de anticipación de \SI{0.02}{\second}. Es decir, si el backend está en el instante \(t\), el scheduler entrega los eventos cuyo tiempo programado esté entre \(t\) y \(t+\SI{0.02}{\second}\). Este margen, denominado \textit{lookahead}, evita que el sistema dependa de acertar exactamente con el instante de cada nota en una vuelta concreta del bucle. Los eventos extraídos pasan entonces al transporte MIDI para convertirse en bytes y enviarse al firmware.
 
-La conversión a bytes se realiza mediante \texttt{event\_to\_midi\_bytes()}. Un \texttt{note\_on} se codifica con estado \texttt{0x90 | channel}, nota y \textit{velocity}; un \texttt{note\_off} usa \texttt{0x80 | channel}; un \texttt{control\_change} usa \texttt{0xB0 | channel}; y un \texttt{program\_change} usa \texttt{0xC0 | channel}. Todos los canales se limitan a 0--15 y los datos MIDI a 0--127.
+Cuando un evento debe enviarse, se convierte a bytes MIDI mediante \texttt{event\_to\_midi\_bytes()}. En esta conversión, el evento musical se transforma en un mensaje MIDI estándar. Por ejemplo, una orden de inicio de nota contiene el tipo de mensaje, el canal, la nota y la \textit{velocity}; una orden de apagado contiene el tipo de mensaje, el canal y la nota. La función también asegura que los valores se mantengan dentro de los rangos admitidos por MIDI.
 
-\texttt{MidiByteTransport} recibe los eventos vencidos, los convierte en bytes y llama al \textit{handler} del firmware mediante \texttt{Bridge.call("midi\_bytes", n, b0, b1, b2)}. El campo \texttt{n} indica si el mensaje tiene dos o tres bytes válidos. El firmware no decide qué nota tocar ni interpreta musicalmente el mensaje: recibe los bytes y los escribe por la UART asociada a la salida MIDI física.
+Después, \texttt{MidiByteTransport} envía el mensaje al firmware mediante \texttt{Bridge.call("midi\_bytes", n, b0, b1, b2)}. La llamada reserva tres posiciones de byte, \texttt{b0}, \texttt{b1} y \texttt{b2}, porque algunos mensajes MIDI tienen tres bytes y otros solo dos. Por eso se incluye el campo \texttt{n}: indica al firmware cuántos de esos bytes debe escribir realmente. Si \texttt{n} vale 3, se envían \texttt{b0}, \texttt{b1} y \texttt{b2}; si vale 2, solo se envían \texttt{b0} y \texttt{b1}, y el tercer byte se ignora.
 
-La salida física validada usa \texttt{Serial1}/D1 a la velocidad MIDI estándar de \SI{31250}{baudios}, con transmisión invertida en el microcontrolador. Esta configuración pertenece a la capa de firmware y electrónica ya descrita previamente; en 6.3 basta con indicar que la ruta Python--Bridge--firmware desemboca en esa UART física y, desde ella, en el conector MIDI OUT del prototipo.
+A partir de ese punto, el firmware no interpreta la música ni decide qué nota debe sonar. Su papel es únicamente recibir los bytes preparados por Python y escribirlos por la UART asociada a la salida MIDI física. La salida validada usa \texttt{Serial1}/D1 a la velocidad estándar MIDI de \SI{31250}{baudios}, con transmisión invertida en el microcontrolador. Así, la ruta final queda formada por: \texttt{NoteEvent}, evento temporizado, bytes MIDI, llamada \texttt{midi\_bytes}, firmware y conector MIDI OUT.
 
-La Figura~\ref{fig:impl_midi_eventos_bytes} resume la formación de mensajes MIDI desde las notas generadas. Esta figura aclara la diferencia entre nota musical, evento MIDI temporizado, bytes MIDI y transporte físico.
+La Figura~\ref{fig:impl_midi_eventos_bytes} resume esta transformación final. La figura aclara la diferencia entre nota musical de alto nivel, evento MIDI temporizado, bytes MIDI y transporte físico.
 
 \begin{figure}[H]
     \centering
     \IfFileExists{images/uml/impl_midi_eventos_bytes.png}{%
-        \includegraphics[width=0.92\textwidth,height=0.62\textheight,keepaspectratio]{images/uml/impl_midi_eventos_bytes.png}
-    }{%
-        \IfFileExists{images/uml/impl_midi_eventos_bytes.pdf}{%
-            \includegraphics[width=0.92\textwidth,height=0.62\textheight,keepaspectratio]{images/uml/impl_midi_eventos_bytes.pdf}
-        }{%
-            \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_midi\_eventos\_bytes.mmd}}}%
+        \makebox[\textwidth][c]{%
+            \includegraphics[
+                width=1.12\textwidth,
+                height=0.68\textheight,
+                keepaspectratio
+            ]{images/uml/impl_midi_eventos_bytes.png}%
         }%
+    }{%
+        \fbox{\parbox{0.9\textwidth}{\centering Diagrama pendiente de exportar desde Mermaid: \texttt{images/uml/impl\_midi\_eventos\_bytes.mmd}}}%
     }
-    \caption{Formación de mensajes MIDI en la ruta live. Las notas de alto nivel se transforman en eventos \texttt{note\_on}, \texttt{note\_off} y \texttt{program\_change}; después se convierten a bytes y se envían al firmware mediante \texttt{midi\_bytes}.}
+    \caption{Formación de mensajes MIDI en la ruta live. Las notas de alto nivel se transforman en eventos temporizados; después se convierten a bytes MIDI y se envían al firmware mediante \texttt{midi\_bytes}.}
     \label{fig:impl_midi_eventos_bytes}
 \end{figure}
 
-Como medida de seguridad, el sistema conserva la ruta \texttt{panic}. Esta acción limpia el scheduler y genera mensajes \texttt{All Sound Off} y \texttt{All Notes Off} para todos los canales. Es necesaria porque una ventana de mala calidad puede bloquear la generación de nuevos compases, pero no elimina automáticamente eventos que ya hubieran sido programados desde una ventana anterior. Por tanto, el \textit{panic} forma parte de la robustez del sistema MIDI y debe mantenerse aunque se simplifique la lógica musical.
+Como medida de robustez, el sistema conserva la ruta \texttt{panic}. Esta acción limpia el scheduler y genera mensajes de apagado general, como \texttt{All Sound Off} y \texttt{All Notes Off}, para todos los canales. Su función es evitar que queden notas sostenidas si se detiene la generación, si una ventana de mala calidad bloquea nuevos compases o si se interrumpe la ejecución musical. Por tanto, \texttt{panic} no forma parte de la lógica creativa, sino de la seguridad de la salida MIDI.
 
-La salida MIDI puede desactivarse mediante la variable de entorno \texttt{EEG\_MIDI\_LIVE\_ENABLED}. En ese caso, los eventos pueden seguir generándose y contabilizándose, pero el transporte los marca como descartados en lugar de enviarlos al firmware. Esta opción permite validar generación y scheduler sin forzar siempre el envío físico por la UART MIDI.
+
+Con esta etapa queda cerrada la cadena de sonificación implementada. Las características EEG se convierten primero en controles musicales; esos controles generan un \texttt{MusicSegment}; el segmento produce un \texttt{Bar}; el compás se transforma en una lista de \texttt{NoteEvent}; y, finalmente, esas notas se programan, se codifican como bytes MIDI y se transmiten al firmware. Esta separación mantiene trazable el recorrido completo desde el estado EEG hasta la salida MIDI física.
 
 \subsection{Implementación de la interfaz web}
 

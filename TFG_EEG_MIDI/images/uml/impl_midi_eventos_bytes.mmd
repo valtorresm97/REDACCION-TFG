@@ -1,42 +1,62 @@
-%%{init: {"theme": "base", "themeVariables": {"fontSize": "24px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 42, "rankSpacing": 55, "curve": "basis"}}}%%
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "36px", "fontFamily": "Arial", "primaryBorderColor": "#333333", "lineColor": "#333333"}, "flowchart": {"htmlLabels": true, "nodeSpacing": 64, "rankSpacing": 90, "curve": "basis"}}}%%
 flowchart TB
-  subgraph musical["Nivel musical"]
-    notes["NoteEvent<br/>t_start, t_end<br/>pitch, velocity"]
-    live["note_to_live_events"]
-    noteOn["MidiLiveEvent<br/>note_on"]
-    noteOff["MidiLiveEvent<br/>note_off"]
+
+  subgraph fila1[" "]
+    direction LR
+
+    subgraph musical["Nivel musical"]
+      direction TB
+      notes["NoteEvent<br/>t_start, t_end<br/>pitch, velocity"]
+      live["note_to_live_events"]
+      noteOn["MidiLiveEvent<br/>note_on"]
+      noteOff["MidiLiveEvent<br/>note_off"]
+
+      notes --> live
+      live --> noteOn
+      live --> noteOff
+    end
+
+    subgraph scheduler["Planificación temporal"]
+      direction TB
+      program["program_change<br/>inicio"]
+      panic["panic<br/>CC120 + CC123"]
+      schedulerHeap["MidiScheduler<br/>cola temporal"]
+      dueEvents["pop_due_events<br/>now + lookahead"]
+
+      program --> schedulerHeap
+      panic --> schedulerHeap
+      schedulerHeap --> dueEvents
+    end
   end
 
-  subgraph scheduler["Planificación temporal"]
-    program["program_change<br/>inicio"]
-    panic["panic<br/>CC120 + CC123"]
-    schedulerHeap["MidiScheduler<br/>heap temporal"]
-    dueEvents["pop_due_events<br/>now + lookahead"]
+  subgraph fila2[" "]
+    direction LR
+
+    subgraph transportLayer["Transporte MIDI"]
+      direction TB
+      midiBytes["event_to_midi_bytes<br/>mensaje MIDI"]
+      transport["MidiByteTransport"]
+      bridgeCall["Bridge.call<br/>midi_bytes<br/>n, b0, b1, b2"]
+
+      midiBytes --> transport
+      transport --> bridgeCall
+    end
+
+    subgraph firmware["Firmware y salida física"]
+      direction TB
+      firmwareHandler["firmware<br/>midi_bytes"]
+      uartOut["Serial1 / D1<br/>31250 baudios<br/>TX invertido"]
+      physicalOut["MIDI OUT físico"]
+
+      firmwareHandler --> uartOut
+      uartOut --> physicalOut
+    end
   end
 
-  subgraph transportLayer["Transporte MIDI"]
-    midiBytes["event_to_midi_bytes<br/>status + data"]
-    transport["MidiByteTransport"]
-    bridgeCall["Bridge call<br/>midi_bytes n b0 b1 b2"]
-  end
-
-  subgraph firmware["Firmware y salida física"]
-    firmwareHandler["firmware<br/>midi_bytes"]
-    uartOut["Serial1 / D1<br/>31250 baudios<br/>TX invertido"]
-    physicalOut["MIDI OUT físico"]
-  end
-
-  notes --> live
-  live --> noteOn
-  live --> noteOff
   noteOn --> schedulerHeap
   noteOff --> schedulerHeap
-  program --> schedulerHeap
-  panic --> schedulerHeap
-  schedulerHeap --> dueEvents
   dueEvents --> midiBytes
-  midiBytes --> transport
-  transport --> bridgeCall
   bridgeCall --> firmwareHandler
-  firmwareHandler --> uartOut
-  uartOut --> physicalOut
+
+  style fila1 fill:transparent,stroke:transparent
+  style fila2 fill:transparent,stroke:transparent
