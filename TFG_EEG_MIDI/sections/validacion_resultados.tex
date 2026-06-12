@@ -2,68 +2,285 @@
 
 \begin{document}
 
-\section{Validación y resultados}
+\section{Validación del sistema}
+\label{sec:validacion}
+
+\newcommand{\validacioninclude}[2]{%
+    \IfFileExists{#2}{%
+        \includegraphics[#1]{#2}%
+    }{%
+        \fbox{\parbox{0.88\textwidth}{\centering Imagen pendiente en repositorio: \\ \texttt{\detokenize{#2}}}}%
+    }%
+}
 
 \subsection{Metodología de validación}
+\label{subsec:validacion_metodologia}
 
-% Pendiente de redacción propia.
+La validación del sistema EEG--MIDI se ha planteado como una comprobación funcional, experimental y temporal de la cadena completa desarrollada. El objetivo no es realizar una validación clínica de la señal EEG ni demostrar la detección fiable de estados cognitivos, sino verificar que el prototipo es capaz de adquirir señal real con el ADS1299, transportarla hasta el backend Python, calcular características espectrales, aplicar criterios de calidad, generar una respuesta musical y conservar evidencias trazables del funcionamiento.
 
-\subsection{Validación de la adquisición EEG}
+La metodología combina capturas reales, análisis offline de los ficheros generados y benchmarks temporales ejecutados en la placa UNO Q/Linux. Las capturas permiten comprobar la continuidad de adquisición y el comportamiento de la señal real; los informes de calidad y espectro permiten evaluar las ventanas útiles y las contaminadas por artefactos; y los benchmarks permiten comprobar si firmware y backend disponen de margen suficiente para operar en tiempo real.
 
-\subsubsection{Lectura del identificador del ADS1299}
+La configuración final de referencia corresponde al modo \texttt{bias\_ch1\_only\_loff\_off}, con \texttt{ADS\_DIAGNOSTIC\_MODE=5}. El montaje empleado en la sesión final fue \texttt{ear\_eeg\_ch1\_only}, utilizando CH1 como canal principal de análisis. Los canales CH2--CH4 se mantienen dentro del contrato de datos del sistema, pero no se interpretan como canales EEG activos en esta validación. La frecuencia de muestreo es de \SI{250}{\hertz}, la ventana de análisis espectral es de \SI{4}{\second} y el salto entre cálculos de características es de 64 muestras, equivalente a \SI{256}{\milli\second}.
 
-% Pendiente de redacción propia.
+La validación se organiza en cinco capas: adquisición ADS1299, calidad de señal, procesado espectral, sonificación MIDI y rendimiento temporal. En la primera se comprueba la continuidad del flujo de datos y la ausencia de pérdidas relevantes; en la segunda se analizan métricas como RMS, pico a pico, ruido de red y artefactos; en la tercera se valida la estimación espectral y la potencia por bandas; en la cuarta se comprueba que las características alimentan la generación musical; y en la quinta se comparan los tiempos medidos con los presupuestos temporales disponibles.
 
-\subsubsection{Validación de configuración de registros}
+De forma complementaria, se emplean dos referencias temporales para interpretar los benchmarks. En firmware, cada bloque EEG contiene 8 muestras, lo que a \SI{250}{\hertz} equivale a \SI{32}{\milli\second} por bloque. En Python, las características no se recalculan muestra a muestra, sino cada 64 muestras, por lo que el presupuesto temporal disponible es de \SI{256}{\milli\second} por actualización. Estos márgenes se utilizan en la validación temporal para determinar si el sistema puede sostener el funcionamiento en tiempo real.
 
-% Pendiente de redacción propia.
+Por tanto, la sección presenta una validación técnica del prototipo: demuestra integración, continuidad de adquisición, extracción de características, sonificación y margen temporal. Las limitaciones relacionadas con ruido, artefactos, montaje experimental y número de sujetos se tratan explícitamente, evitando interpretar los resultados como una validación médica o clínica.
 
-\subsubsection{Pruebas con señal interna de test}
+\subsection{Validación de la adquisición y del montaje experimental}
+\label{subsec:validacion_adquisicion_montaje}
 
-% Pendiente de redacción propia.
+La primera parte de la validación se centró en comprobar que la cadena baja de adquisición funcionaba de forma continua antes de interpretar la señal desde el punto de vista espectral o musical. La ruta validada fue:
 
-\subsubsection{Pruebas con electrodos}
+\begin{center}
+\texttt{ADS1299 $\rightarrow$ SPI/RDATAC $\rightarrow$ firmware $\rightarrow$ Bridge $\rightarrow$ Python $\rightarrow$ CSV}
+\end{center}
 
-% Pendiente de redacción propia.
+El firmware reconstruye las tramas RDATAC de 24 bits, valida el prefijo de estado del ADS1299, convierte las cuentas del ADC a microvoltios y envía al backend bloques \texttt{eeg\_block\_uV} de 8 muestras. Con una frecuencia de muestreo de \SI{250}{\hertz}, cada bloque representa \SI{32}{\milli\second} de señal. Esta comprobación permite separar los problemas propios de adquisición y transporte de los problemas asociados al montaje bioeléctrico, como ruido de red, movimiento de electrodos, impedancia de contacto o artefactos fisiológicos.
 
-\subsection{Validación del procesamiento digital}
+Como prueba diagnóstica de la ruta ADC y del transporte digital se utilizó una captura con entradas cortocircuitadas, identificada como \texttt{20260523-175959\_post\_configfix\_shorted\_inputs}. Esta prueba no pretende representar EEG real, sino aislar el comportamiento del ADS1299 y del flujo de datos. El resultado fue una frecuencia efectiva de \SI{250}{\hertz}, sin discontinuidades temporales y sin estados ADS inválidos. Además, la señal presentó un valor RMS de \SI{0.115}{\micro\volt} y una amplitud pico a pico de \SI{4.000}{\micro\volt}, coherentes con una entrada cortocircuitada y con bajo ruido interno.
 
-\subsubsection{Cálculo de bandas EEG}
+\begin{table}[htbp]
+    \centering
+    \caption{Resultado de la prueba diagnóstica de adquisición con entradas cortocircuitadas.}
+    \label{tab:validacion_shorted_inputs}
+    \begin{tabular}{l c}
+        \hline
+        \textbf{Métrica} & \textbf{Valor} \\
+        \hline
+        Frecuencia efectiva & \SI{250.0}{\hertz} \\
+        Discontinuidades temporales & 0 \\
+        Estados ADS inválidos & 0 \\
+        RMS & \SI{0.115}{\micro\volt} \\
+        Pico a pico & \SI{4.000}{\micro\volt} \\
+        Diagnóstico & Válida como prueba diagnóstica \\
+        \hline
+    \end{tabular}
+\end{table}
 
-% Pendiente de redacción propia.
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.88\textwidth}{images/validacion/val_shorted_inputs_timeseries.jpg}
+    \caption{Señal temporal registrada en la prueba diagnóstica con entradas cortocircuitadas. La amplitud reducida y la ausencia de discontinuidades permiten verificar que la ruta ADS1299--firmware--Python funciona correctamente antes de conectar el montaje experimental.}
+    \label{fig:validacion_shorted_inputs}
+\end{figure}
 
-\subsubsection{Estimación PSD y multitaper}
+Una vez comprobada la ruta de adquisición, se compararon diferentes configuraciones físicas de electrodos y modos de operación del ADS1299. El montaje frontal Fp1--Fp2 permitió observar actividad y artefactos claros, especialmente asociados a parpadeos y movimiento frontal, pero mostró mayor sensibilidad al contacto, al movimiento y al ruido común. La activación de BIAS/RLD y el paso a configuraciones centradas en CH1 redujeron la influencia de canales no utilizados y facilitaron capturas más estables.
 
-% Pendiente de redacción propia.
+La configuración final quedó fijada como \texttt{ADS\_DIAGNOSTIC\_MODE=5}, modo \texttt{bias\_ch1\_only\_loff\_off} y montaje \texttt{ear\_eeg\_ch1\_only}. En este modo, CH1 permanece como canal principal de análisis, el BIAS se deriva de CH1P y CH1N, la detección \textit{lead-off} se mantiene desactivada y los canales CH2--CH4 se conservan por compatibilidad con el contrato de datos, pero no se interpretan como canales EEG activos.
 
-\subsubsection{Estabilidad temporal de las características}
+Para justificar esta elección no se utilizó una única métrica, sino un conjunto de indicadores complementarios. El RMS permite comparar la amplitud típica de la señal; el pico a pico permite detectar transitorios grandes; la componente relativa de 50 Hz indica sensibilidad al ruido de red; la fracción de artefactos resume la proporción de ventanas contaminadas; y el \textit{quality score} integra varios de estos criterios en una puntuación de calidad útil para decidir si una ventana puede alimentar la sonificación.
 
-% Pendiente de redacción propia.
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.96\textwidth}{images/validacion/val_mounting_metrics_grid.jpg}
+    \caption{Comparación de montajes mediante métricas de amplitud, transitorios, ruido de red y artefactos: (a) RMS mediano, (b) amplitud pico a pico, (c) componente de 50 Hz y (d) fracción de ventanas artefactadas. Estas métricas permiten valorar la estabilidad del montaje y su sensibilidad a ventanas contaminadas.}
+    \label{fig:validacion_montaje_metricas}
+\end{figure}
 
-\subsection{Validación de la sonificación EEG--MIDI}
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.82\textwidth}{images/validacion/val_mounting_quality_score.jpg}
+    \caption{Comparación del \textit{quality score} entre montajes y condiciones. La configuración \texttt{ear\_eeg\_ch1\_only} con \texttt{bias\_ch1\_only\_loff\_off} se seleccionó como montaje final porque ofreció una base más estable para obtener ventanas útiles y aplicar posteriormente el \textit{quality gate}.}
+    \label{fig:validacion_montaje_quality_score}
+\end{figure}
 
-\subsubsection{Generación de eventos MIDI}
+Los resultados no implican que el montaje final elimine todos los artefactos biológicos o ambientales. Su utilidad reside en que proporciona una base más estable para trabajar con ventanas útiles y permite que el sistema de calidad descarte o atenúe las ventanas contaminadas antes de la sonificación. Por ello, la elección de \texttt{ear\_eeg\_ch1\_only} se justifica por la estabilidad temporal, la ausencia de discontinuidades, el estado ADS válido, la menor influencia de canales no usados y su compatibilidad con el \textit{quality gate} utilizado en la validación final.
 
-% Pendiente de redacción propia.
+La sesión final de laboratorio se realizó con esta configuración. Las capturas revisadas mantuvieron una frecuencia efectiva de \SI{250}{\hertz}, sin \textit{sample gaps} y sin estados ADS inválidos. En consecuencia, las limitaciones observadas en la señal real no se atribuyen a pérdidas de transporte ni a fallos de estado del ADS1299, sino principalmente al montaje bioeléctrico, al contacto de electrodos, al ruido de red y a artefactos fisiológicos o externos.
 
-\subsubsection{Coherencia entre características EEG y parámetros musicales}
+\subsection{Validación de calidad de señal}
+\label{subsec:validacion_calidad_senal}
 
-% Pendiente de redacción propia.
+Una vez validada la adquisición y seleccionado el montaje experimental, se evaluó la calidad de la señal real. Esta etapa es necesaria porque una captura puede ser correcta desde el punto de vista temporal, manteniendo \SI{250}{\hertz}, sin \textit{sample gaps} y sin estados ADS inválidos, pero contener ventanas contaminadas por ruido de red, transitorios de contacto, movimiento de electrodos, parpadeos o actividad muscular.
 
-\subsubsection{Pruebas de salida MIDI}
+La validación de calidad no se plantea como una validación clínica EEG, sino como un mecanismo para decidir qué ventanas son adecuadas para alimentar la sonificación. Por ello, el sistema calcula métricas globales y métricas por ventanas antes de transformar las características espectrales en controles musicales. La cadena usada en la versión final es:
 
-% Pendiente de redacción propia.
+\begin{center}
+\texttt{compute\_quality\_diagnostics() $\rightarrow$ compute\_spectral\_quality() $\rightarrow$ quality gate}
+\end{center}
 
-\subsection{Validación de la interfaz web}
+Los criterios principales utilizados fueron la frecuencia efectiva, la presencia de discontinuidades, los estados ADS1299 inválidos, el RMS, la amplitud pico a pico, la componente relativa de 50 Hz, la fracción de ventanas artefactadas y el índice de calidad espectral. De esta forma, el sistema puede distinguir entre una captura completamente no válida, una captura dudosa y una captura con ventanas parcialmente utilizables.
 
-% Pendiente de redacción propia.
+Para validar esta lógica se utilizó la captura \texttt{20260524-122200\_final\_atenuacion\_artefactos\_mixed\_states}. Esta captura no corresponde a la sesión final principal, pero resulta especialmente útil porque contiene varios estados dentro de una misma adquisición: ojos abiertos, ojos cerrados, mandíbula, recuperación, parpadeo/frente y nuevos tramos de recuperación. Esto permite comprobar si las métricas de calidad responden de forma coherente ante tramos más estables y tramos contaminados.
 
-\subsection{Validación integrada del sistema}
+\begin{table}[htbp]
+    \centering
+    \small
+    \caption{Resumen por estados de la captura utilizada para validar el análisis de calidad.}
+    \label{tab:validacion_calidad_estados}
+    \begin{tabular}{p{0.24\textwidth} c c c c p{0.22\textwidth}}
+        \hline
+        \textbf{Estado} & \textbf{RMS med.} & \textbf{PTP med.} & \textbf{50 Hz} & \textbf{Calidad} & \textbf{Diagnóstico} \\
+        \hline
+        Ojos abiertos & 76,76 & 1272 & 0,259 & 0,987 & Usable con artefactos leves \\
+        Ojos cerrados 1 & 80,01 & 1226 & 0,268 & 0,922 & Artefactos moderados \\
+        Mandíbula & 69,72 & 1217 & 0,322 & 0,893 & Usable con artefactos leves \\
+        Recuperación 1 & 80,44 & 1275 & 0,226 & 1,000 & Estable \\
+        Parpadeo/frente & 94,22 & 1558 & 0,364 & 0,823 & Usable con artefactos leves \\
+        Recuperación 2 & 109,8 & 1701 & 0,346 & 0,856 & Usable con artefactos leves \\
+        Ojos cerrados 2 & 175,4 & 1725 & 0,188 & 0,621 & Artefacto dominante \\
+        \hline
+    \end{tabular}
+\end{table}
 
-% Pendiente de redacción propia.
+La Tabla~\ref{tab:validacion_calidad_estados} muestra que la calidad no puede decidirse mediante una única magnitud. Algunos estados presentan una frecuencia de adquisición correcta, pero un aumento de amplitud, una mayor componente de 50 Hz o una reducción del índice de calidad. Por este motivo, la validación se realiza por ventanas y no solo mediante una etiqueta global de captura.
 
-\subsection{Limitaciones observadas}
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.96\textwidth}{images/validacion/val_quality_timeline_grid.jpg}
+    \caption{Evolución temporal de la amplitud RMS y del índice de calidad en la captura de estados mixtos. La comparación muestra que la calidad de la señal varía a lo largo de la adquisición y que no todas las ventanas deben tratarse de la misma forma.}
+    \label{fig:validacion_calidad_timeline}
+\end{figure}
 
-% Pendiente de redacción propia.
+La Figura~\ref{fig:validacion_calidad_timeline} resume el comportamiento global por ventanas. El RMS permite detectar incrementos de amplitud asociados a movimiento o transitorios, mientras que el índice de calidad resume la validez espectral de cada ventana. Esta representación justifica que la sonificación utilice un factor de puerta o atenuación, en lugar de transformar toda la señal directamente en música.
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.76\textwidth}{images/validacion/val_quality_state_distribution.jpg}
+    \caption{Distribución de estados de calidad en la captura de validación. La presencia de varios estados confirma que el sistema puede separar ventanas utilizables, ventanas dudosas y ventanas afectadas por artefactos.}
+    \label{fig:validacion_quality_states}
+\end{figure}
+
+Para comprobar visualmente el comportamiento de las métricas, se generaron además figuras homogéneas por estado. Todas las señales temporales se representaron con la misma escala vertical, de \(-750\) a \(+750~\si{\micro\volt}\), lo que permite comparar la amplitud relativa y la presencia de transitorios entre estados sin que el autoescalado oculte las diferencias.
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.96\textwidth}{images/validacion/val_state_timeseries_grid.jpg}
+    \caption{Comparación temporal de estados representativos de la captura \texttt{mixed\_states}: (a) ojos abiertos/reposo, (b) recuperación, (c) mandíbula y (d) parpadeo/frente. La escala común permite observar diferencias de amplitud y transitorios entre reposo, recuperación y estados con mayor presencia de artefactos.}
+    \label{fig:validacion_estados_temporales_1}
+\end{figure}
+
+La Figura~\ref{fig:validacion_estados_temporales_1} muestra que los estados de reposo y recuperación presentan una dinámica más contenida, mientras que los estados asociados a mandíbula o parpadeo/frente introducen cambios de mayor amplitud y morfología distinta. Estos tramos son útiles para validar que el sistema no debe interpretar todos los cambios de la señal como variaciones EEG útiles para la sonificación.
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.96\textwidth}{images/validacion/val_eyes_closed_timeseries_grid.jpg}
+    \caption{Comparación temporal entre dos tramos etiquetados como ojos cerrados. Aunque ambos pertenecen al mismo tipo de condición experimental, el segundo presenta mayor amplitud y peor puntuación de calidad, lo que evidencia la necesidad de evaluar la señal por ventanas y no solo por condición.}
+    \label{fig:validacion_ojos_cerrados_comparacion}
+\end{figure}
+
+Además del comportamiento temporal, la validación de calidad se apoyó en una inspección espectral básica por estados. Esta comprobación no sustituye a la validación DSP detallada de la Subsección~\ref{subsec:validacion_espectral}, pero sí verifica que la clasificación de ventanas útiles o contaminadas resulta coherente cuando se observa el contenido en frecuencia de la señal.
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.96\textwidth}{images/validacion/val_state_psd_grid.jpg}
+    \caption{Densidad espectral de potencia estimada para varios estados representativos de la captura \texttt{mixed\_states}. Los estados de reposo y recuperación presentan un contenido más compatible con una ventana útil, mientras que los estados asociados a mandíbula o parpadeo/frente muestran una modificación del espectro coherente con la presencia de artefactos.}
+    \label{fig:validacion_estados_psd_1}
+\end{figure}
+
+La Figura~\ref{fig:validacion_estados_psd_1} muestra que la evaluación de calidad no depende únicamente de la amplitud temporal, sino también del comportamiento espectral. En los tramos más estables, el espectro mantiene una forma más consistente con una señal útil para análisis; en cambio, en mandíbula o parpadeo/frente aparecen cambios compatibles con contaminación por movimiento o actividad muscular.
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.96\textwidth}{images/validacion/val_eyes_closed_psd_grid.jpg}
+    \caption{Comparación espectral entre dos tramos etiquetados como ojos cerrados. Aunque pertenecen a la misma condición experimental, el segundo presenta un espectro menos compatible con una ventana limpia, en concordancia con su peor diagnóstico de calidad.}
+    \label{fig:validacion_ojos_cerrados_psd}
+\end{figure}
+
+La comparación de la Figura~\ref{fig:validacion_ojos_cerrados_psd} refuerza una idea importante: una misma condición experimental no garantiza la misma calidad bioeléctrica. Por ello, el sistema evalúa la calidad por ventanas y por estado, y no asigna validez únicamente a partir de la etiqueta global de la captura.
+
+En la sesión final de laboratorio, identificada como \texttt{s01\_20260528}, se confirmó la misma lectura general. Las capturas mantuvieron adquisición estable a \SI{250}{\hertz}, sin \textit{sample gaps} y sin estados ADS1299 inválidos, pero la calidad fisiológica fue parcial. Varias condiciones fueron etiquetadas como \texttt{dudosa} por ruido de red, amplitudes elevadas o transitorios. Por tanto, la señal real no debe presentarse como EEG clínicamente limpio, sino como una señal experimental válida para demostrar adquisición, análisis espectral, control de calidad y sonificación.
+
+En conclusión, la validación de calidad demuestra que el sistema dispone de métricas suficientes para no tratar todas las ventanas por igual. La calidad debe evaluarse por ventanas y por estado, y el \textit{quality gate} debe conservarse como parte esencial del pipeline final antes de la sonificación.
+
+\subsection{Validación espectral y extracción de características}
+\label{subsec:validacion_espectral}
+
+Tras evaluar la calidad de la señal, se validó el bloque de procesado espectral encargado de transformar las ventanas EEG en características utilizables por la sonificación. El objetivo de esta validación no es asociar una banda EEG aislada a un estado cognitivo concreto, sino comprobar que el sistema calcula de forma coherente la densidad espectral de potencia, obtiene potencias relativas por bandas y genera variables estables para modular parámetros musicales.
+
+La ruta validada en esta etapa fue:
+
+\begin{center}
+\texttt{ventana CH1 $\rightarrow$ preprocesado $\rightarrow$ PSD multitaper $\rightarrow$ bandpowers $\rightarrow$ features espectrales}
+\end{center}
+
+La configuración final emplea CH1 como canal principal, una frecuencia de muestreo de \SI{250}{\hertz}, ventanas de \SI{4}{\second} y una actualización de características cada 64 muestras. El método principal de estimación espectral es multitaper, ya que en ventanas EEG cortas reduce la variabilidad y el \textit{leakage} respecto a un periodograma simple. Esta decisión no corrige por sí sola problemas de contacto, saturación o contaminación muscular, por lo que la PSD se interpreta siempre junto con el \textit{quality gate} descrito en la subsección anterior.
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.96\textwidth}{images/validacion/val_periodogram_multitaper_global_grid.jpg}
+    \caption{Comparación global entre periodograma y PSD multitaper en la captura de estados mixtos. El periodograma conserva mayor variabilidad entre segmentos, mientras que la estimación multitaper proporciona curvas más estables para calcular potencia por bandas.}
+    \label{fig:validacion_periodograma_multitaper_global}
+\end{figure}
+
+La Figura~\ref{fig:validacion_periodograma_multitaper_global} resume la razón principal para emplear multitaper en el pipeline final. El periodograma resulta útil como referencia directa, pero presenta mayor variabilidad. La estimación multitaper suaviza la estimación espectral y permite obtener bandpowers más robustos para la generación musical. Las comparaciones individuales por estado se conservan como material auxiliar, pero no se incluyen en el cuerpo principal para evitar una sección excesivamente repetitiva.
+
+Para comprobar el comportamiento tiempo--frecuencia se analizó también el espectrograma de la captura \texttt{mixed\_states}. Esta representación permite localizar cambios espectrales asociados a transiciones entre condiciones o a ventanas con mayor presencia de artefactos.
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.90\textwidth}{images/validacion/val_spectrogram_state_bar.jpg}
+    \caption{Espectrograma de la captura de estados mixtos con barra de estados. La figura muestra la evolución temporal del contenido espectral y ayuda a relacionar cambios de frecuencia con reposo, recuperación y estados contaminados por artefactos.}
+    \label{fig:validacion_spectrogram_state_bar}
+\end{figure}
+
+A partir de la PSD, el sistema integra la potencia en las bandas delta, theta, alpha, beta y gamma. Para que la salida musical no dependa únicamente de la potencia absoluta, se emplean principalmente potencias relativas, relaciones entre bandas y variables normalizadas. Esta decisión permite que la sonificación responda a cambios internos de la captura, manteniendo la cautela ante artefactos.
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.90\textwidth}{images/validacion/val_windowed_bandpowers.jpg}
+    \caption{Evolución temporal de las potencias relativas por bandas en la captura de estados mixtos. La figura muestra que las características espectrales cambian por ventanas, lo que justifica su uso como entrada dinámica para la sonificación.}
+    \label{fig:validacion_windowed_bandpowers}
+\end{figure}
+
+La Figura~\ref{fig:validacion_windowed_bandpowers} conecta la validación espectral con el funcionamiento en tiempo real. El backend no trabaja con una única PSD de toda la sesión, sino con ventanas sucesivas que actualizan las características disponibles para el módulo musical. Por ello, las bandas deben interpretarse como señales de control dinámicas y no como conclusiones fisiológicas aisladas.
+
+También se compararon montajes y condiciones para identificar qué bandas resultaban más defendibles en la validación disponible. La comparación ojos abiertos/ojos cerrados fue más favorable en el montaje \texttt{ear\_eeg\_ch1\_only} que en Fp1--Fp2. En el montaje frontal, la banda alpha no apareció de forma robusta, probablemente por la mayor exposición a actividad ocular, muscular y frontal.
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.90\textwidth}{images/validacion/val_alpha_alpha_beta_grid.jpg}
+    \caption{Comparación de la banda alpha y de la relación alpha/beta entre condiciones y montajes. La respuesta alpha fue más clara en el montaje ear-EEG que en Fp1--Fp2, por lo que se utiliza como modulador relativo de reposo y no como indicador clínico directo.}
+    \label{fig:validacion_alpha_alpha_beta}
+\end{figure}
+
+Los resultados resumidos muestran que, en ear-EEG, la potencia relativa alpha aumentó de 0,064 en ojos abiertos a 0,158 en ojos cerrados, con una relación alpha/beta que pasó de 0,414 a 1,150. En Fp1--Fp2, en cambio, alpha permaneció baja tanto con ojos abiertos como cerrados. Esta diferencia justifica que el sistema no dependa de una única banda ni de un único montaje, sino de un conjunto de bandpowers, relaciones y métricas de calidad.
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.90\textwidth}{images/validacion/val_bands_robustness_grid.jpg}
+    \caption{Comparación de bandas y robustez de características espectrales. Las diferencias entre montaje, condición y presencia de artefactos justifican el uso de normalización, suavizado temporal y \textit{quality gate} antes de transformar las bandas en controles musicales.}
+    \label{fig:validacion_bandas_robustez}
+\end{figure}
+
+La Figura~\ref{fig:validacion_bandas_robustez} resume la idea central de la validación espectral: las bandas EEG son medibles y aportan información útil para modular la sonificación, pero no todas tienen la misma robustez ni la misma sensibilidad a artefactos. Delta y theta se emplean como apoyo contextual, alpha es la banda más defendible para reposo relativo en el montaje ear-EEG, beta puede aportar actividad rápida, y gamma debe tratarse con especial cautela por su sensibilidad a EMG y movimiento.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Interpretación adoptada para las bandas espectrales dentro del sistema.}
+    \label{tab:validacion_decision_bandas}
+    \begin{tabular}{p{0.17\textwidth} p{0.38\textwidth} p{0.36\textwidth}}
+        \hline
+        \textbf{Banda} & \textbf{Uso en el sistema} & \textbf{Cautela de interpretación} \\
+        \hline
+        Delta & Apoyo contextual y dinámica lenta. & Sensible a deriva, movimiento y transitorios de contacto. \\
+        Theta & Apoyo contextual dentro del perfil espectral. & No se interpreta como marcador cognitivo sin más sujetos ni protocolo específico. \\
+        Alpha & Modulador de reposo relativo, especialmente en ear-EEG. & No aparece de forma robusta en todos los montajes; no es diagnóstico clínico. \\
+        Beta & Apoyo para actividad rápida y tensión musical. & Puede estar contaminada por actividad muscular o movimiento. \\
+        Gamma & Componente de tensión/artefacto bajo control del \textit{gate}. & Muy sensible a EMG; no se usa como indicador fisiológico directo. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+A partir de estas bandas, el backend genera controles reportables para la sonificación, como \texttt{alpha\_drive}, \texttt{beta\_gamma\_drive}, \texttt{rms\_beta\_activity}, \texttt{band\_driven\_density}, \texttt{spectral\_register}, \texttt{alpha\_stability}, \texttt{rms\_band\_velocity} y \texttt{band\_note\_probability}. Estos controles combinan bandpowers relativos, RMS, picos espectrales, suavizado temporal y \textit{quality gate}. Su efecto musical se analizará en la siguiente subsección.
+
+En conclusión, la validación espectral confirma que el sistema obtiene PSD y bandpowers coherentes a partir de ventanas reales, que multitaper ofrece una estimación más estable que el periodograma simple y que las bandas EEG pueden utilizarse como moduladores musicales relativos. La interpretación se mantiene limitada al uso experimental del prototipo: las bandas no se emplean como marcadores clínicos aislados, sino como entradas normalizadas, suavizadas y condicionadas por calidad para la sonificación EEG--MIDI.
+
+\subsection{Validación de sonificación EEG--MIDI}
+\label{subsec:validacion_sonificacion_midi}
+
+% Pendiente de completar en la siguiente iteración.
+
+\subsection{Validación temporal y benchmarks}
+\label{subsec:validacion_benchmarks}
+
+% Pendiente de completar en la siguiente iteración.
+
+\subsection{Conclusiones y limitaciones de la validación}
+\label{subsec:validacion_conclusiones_limitaciones}
+
+% Pendiente de completar en la siguiente iteración.
 
 \end{document}
