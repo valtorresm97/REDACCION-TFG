@@ -1,0 +1,41 @@
+% !TeX root = ../main.tex
+\documentclass[../main.tex]{subfiles}
+
+\begin{document}
+
+\subsection{Implementación de la interfaz web}
+
+La interfaz web se implementa como una capa de observación y control ligero sobre el backend Python. A diferencia de las capas anteriores, no adquiere señal EEG, no calcula características espectrales y no genera música por sí misma. Su función es consultar el estado publicado por el backend y representarlo en forma de paneles para facilitar la supervisión del prototipo durante las pruebas.
+
+La motivación de esta WebUI es práctica: durante el desarrollo del sistema EEG--MIDI resulta necesario comprobar de forma rápida si la adquisición está activa, si la ventana de análisis contiene señal suficiente, si la calidad espectral es aceptable, qué características EEG se están calculando, qué controles de sonificación se están produciendo y si la salida MIDI está programando notas. La interfaz reúne esa información en una vista local, de modo que el sistema pueda observarse sin inspeccionar manualmente los logs o los ficheros de estado.
+
+La implementación se apoya en un servidor local definido en \texttt{web\_server.py}. Este servidor carga los recursos estáticos de la interfaz, principalmente \texttt{index.html}, \texttt{app.js} y \texttt{styles.css}, y expone rutas de consulta y control sobre el runtime. Entre ellas se encuentran \texttt{/status}, que devuelve un estado reducido, y \texttt{/latest}, que devuelve el último \textit{snapshot} público del backend. Además, se incluyen rutas de control como \texttt{/midi/panic} y rutas de configuración musical, por ejemplo para cambiar la escala, la nota raíz o la nota principal.
+
+El elemento central de la comunicación entre backend y frontend es el \textit{snapshot}. \texttt{BackendService} lo construye periódicamente como una vista pública del estado interno del sistema. En lugar de obligar al navegador a conocer las clases internas del backend, el \textit{snapshot} agrupa la información relevante en bloques: configuración activa, estado de ejecución, recepción de datos, características EEG, diagnósticos, calidad espectral, captura, sonificación, música, MIDI, matriz LED, rendimiento y errores. De esta forma, la WebUI trabaja sobre un contrato de visualización estable, separado de la lógica de adquisición y procesamiento.
+
+En el lado cliente, \texttt{index.html} define la estructura de paneles visibles, \texttt{app.js} consulta el estado mediante \texttt{/latest} y escucha las actualizaciones de \texttt{eeg\_snapshot} cuando están disponibles, y \texttt{styles.css} organiza la presentación visual como un dashboard técnico. Si no se reciben eventos en vivo, el cliente mantiene una consulta periódica como respaldo, con una cadencia suficiente para monitorización visual. Esta actualización no altera el ciclo EEG ni la generación MIDI: únicamente refresca los valores mostrados en pantalla.
+
+La Figura~\ref{fig:impl_webui_dashboard} muestra el resultado visual de la implementación. La interfaz se organiza en paneles que resumen el estado del sistema, el rendimiento de adquisición, el diagnóstico ADS1299, la forma de onda reciente, las características EEG del canal activo, la potencia por bandas, los controles de sonificación, el estado MIDI y un piano roll con notas recientes. El objetivo no es mostrar todas las variables internas del programa, sino presentar las magnitudes más útiles para comprobar que la cadena EEG--MIDI está funcionando de forma coherente.
+
+\begin{figure}[H]
+    \centering
+    \IfFileExists{images/webui_dashboard_completo_datos_sinteticos.png}{%
+        \includegraphics[width=\textwidth,height=0.78\textheight,keepaspectratio]{images/webui_dashboard_completo_datos_sinteticos.png}
+    }{%
+        \fbox{\parbox{0.9\textwidth}{\centering Captura pendiente: \texttt{images/webui\_dashboard\_completo\_datos\_sinteticos.png}}}%
+    }
+    \caption{Vista general de la WebUI implementada como dashboard técnico. La interfaz reúne estado de adquisición, calidad de señal, características EEG, sonificación, controles musicales, estado MIDI y piano roll de notas recientes.}
+    \label{fig:impl_webui_dashboard}
+\end{figure}
+
+Los paneles de adquisición permiten comprobar si el sistema está recibiendo bloques EEG con la cadencia esperada y si aparecen pérdidas, bloques malformados o estados inválidos. Los paneles de calidad muestran indicadores como RMS, pico a pico, saturación, saltos bruscos, ruido de red y estado de calidad espectral. Junto a ellos, las secciones de \textit{features} y potencia por bandas muestran el resumen espectral que el backend ya ha calculado sobre la ventana reciente. La WebUI no vuelve a calcular estas magnitudes; únicamente representa los valores incluidos en el \textit{snapshot}.
+
+La parte musical muestra los controles de sonificación derivados del backend y el estado de la salida MIDI. En esta zona pueden observarse variables como la actividad, densidad, registro, estabilidad, dinámica o probabilidad de nota, junto con contadores de eventos MIDI, notas activas y eventos descartados o fallidos. El piano roll ofrece una representación visual sencilla de las notas recientes, útil para comprobar que la generación musical y la programación MIDI producen una salida temporalmente coherente.
+
+La interfaz incorpora también controles ligeros para pruebas. El botón \textit{panic} ejecuta la ruta de seguridad MIDI y permite apagar notas sostenidas si la generación se interrumpe o si queda algún evento pendiente. Los controles musicales permiten ajustar parámetros como escala, nota raíz o nota principal, modificando la configuración musical usada por el backend. Estos controles afectan al marco musical de la sonificación, pero no cambian la adquisición EEG ni el cálculo espectral.
+
+Gran parte de la WebUI se desarrolló con ayuda de Codex, especialmente en la construcción del dashboard HTML/CSS/JavaScript y en la organización visual de los paneles. No obstante, la integración se revisó dentro del sistema completo para mantener los contratos ya definidos por el backend: el frontend consume el \textit{snapshot}, respeta las rutas públicas del servidor y no introduce una segunda lógica de procesamiento. Esta separación permite que la interfaz sea útil para observar, depurar y documentar el prototipo sin convertirla en el núcleo de la cadena EEG--MIDI.
+
+En conjunto, la WebUI actúa como una herramienta de validación visual. Durante las pruebas permite comprobar de forma inmediata el estado de adquisición, la calidad de la señal, las características EEG disponibles y el comportamiento de la sonificación y del MIDI. Además, facilita la generación de capturas para la memoria, ya que concentra en una única pantalla el estado operativo del sistema.
+
+\end{document}
