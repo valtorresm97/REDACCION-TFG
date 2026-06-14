@@ -383,7 +383,8 @@ Los resultados resumidos muestran que, en ear-EEG, la potencia relativa alpha au
 
 Las Figuras~\ref{fig:validacion_bandas_por_montaje} y~\ref{fig:validacion_robustez_features} resumen la idea central de la validación espectral: las bandas EEG son medibles y aportan información útil para modular la sonificación, pero no todas tienen la misma robustez ni la misma sensibilidad a artefactos. Delta y theta se emplean como apoyo contextual, alpha es la banda más defendible para reposo relativo en el montaje ear-EEG, beta puede aportar actividad rápida, y gamma debe tratarse con especial cautela por su sensibilidad a EMG y movimiento.
 
-```latex
+A partir de las comparaciones anteriores se estableció una decisión práctica para cada banda. La Tabla~\ref{tab:validacion_decision_bandas} resume qué se observó en la validación y cómo se trasladó cada banda al diseño de los controles musicales.
+
 \begin{table}[H]
     \centering
     \small
@@ -393,42 +394,96 @@ Las Figuras~\ref{fig:validacion_bandas_por_montaje} y~\ref{fig:validacion_robust
         \hline
         \textbf{Banda} & \textbf{Resultado observado en la validación} & \textbf{Decisión adoptada en el sistema} \\
         \hline
-        Delta &
-        Presenta una contribución relevante en varias capturas, pero es sensible a deriva lenta, movimiento y transitorios de contacto. &
-        Se utiliza como información contextual de baja frecuencia, no como indicador fisiológico aislado. \\
-
-        Theta &
-        Se obtiene de forma estable como parte del perfil espectral, aunque no mostró una separación clara entre condiciones con el protocolo disponible. &
-        Se conserva como modulador secundario dentro del conjunto de bandas, sin asociarla a un estado cognitivo concreto. \\
-
-        Alpha &
-        Fue la banda más interpretable en el montaje ear-EEG: aumentó en ojos cerrados respecto a ojos abiertos y mejoró la relación alpha/beta. &
-        Se usa como modulador principal de reposo relativo mediante variables como \texttt{alpha\_drive} y \texttt{alpha\_stability}. \\
-
-        Beta &
-        Aporta información de actividad rápida, pero puede mezclarse con actividad muscular, movimiento o tensión facial. &
-        Se combina con RMS, gamma y calidad de ventana para generar controles de actividad/tensión musical, evitando interpretarla de forma aislada. \\
-
-        Gamma &
-        Es la banda más sensible a EMG y artefactos de movimiento en el montaje experimental empleado. &
-        No se usa como marcador EEG directo; se trata como componente de tensión o posible artefacto, siempre condicionada por el \textit{quality gate}. \\
+        Delta & Presenta una contribución relevante en varias capturas, pero es sensible a deriva lenta, movimiento y transitorios de contacto. & Se utiliza como información contextual de baja frecuencia, no como indicador fisiológico aislado. \\
+        Theta & Se obtiene de forma estable como parte del perfil espectral, aunque no mostró una separación clara entre condiciones con el protocolo disponible. & Se conserva como modulador secundario dentro del conjunto de bandas, sin asociarla a un estado cognitivo concreto. \\
+        Alpha & Fue la banda más interpretable en el montaje ear-EEG: aumentó en ojos cerrados respecto a ojos abiertos y mejoró la relación alpha/beta. & Se usa como modulador principal de reposo relativo mediante variables como \texttt{alpha\_drive} y \texttt{alpha\_stability}. \\
+        Beta & Aporta información de actividad rápida, pero puede mezclarse con actividad muscular, movimiento o tensión facial. & Se combina con RMS, gamma y calidad de ventana para generar controles de actividad/tensión musical, evitando interpretarla de forma aislada. \\
+        Gamma & Es la banda más sensible a EMG y artefactos de movimiento en el montaje experimental empleado. & No se usa como marcador EEG directo; se trata como componente de tensión o posible artefacto, siempre condicionada por el \textit{quality gate}. \\
         \hline
     \end{tabular}
 \end{table}
-```
-
 
 A partir de estas bandas, el backend genera controles reportables para la sonificación, como \texttt{alpha\_drive}, \texttt{beta\_gamma\_drive}, \texttt{rms\_beta\_activity}, \texttt{band\_driven\_density}, \texttt{spectral\_register}, \texttt{alpha\_stability}, \texttt{rms\_band\_velocity} y \texttt{band\_note\_probability}. Estos controles combinan bandpowers relativos, RMS, picos espectrales, suavizado temporal y \textit{quality gate}. Su efecto musical se analizará en la siguiente subsección.
 
 En conclusión, la validación espectral confirma que el sistema obtiene PSD y bandpowers coherentes a partir de ventanas reales, que multitaper ofrece una estimación más estable que el periodograma simple y que las bandas EEG pueden utilizarse como moduladores musicales relativos. La interpretación se mantiene limitada al uso experimental del prototipo: las bandas no se emplean como marcadores clínicos aislados, sino como entradas para la sonificación las cuales serán normalizadas, suavizadas y condicionadas por calidad para la sonificación EEG--MIDI.
 
-\subsection{Validación de sonificación EEG--MIDI}
-\label{subsec:validacion_sonificacion_midi}
-
-% Pendiente de completar en la siguiente iteración.
-
 \subsection{Validación temporal y benchmarks}
 \label{subsec:validacion_benchmarks}
+
+Tras validar la adquisición, la calidad de señal y la extracción espectral, se comprobó si el sistema disponía de margen temporal suficiente para ejecutar el pipeline en tiempo real sobre la placa. Esta validación no evalúa la limpieza fisiológica de la señal, sino el coste computacional real del firmware y del backend Python/Linux cuando trabajan con datos adquiridos por el hardware.
+
+Los benchmarks se realizaron sobre la Arduino UNO Q/Linux usando capturas reales, no señales sintéticas. La ruta temporal evaluada fue:
+
+\begin{center}
+\texttt{ADS1299 $\rightarrow$ firmware MCU $\rightarrow$ Bridge $\rightarrow$ Python $\rightarrow$ DSP $\rightarrow$ quality gate $\rightarrow$ sonificación}
+\end{center}
+
+Se emplearon dos referencias de tiempo. En el firmware, los datos se publican en bloques de 8 muestras; a \SI{250}{\hertz}, esto equivale a un periodo de bloque de \SI{32}{\milli\second}. En Python, las características espectrales se actualizan cada 64 muestras; por tanto, el presupuesto disponible entre actualizaciones es de \SI{256}{\milli\second}. La Tabla~\ref{tab:validacion_presupuestos_temporales} resume estas referencias.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Presupuestos temporales usados para interpretar los benchmarks.}
+    \label{tab:validacion_presupuestos_temporales}
+    \begin{tabular}{p{0.22\textwidth} p{0.25\textwidth} p{0.20\textwidth} p{0.24\textwidth}}
+        \hline
+        \textbf{Parte} & \textbf{Referencia} & \textbf{Presupuesto} & \textbf{Uso del margen} \\
+        \hline
+        Firmware/MCU & Bloque de 8 muestras a \SI{250}{\hertz} & \SI{32}{\milli\second} & Filtrado, cola TX y publicación por Bridge. \\
+        Python/Linux & Hop de 64 muestras a \SI{250}{\hertz} & \SI{256}{\milli\second} & Cálculo de features, calidad y adaptación de sonificación. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Las capturas empleadas fueron \texttt{20260528-104617\_bench\_real\_rest\_60s}, como benchmark inicial Python/Linux, y \texttt{20260528-111723\_bench\_real\_rest\_60s\_mcu}, como benchmark completo con métricas de MCU y Python sobre captura real. La segunda ejecución generó 14368 muestras en 1796 bloques y se toma como referencia principal por incluir también los datos parseados del monitor del firmware.
+
+En Python/Linux se midieron el parser, la recepción de bloques, la inserción en el buffer, el cálculo de características en vivo, el diagnóstico de calidad, el DSP aislado y un replay completo con salto real de 64 muestras. La función crítica para el funcionamiento en tiempo real es \texttt{EEGSignalProcessor.compute\_live\_features}, ya que actualiza las características espectrales que alimentan el \textit{quality gate} y la sonificación.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Resumen de benchmarks Python/Linux sobre la captura real con métricas MCU.}
+    \label{tab:validacion_bench_python}
+    \begin{tabular}{p{0.35\textwidth} c c c c}
+        \hline
+        \textbf{Benchmark} & \textbf{Mediana} & \textbf{P95} & \textbf{Máx.} & \textbf{Referencia} \\
+        \hline
+        \texttt{compute\_live\_features} & \SI{5.2158}{\milli\second} & \SI{6.4103}{\milli\second} & \SI{6.9831}{\milli\second} & \SI{256}{\milli\second} \\
+        \texttt{compute\_quality\_diagnostics} & \SI{6.0806}{\milli\second} & \SI{8.1642}{\milli\second} & \SI{9.4764}{\milli\second} & \SI{256}{\milli\second} \\
+        \texttt{DSPCore.compute\_features} & \SI{5.1967}{\milli\second} & \SI{6.2634}{\milli\second} & \SI{6.5716}{\milli\second} & \SI{256}{\milli\second} \\
+        Replay con hop real & \SI{12.56}{\milli\second/ciclo} & -- & -- & \SI{256}{\milli\second} \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Los resultados de la Tabla~\ref{tab:validacion_bench_python} muestran que el cálculo principal de features consume como máximo \SI{6.9831}{\milli\second}, aproximadamente un 2.7\% del presupuesto de \SI{256}{\milli\second}. Incluso el replay completo con hop real, que incluye entrada de bloques, cálculo de features, diagnóstico de calidad y adaptación de sonificación, requiere alrededor de \SI{12.56}{\milli\second} por ciclo, aproximadamente un 4.9\% del margen disponible. Por tanto, el bloque Python/Linux no constituye un cuello de botella temporal en la configuración evaluada.
+
+En el firmware se conservaron las métricas impresas por el Monitor/App Lab mediante bloques \texttt{[BENCH] EEG\_MIDI}. Para no alterar el transporte real, no se añadió ningún evento \texttt{Bridge.notify} adicional; el log del monitor se copió y se parseó después con una herramienta específica. Las métricas principales se resumen en la Tabla~\ref{tab:validacion_bench_mcu}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Resumen de benchmarks del firmware/MCU.}
+    \label{tab:validacion_bench_mcu}
+    \begin{tabular}{p{0.32\textwidth} c c p{0.29\textwidth}}
+        \hline
+        \textbf{Métrica MCU} & \textbf{Valor} & \textbf{Referencia} & \textbf{Lectura} \\
+        \hline
+        \texttt{filt\_avg\_us} mediano & \SI{5.050}{\micro\second} & \SI{4}{\milli\second}/muestra & Filtrado despreciable frente al periodo de muestreo. \\
+        \texttt{notify\_avg\_us} mediano & \SI{3367.250}{\micro\second} & \SI{32}{\milli\second}/bloque & Publicación Bridge asumible. \\
+        \texttt{notify\_max\_us\_win} máximo & \SI{11528}{\micro\second} & \SI{32}{\milli\second}/bloque & Pico inferior al periodo de bloque. \\
+        \texttt{loop\_max\_us\_win} máximo & \SI{12886}{\micro\second} & \SI{32}{\milli\second}/bloque & Bucle con margen en las ventanas analizadas. \\
+        \texttt{qmax\_global} & 1 & Cola estable & Sin acumulación significativa de bloques. \\
+        \texttt{drops\_total} & 0 & 0 esperado & Sin pérdidas por cola TX. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+En el MCU, el coste dominante no fue el filtrado, sino la publicación de bloques por Bridge. Aun así, el máximo de \texttt{notify} por ventana fue de \SI{11.528}{\milli\second} y el máximo de \texttt{loop} por ventana fue de \SI{12.886}{\milli\second}, ambos por debajo del periodo de bloque de \SI{32}{\milli\second}. Además, la cola TX permaneció controlada, con \texttt{qmax\_global = 1} y \texttt{drops\_total = 0}.
+
+Como limitación, estos benchmarks no miden la latencia física completa EEG--MIDI OUT ni el coste del navegador WebUI. Tampoco sustituyen a la validación experimental de la señal ni a las capturas finales de laboratorio. Su función dentro de la memoria es demostrar que, con la configuración evaluada, los procesos ya validados disponen de margen temporal suficiente para ejecutarse en tiempo real.
+
+En conjunto, los resultados muestran que el cuello de botella principal del prototipo no se encuentra en el cálculo DSP/sonificación de Python ni en el filtrado del MCU. Los aspectos más críticos para interpretar los resultados finales son la calidad de señal, la presencia de artefactos, la estabilidad del montaje bioeléctrico y la ausencia de una medida física completa de latencia extremo a extremo. Esta validación temporal permite introducir la siguiente fase: la sesión final de laboratorio, donde se analiza la sonificación producida a partir de capturas reales.
+
+\subsection{Sonificación y resultados}
+\label{subsec:validacion_sonificacion_resultados}
 
 % Pendiente de completar en la siguiente iteración.
 
