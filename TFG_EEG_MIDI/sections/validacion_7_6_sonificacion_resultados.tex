@@ -3,50 +3,292 @@
 
 Una vez comprobado que la adquisición, el procesado espectral y los benchmarks temporales cumplían los requisitos del sistema, se realizó una sesión final de laboratorio para validar la integración completa EEG--MIDI con señal real. Esta sesión se identificó como \texttt{s01\_20260528} y se llevó a cabo con el montaje final \texttt{ear\_eeg\_ch1\_only}, el modo ADS \texttt{bias\_ch1\_only\_loff\_off}, \texttt{ADS\_DIAGNOSTIC\_MODE=5} y el modelo musical \texttt{modelo\_captura\_final}. El objetivo no fue obtener un registro EEG clínicamente limpio, sino comprobar que el sistema era capaz de adquirir señal real, calcular características, aplicar el \textit{quality gate}, generar controles de sonificación y registrar notas musicales durante la adquisición.
 
-La sesión estuvo formada por capturas de precomprobación, ojos abiertos, ojos cerrados, reposo quieto, parpadeo y repetición de ojos abiertos. Todas las capturas revisadas mantuvieron una frecuencia efectiva de \SI{250}{\hertz}, sin \textit{sample gaps} y sin estados ADS1299 inválidos. Por tanto, la sesión valida la continuidad técnica de la ruta:
+La sesión estuvo formada por dos capturas de precomprobación y cinco condiciones principales: ojos abiertos, ojos cerrados, reposo quieto, parpadeo y repetición de ojos abiertos. Todas las capturas revisadas mantuvieron una frecuencia efectiva de \SI{250}{\hertz}, sin \textit{sample gaps} y sin estados ADS1299 inválidos. Por tanto, la sesión valida la continuidad técnica de la ruta:
 
 \begin{center}
 \texttt{ADS1299 $\rightarrow$ firmware $\rightarrow$ Bridge $\rightarrow$ Python $\rightarrow$ DSP $\rightarrow$ quality gate $\rightarrow$ sonificación $\rightarrow$ notas}
 \end{center}
 
-La Tabla~\ref{tab:validacion_sesion_final_musica} resume las condiciones principales y la evidencia musical registrada. Todas las capturas conservaron ficheros de sonificación, incluyendo \texttt{music\_snapshots.jsonl}, \texttt{music\_notes.csv} y \texttt{music\_capture\_summary.json}. Esto permite analizar a posteriori la relación entre señal EEG, características espectrales, controles musicales y notas generadas.
+Además de los ficheros EEG y de metadatos, cada captura conservó los artefactos musicales necesarios para el análisis posterior: \texttt{music\_snapshots.jsonl}, \texttt{music\_notes.csv}, \texttt{music\_capture\_summary.json} y \texttt{windowed\_sonification\_features.csv}. Esto permite relacionar, fuera de línea, la señal registrada con las características espectrales, los controles de sonificación y las notas generadas.
 
 \begin{table}[htbp]
     \centering
     \small
-    \caption{Resumen de la sesión final de laboratorio y notas musicales registradas.}
+    \caption{Resumen de la sesión final de laboratorio y salida musical registrada.}
     \label{tab:validacion_sesion_final_musica}
-    \begin{tabular}{p{0.34\textwidth} c c p{0.32\textwidth}}
+    \begin{tabular}{p{0.31\textwidth} c c c p{0.28\textwidth}}
         \hline
-        \textbf{Condición} & \textbf{Duración} & \textbf{Notas} & \textbf{Lectura para validación} \\
+        \textbf{Condición} & \textbf{Diagnóstico} & \textbf{50 Hz} & \textbf{Notas} & \textbf{Uso en la validación} \\
         \hline
-        \texttt{precheck\_10s} & \SI{10}{\second} & 12 / 22 & Comprobación técnica previa; no se interpreta como estado fisiológico. \\
-        \texttt{eyes\_open\_rest\_60s} & \SI{60}{\second} & 45 & Sonificación registrada, aunque con artefacto transitorio de gran amplitud. \\
-        \texttt{eyes\_closed\_rest\_60s} & \SI{60}{\second} & 80 & Captura de reposo con contaminación de 50 Hz; útil con cautela. \\
-        \texttt{quiet\_rest\_60s} & \SI{60}{\second} & 72 & Evidencia de sonificación sostenida durante reposo. \\
-        \texttt{blink\_artifact\_30s} & \SI{30}{\second} & 34 & Control de artefacto fisiológico por parpadeo. \\
-        \texttt{eyes\_open\_repeat\_30s} & \SI{30}{\second} & 65 & Mejor candidata para la figura principal de resultados. \\
+        \texttt{precheck\_10s} & Dudosa & 0,329 / 0,342 & 12 / 22 & Comprobación operativa previa. \\
+        \texttt{eyes\_open\_rest\_60s} & Dudosa & 0,000 & 45 & Captura real con artefacto transitorio. \\
+        \texttt{eyes\_closed\_rest\_60s} & Dudosa & 0,363 & 80 & Reposo con ojos cerrados y ruido de red. \\
+        \texttt{quiet\_rest\_60s} & Dudosa & 0,339 & 72 & Sonificación sostenida en reposo. \\
+        \texttt{blink\_artifact\_30s} & Dudosa & 0,381 & 34 & Artefacto fisiológico controlado. \\
+        \texttt{eyes\_open\_repeat\_30s} & Válida preliminar & 0,001 & 65 & Figura principal de integración EEG--MIDI. \\
         \hline
     \end{tabular}
 \end{table}
 
-La captura seleccionada como evidencia principal fue \texttt{06\_eyes\_open\_repeat\_30s}. Esta captura presenta el diagnóstico automático más favorable de la sesión y, además, dispone de una figura combinada reajustada que permite visualizar de forma conjunta la señal temporal, las características espectrales, los controles de sonificación y las notas generadas. La figura no se utiliza para afirmar que toda la señal sea EEG limpia, sino para demostrar la trazabilidad completa del sistema: a partir de una señal real se obtienen variables de control y una salida musical registrada.
+Los prechecks se consideran comprobaciones técnicas de arranque. En ellos se verificó la recepción desde la placa, el guardado de \texttt{eeg\_timeseries.csv}, la generación de \texttt{metadata.json}, los reports offline y la escritura de \texttt{music\_notes.csv}. No se emplean como evidencia fisiológica principal, pero sí documentan que el sistema estaba operativo antes de las capturas largas.
+
+\paragraph{Ojos abiertos en reposo.}
+La condición \texttt{eyes\_open\_rest\_60s} demuestra que el sistema pudo mantener durante \SI{60}{\second} la adquisición, el cálculo de características, los controles de sonificación y el registro musical. Sin embargo, presenta un transitorio de gran amplitud, por lo que se usa como ejemplo de integración real con limitaciones experimentales, no como registro EEG limpio.
 
 \begin{figure}[htbp]
     \centering
-    \validacioninclude{width=0.96\textwidth}{images/validacion/06_figura_combinada_reajustada_300uv.png}
-    \caption{Figura combinada de la captura \texttt{06\_eyes\_open\_repeat\_30s}. La representación agrupa señal EEG, características derivadas, controles de sonificación y notas musicales registradas, mostrando la trazabilidad de la cadena EEG--MIDI durante una captura real de laboratorio.}
-    \label{fig:validacion_sonificacion_combinada_06}
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/01_eyes_open_rest_60s/eeg_ch1_temporal.png}
+        \small (a) Señal temporal CH1
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/01_eyes_open_rest_60s/bandpowers_relativos.png}
+        \small (b) Bandpowers relativos
+    \end{minipage}
+    \caption{Captura de ojos abiertos: señal temporal y potencias relativas por bandas. El transitorio observado en la señal obliga a leer los bandpowers junto con la calidad de ventana.}
+    \label{fig:validacion_s01_01_eeg_bands}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/01_eyes_open_rest_60s/controles_sonificacion.png}
+        \small (a) Controles de sonificación
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/01_eyes_open_rest_60s/calidad_senal_quality_gate.png}
+        \small (b) Calidad y \textit{quality gate}
+    \end{minipage}
+    \caption{Captura de ojos abiertos: controles musicales y calidad de señal. La figura permite comprobar que la sonificación se interpreta junto con el estado de calidad de las ventanas.}
+    \label{fig:validacion_s01_01_controls_quality}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.86\textwidth}{images/validacion/capturas_finales_s01_20260528/01_eyes_open_rest_60s/notas_musicales.png}
+    \caption{Notas musicales generadas durante la captura de ojos abiertos. Se registraron 45 notas deduplicadas, usadas como evidencia de salida musical persistida.}
+    \label{fig:validacion_s01_01_notes}
+\end{figure}
+
+\paragraph{Ojos cerrados en reposo.}
+La condición \texttt{eyes\_closed\_rest\_60s} se incluye para observar el comportamiento del sistema en una condición de reposo distinta a ojos abiertos. La adquisición fue continua y se registraron 80 notas deduplicadas, aunque el ratio de 50 Hz fue elevado. Por este motivo, la captura se considera válida como evidencia de funcionamiento del pipeline, pero no como demostración fisiológica concluyente de cambios espectrales.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/02_eyes_closed_rest_60s/eeg_ch1_temporal.png}
+        \small (a) Señal temporal CH1
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/02_eyes_closed_rest_60s/bandpowers_relativos.png}
+        \small (b) Bandpowers relativos
+    \end{minipage}
+    \caption{Captura de ojos cerrados: señal temporal y distribución espectral por bandas. La continuidad temporal permite analizar la captura, aunque la contaminación de red limita su interpretación fisiológica.}
+    \label{fig:validacion_s01_02_eeg_bands}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/02_eyes_closed_rest_60s/controles_sonificacion.png}
+        \small (a) Controles de sonificación
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/02_eyes_closed_rest_60s/calidad_senal_quality_gate.png}
+        \small (b) Calidad y \textit{quality gate}
+    \end{minipage}
+    \caption{Captura de ojos cerrados: controles de sonificación y calidad de ventana. La respuesta musical debe leerse condicionada por el ruido de red observado.}
+    \label{fig:validacion_s01_02_controls_quality}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.86\textwidth}{images/validacion/capturas_finales_s01_20260528/02_eyes_closed_rest_60s/notas_musicales.png}
+    \caption{Notas musicales generadas durante la captura de ojos cerrados. La mayor densidad musical registrada no se interpreta como marcador fisiológico directo, sino como salida del sistema bajo los controles calculados.}
+    \label{fig:validacion_s01_02_notes}
+\end{figure}
+
+\paragraph{Reposo quieto.}
+La condición \texttt{quiet\_rest\_60s} se planteó como estado basal general, con el sujeto sentado, sin hablar y sin movimientos voluntarios. La captura no constituye un control fisiológico perfecto, pero es útil para demostrar que el sistema puede sostener adquisición, análisis y sonificación durante un estado mantenido.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/03_quiet_rest_60s/eeg_ch1_temporal.png}
+        \small (a) Señal temporal CH1
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/03_quiet_rest_60s/bandpowers_relativos.png}
+        \small (b) Bandpowers relativos
+    \end{minipage}
+    \caption{Captura de reposo quieto: señal temporal y bandpowers relativos. Esta condición permite observar el comportamiento del sistema durante una captura sostenida.}
+    \label{fig:validacion_s01_03_eeg_bands}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/03_quiet_rest_60s/controles_sonificacion.png}
+        \small (a) Controles de sonificación
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/03_quiet_rest_60s/calidad_senal_quality_gate.png}
+        \small (b) Calidad y \textit{quality gate}
+    \end{minipage}
+    \caption{Captura de reposo quieto: controles musicales y evaluación de calidad. El diagnóstico sigue siendo dudoso por ruido y artefactos moderados, aunque la continuidad del sistema es correcta.}
+    \label{fig:validacion_s01_03_controls_quality}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.86\textwidth}{images/validacion/capturas_finales_s01_20260528/03_quiet_rest_60s/notas_musicales.png}
+    \caption{Notas musicales generadas durante el reposo quieto. Se registraron 72 notas deduplicadas, confirmando la persistencia de la salida musical durante una condición mantenida.}
+    \label{fig:validacion_s01_03_notes}
+\end{figure}
+
+\paragraph{Parpadeo como artefacto controlado.}
+La condición \texttt{blink\_artifact\_30s} se diseñó como captura contaminada por artefacto fisiológico. Su finalidad no es validar EEG limpia, sino mostrar que el sistema registra también condiciones no ideales y conserva las evidencias necesarias para analizar cómo se comporta la sonificación ante contaminación esperada.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/04_blink_artifact_30s/eeg_ch1_temporal.png}
+        \small (a) Señal temporal CH1
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/04_blink_artifact_30s/bandpowers_relativos.png}
+        \small (b) Bandpowers relativos
+    \end{minipage}
+    \caption{Captura de parpadeo: señal temporal y bandpowers. Los cambios de potencia deben interpretarse como respuesta ante una condición con artefacto ocular controlado.}
+    \label{fig:validacion_s01_04_eeg_bands}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/04_blink_artifact_30s/controles_sonificacion.png}
+        \small (a) Controles de sonificación
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/04_blink_artifact_30s/calidad_senal_quality_gate.png}
+        \small (b) Calidad y \textit{quality gate}
+    \end{minipage}
+    \caption{Captura de parpadeo: controles musicales y evaluación de calidad. Esta condición justifica la necesidad de interpretar la música junto con el \textit{quality gate}.}
+    \label{fig:validacion_s01_04_controls_quality}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.86\textwidth}{images/validacion/capturas_finales_s01_20260528/04_blink_artifact_30s/notas_musicales.png}
+    \caption{Notas musicales generadas durante la condición de parpadeo. La salida musical existe, pero no se interpreta como reflejo directo de un estado EEG limpio.}
+    \label{fig:validacion_s01_04_notes}
+\end{figure}
+
+\paragraph{Repetición de ojos abiertos y figura principal.}
+La captura \texttt{06\_eyes\_open\_repeat\_30s} fue la mejor candidata para representar los resultados finales. Combina adquisición continua a \SI{250}{\hertz}, \textit{sample gaps} nulos, estados ADS1299 válidos, diagnóstico \texttt{valida\_preliminar}, 65 notas deduplicadas y gráficas completas generadas con Matplotlib. Aun así, conserva transitorios de amplitud, por lo que no se presenta como EEG clínicamente limpio.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/06_eyes_open_repeat_30s/eeg_ch1_temporal.png}
+        \small (a) Señal temporal CH1
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/06_eyes_open_repeat_30s/bandpowers_relativos.png}
+        \small (b) Bandpowers relativos
+    \end{minipage}
+    \caption{Captura principal \texttt{06\_eyes\_open\_repeat\_30s}: señal temporal y características espectrales. Esta figura conecta la señal real con los descriptores usados por la sonificación.}
+    \label{fig:validacion_s01_06_eeg_bands}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/06_eyes_open_repeat_30s/controles_sonificacion.png}
+        \small (a) Controles de sonificación
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/06_eyes_open_repeat_30s/calidad_senal_quality_gate.png}
+        \small (b) Calidad y \textit{quality gate}
+    \end{minipage}
+    \caption{Captura principal: controles de sonificación y calidad de señal. La lectura conjunta permite separar la salida musical de la fiabilidad de cada ventana.}
+    \label{fig:validacion_s01_06_controls_quality}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.86\textwidth}{images/validacion/capturas_finales_s01_20260528/06_eyes_open_repeat_30s/notas_musicales.png}
+    \caption{Notas musicales generadas durante la captura \texttt{06\_eyes\_open\_repeat\_30s}. La gráfica representa la salida discreta del sistema musical, con pitch MIDI y distribución temporal de eventos.}
+    \label{fig:validacion_s01_06_notes}
+\end{figure}
+
+Para esta captura se generaron además vistas reajustadas, ya que el transitorio final puede comprimir visualmente la parte útil de la señal. La vista completa conserva el artefacto para no ocultar la limitación experimental, mientras que la vista con escala robusta facilita inspeccionar la dinámica principal y relacionarla con la sonificación.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/06_eyes_open_repeat_30s/06_eeg_ch1_completo_con_transitorio.png}
+        \small (a) EEG completo con transitorio
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/06_eyes_open_repeat_30s/06_eeg_ch1_zoom_300uv.png}
+        \small (b) Zoom robusto en \(\pm\SI{300}{\micro\volt}\)
+    \end{minipage}
+    \caption{Lecturas complementarias de la captura principal. La vista completa documenta el transitorio y la vista reajustada permite observar la parte útil sin negar la presencia del artefacto.}
+    \label{fig:validacion_s01_06_eeg_completo_zoom}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/06_eyes_open_repeat_30s/06_quality_score_gate.png}
+        \small (a) Quality score y \textit{gate}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/capturas_finales_s01_20260528/06_eyes_open_repeat_30s/06_figura_combinada_reajustada_300uv.png}
+        \small (b) Figura combinada reajustada
+    \end{minipage}
+    \caption{Captura principal reajustada: calidad de ventanas y figura combinada EEG--sonificación--notas. Esta figura sintetiza la trazabilidad del sistema completo durante una adquisición real.}
+    \label{fig:validacion_s01_06_reajustada}
 \end{figure}
 
 El comportamiento de la sonificación se basa en controles reportables derivados de las características validadas en la Subsección~\ref{subsec:validacion_espectral}: \texttt{alpha\_drive}, \texttt{beta\_gamma\_drive}, \texttt{rms\_beta\_activity}, \texttt{band\_driven\_density}, \texttt{spectral\_register}, \texttt{alpha\_stability}, \texttt{rms\_band\_velocity} y \texttt{band\_note\_probability}. Estos controles no traducen directamente una banda EEG en una nota musical, sino que combinan potencias relativas, amplitud, relaciones espectrales, suavizado temporal y calidad de ventana. De esta forma, la música generada queda vinculada a la dinámica de la señal, pero condicionada por el \textit{quality gate} para evitar que artefactos puntuales dominen la salida.
-
-\begin{figure}[htbp]
-    \centering
-    \validacioninclude{width=0.82\textwidth}{images/validacion/06_quality_score_gate.png}
-    \caption{Evolución del índice de calidad y aplicación del \textit{quality gate} en la captura \texttt{06\_eyes\_open\_repeat\_30s}. Esta lógica permite atenuar o limitar la respuesta musical cuando las ventanas presentan baja fiabilidad.}
-    \label{fig:validacion_sonificacion_quality_gate_06}
-\end{figure}
 
 La interpretación de los resultados debe mantenerse prudente. La diferencia en el número de notas entre condiciones no demuestra por sí sola un cambio neurofisiológico, ya que la señal real estuvo condicionada por ruido de red, contacto de electrodos y artefactos fisiológicos. Sin embargo, sí constituye una evidencia técnica relevante: durante la sesión final, el sistema mantuvo la adquisición a \SI{250}{\hertz}, calculó características espectrales, aplicó criterios de calidad, generó controles musicales y guardó notas durante capturas reales.
 
