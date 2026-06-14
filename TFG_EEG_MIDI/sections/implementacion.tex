@@ -664,13 +664,13 @@ La Tabla~\ref{tab:impl_bar_generator_bar} resume los campos principales del obje
     \end{tabular}
 \end{table}
 
-En resumen, \texttt{BarGenerator} convierte el estado musical del segmento en una plantilla de compás. Esta plantilla no contiene todavía notas finales, sino tres elementos que serán usados por la etapa siguiente: una referencia armónica, un patrón de posiciones donde podrán aparecer notas y un mapa de acentos. A partir de esa estructura, \texttt{NoteGenerator} decidirá qué nota concreta se coloca en cada posición activa, con qué duración y con qué \textit{velocity} MIDI.
+En resumen, \texttt{BarGenerator} convierte el estado musical del segmento en una plantilla de compás. A partir de esa estructura, \texttt{NoteGenerator} decidirá qué nota concreta se coloca en cada posición activa, con qué duración y con qué \textit{velocity} MIDI.
 
 
 
 \subsubsection{Generación de notas}
 
-Una vez generado el compás, la etapa siguiente consiste en convertir su plantilla en notas concretas. Esta tarea la realiza \texttt{NoteGenerator}, que recibe como entrada el \texttt{MusicSegment} y el \texttt{Bar}. El primero conserva los controles musicales derivados del EEG, mientras que el segundo aporta la referencia armónica, las posiciones activas y el mapa de acentos del compás. La salida de esta etapa es una lista ordenada de objetos \texttt{NoteEvent}.
+Una vez generado el compás, la etapa siguiente consiste en convertir su plantilla en notas concretas. Esta tarea la realiza \texttt{NoteGenerator}, que recibe como entrada el \texttt{MusicSegment} y el \texttt{Bar}.La salida de esta etapa es una lista ordenada de objetos \texttt{NoteEvent}.
 
 La idea principal es que el compás define cuándo puede sonar algo, mientras que \texttt{NoteGenerator} decide qué nota suena en cada posición marcada, cuánto dura y con qué intensidad MIDI. Por tanto, esta etapa transforma una plantilla rítmica y armónica en eventos musicales individuales.
 
