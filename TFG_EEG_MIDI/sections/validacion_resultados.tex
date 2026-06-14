@@ -383,26 +383,44 @@ Los resultados resumidos muestran que, en ear-EEG, la potencia relativa alpha au
 
 Las Figuras~\ref{fig:validacion_bandas_por_montaje} y~\ref{fig:validacion_robustez_features} resumen la idea central de la validación espectral: las bandas EEG son medibles y aportan información útil para modular la sonificación, pero no todas tienen la misma robustez ni la misma sensibilidad a artefactos. Delta y theta se emplean como apoyo contextual, alpha es la banda más defendible para reposo relativo en el montaje ear-EEG, beta puede aportar actividad rápida, y gamma debe tratarse con especial cautela por su sensibilidad a EMG y movimiento.
 
-\begin{table}[htbp]
+```latex
+\begin{table}[H]
     \centering
-    \caption{Interpretación adoptada para las bandas espectrales dentro del sistema.}
+    \small
+    \caption{Conclusiones de validación adoptadas para cada banda espectral.}
     \label{tab:validacion_decision_bandas}
-    \begin{tabular}{p{0.17\textwidth} p{0.38\textwidth} p{0.36\textwidth}}
+    \begin{tabular}{p{0.14\textwidth} p{0.42\textwidth} p{0.36\textwidth}}
         \hline
-        \textbf{Banda} & \textbf{Uso en el sistema} & \textbf{Cautela de interpretación} \\
+        \textbf{Banda} & \textbf{Resultado observado en la validación} & \textbf{Decisión adoptada en el sistema} \\
         \hline
-        Delta & Apoyo contextual y dinámica lenta. & Sensible a deriva, movimiento y transitorios de contacto. \\
-        Theta & Apoyo contextual dentro del perfil espectral. & No se interpreta como marcador cognitivo sin más sujetos ni protocolo específico. \\
-        Alpha & Modulador de reposo relativo, especialmente en ear-EEG. & No aparece de forma robusta en todos los montajes; no es diagnóstico clínico. \\
-        Beta & Apoyo para actividad rápida y tensión musical. & Puede estar contaminada por actividad muscular o movimiento. \\
-        Gamma & Componente de tensión/artefacto bajo control del \textit{gate}. & Muy sensible a EMG; no se usa como indicador fisiológico directo. \\
+        Delta &
+        Presenta una contribución relevante en varias capturas, pero es sensible a deriva lenta, movimiento y transitorios de contacto. &
+        Se utiliza como información contextual de baja frecuencia, no como indicador fisiológico aislado. \\
+
+        Theta &
+        Se obtiene de forma estable como parte del perfil espectral, aunque no mostró una separación clara entre condiciones con el protocolo disponible. &
+        Se conserva como modulador secundario dentro del conjunto de bandas, sin asociarla a un estado cognitivo concreto. \\
+
+        Alpha &
+        Fue la banda más interpretable en el montaje ear-EEG: aumentó en ojos cerrados respecto a ojos abiertos y mejoró la relación alpha/beta. &
+        Se usa como modulador principal de reposo relativo mediante variables como \texttt{alpha\_drive} y \texttt{alpha\_stability}. \\
+
+        Beta &
+        Aporta información de actividad rápida, pero puede mezclarse con actividad muscular, movimiento o tensión facial. &
+        Se combina con RMS, gamma y calidad de ventana para generar controles de actividad/tensión musical, evitando interpretarla de forma aislada. \\
+
+        Gamma &
+        Es la banda más sensible a EMG y artefactos de movimiento en el montaje experimental empleado. &
+        No se usa como marcador EEG directo; se trata como componente de tensión o posible artefacto, siempre condicionada por el \textit{quality gate}. \\
         \hline
     \end{tabular}
 \end{table}
+```
+
 
 A partir de estas bandas, el backend genera controles reportables para la sonificación, como \texttt{alpha\_drive}, \texttt{beta\_gamma\_drive}, \texttt{rms\_beta\_activity}, \texttt{band\_driven\_density}, \texttt{spectral\_register}, \texttt{alpha\_stability}, \texttt{rms\_band\_velocity} y \texttt{band\_note\_probability}. Estos controles combinan bandpowers relativos, RMS, picos espectrales, suavizado temporal y \textit{quality gate}. Su efecto musical se analizará en la siguiente subsección.
 
-En conclusión, la validación espectral confirma que el sistema obtiene PSD y bandpowers coherentes a partir de ventanas reales, que multitaper ofrece una estimación más estable que el periodograma simple y que las bandas EEG pueden utilizarse como moduladores musicales relativos. La interpretación se mantiene limitada al uso experimental del prototipo: las bandas no se emplean como marcadores clínicos aislados, sino como entradas normalizadas, suavizadas y condicionadas por calidad para la sonificación EEG--MIDI.
+En conclusión, la validación espectral confirma que el sistema obtiene PSD y bandpowers coherentes a partir de ventanas reales, que multitaper ofrece una estimación más estable que el periodograma simple y que las bandas EEG pueden utilizarse como moduladores musicales relativos. La interpretación se mantiene limitada al uso experimental del prototipo: las bandas no se emplean como marcadores clínicos aislados, sino como entradas para la sonificación las cuales serán normalizadas, suavizadas y condicionadas por calidad para la sonificación EEG--MIDI.
 
 \subsection{Validación de sonificación EEG--MIDI}
 \label{subsec:validacion_sonificacion_midi}
