@@ -421,17 +421,17 @@ Los benchmarks se realizaron sobre la Arduino UNO Q/Linux usando capturas reales
 Se emplearon dos referencias de tiempo. En el firmware, los datos se publican en bloques de 8 muestras; a \SI{250}{\hertz}, esto equivale a un periodo de bloque de \SI{32}{\milli\second}. En Python, las características espectrales se actualizan cada 64 muestras; por tanto, el presupuesto disponible entre actualizaciones es de \SI{256}{\milli\second}. La Tabla~\ref{tab:validacion_presupuestos_temporales} resume estas referencias.
 
 \begin{table}[htbp]
-    \centering
-    \caption{Presupuestos temporales usados para interpretar los benchmarks.}
-    \label{tab:validacion_presupuestos_temporales}
-    \begin{tabular}{p{0.22\textwidth} p{0.25\textwidth} p{0.20\textwidth} p{0.24\textwidth}}
-        \hline
-        \textbf{Parte} & \textbf{Referencia} & \textbf{Presupuesto} & \textbf{Uso del margen} \\
-        \hline
-        Firmware/MCU & Bloque de 8 muestras a \SI{250}{\hertz} & \SI{32}{\milli\second} & Filtrado, cola TX y publicación por Bridge. \\
-        Python/Linux & Hop de 64 muestras a \SI{250}{\hertz} & \SI{256}{\milli\second} & Cálculo de features, calidad y adaptación de sonificación. \\
-        \hline
-    \end{tabular}
+\centering
+\caption{Presupuestos temporales usados para interpretar los benchmarks.}
+\label{tab:validacion_presupuestos_temporales}
+\begin{tabular}{p{0.22\textwidth} p{0.25\textwidth} p{0.20\textwidth} p{0.24\textwidth}}
+\hline
+\textbf{Parte} & \textbf{Referencia} & \textbf{Presupuesto} & \textbf{Uso del margen} \\
+\hline
+Firmware/MCU & Bloque de 8 muestras a \SI{250}{\hertz} & \SI{32}{\milli\second} & Filtrado, cola TX y publicación por Bridge. \\
+Python/Linux & Hop de 64 muestras a \SI{250}{\hertz} & \SI{256}{\milli\second} & Cálculo de features, calidad y adaptación de sonificación. \\
+\hline
+\end{tabular}
 \end{table}
 
 Las capturas empleadas fueron \texttt{20260528-104617\_bench\_real\_rest\_60s}, como benchmark inicial Python/Linux, y \texttt{20260528-111723\_bench\_real\_rest\_60s\_mcu}, como benchmark completo con métricas de MCU y Python sobre captura real. La segunda ejecución generó 14368 muestras en 1796 bloques y se toma como referencia principal por incluir también los datos parseados del monitor del firmware.
@@ -439,41 +439,41 @@ Las capturas empleadas fueron \texttt{20260528-104617\_bench\_real\_rest\_60s}, 
 En Python/Linux se midieron el parser, la recepción de bloques, la inserción en el buffer, el cálculo de características en vivo, el diagnóstico de calidad, el DSP aislado y un replay completo con salto real de 64 muestras. La función crítica para el funcionamiento en tiempo real es \texttt{EEGSignalProcessor.compute\_live\_features}, ya que actualiza las características espectrales que alimentan el \textit{quality gate} y la sonificación.
 
 \begin{table}[htbp]
-    \centering
-    \caption{Resumen de benchmarks Python/Linux sobre la captura real con métricas MCU.}
-    \label{tab:validacion_bench_python}
-    \begin{tabular}{p{0.35\textwidth} c c c c}
-        \hline
-        \textbf{Benchmark} & \textbf{Mediana} & \textbf{P95} & \textbf{Máx.} & \textbf{Referencia} \\
-        \hline
-        \texttt{compute\_live\_features} & \SI{5.2158}{\milli\second} & \SI{6.4103}{\milli\second} & \SI{6.9831}{\milli\second} & \SI{256}{\milli\second} \\
-        \texttt{compute\_quality\_diagnostics} & \SI{6.0806}{\milli\second} & \SI{8.1642}{\milli\second} & \SI{9.4764}{\milli\second} & \SI{256}{\milli\second} \\
-        \texttt{DSPCore.compute\_features} & \SI{5.1967}{\milli\second} & \SI{6.2634}{\milli\second} & \SI{6.5716}{\milli\second} & \SI{256}{\milli\second} \\
-        Replay con hop real & \SI{12.56}{\milli\second/ciclo} & -- & -- & \SI{256}{\milli\second} \\
-        \hline
-    \end{tabular}
+\centering
+\caption{Resumen de benchmarks Python/Linux sobre la captura real con métricas MCU.}
+\label{tab:validacion_bench_python}
+\begin{tabular}{p{0.35\textwidth} c c c c}
+\hline
+\textbf{Benchmark} & \textbf{Mediana} & \textbf{P95} & \textbf{Máx.} & \textbf{Referencia} \\
+\hline
+\texttt{compute\_live\_features} & \SI{5.2158}{\milli\second} & \SI{6.4103}{\milli\second} & \SI{6.9831}{\milli\second} & \SI{256}{\milli\second} \\
+\texttt{compute\_quality\_diagnostics} & \SI{6.0806}{\milli\second} & \SI{8.1642}{\milli\second} & \SI{9.4764}{\milli\second} & \SI{256}{\milli\second} \\
+\texttt{DSPCore.compute\_features} & \SI{5.1967}{\milli\second} & \SI{6.2634}{\milli\second} & \SI{6.5716}{\milli\second} & \SI{256}{\milli\second} \\
+Replay con hop real & \SI{12.56}{\milli\second/ciclo} & -- & -- & \SI{256}{\milli\second} \\
+\hline
+\end{tabular}
 \end{table}
 
-Los resultados de la Tabla~\ref{tab:validacion_bench_python} muestran que el cálculo principal de features consume como máximo \SI{6.9831}{\milli\second}, aproximadamente un 2.7\% del presupuesto de \SI{256}{\milli\second}. Incluso el replay completo con hop real, que incluye entrada de bloques, cálculo de features, diagnóstico de calidad y adaptación de sonificación, requiere alrededor de \SI{12.56}{\milli\second} por ciclo, aproximadamente un 4.9\% del margen disponible. Por tanto, el bloque Python/Linux no constituye un cuello de botella temporal en la configuración evaluada.
+Los resultados de la Tabla~\ref{tab:validacion_bench_python} muestran que el cálculo principal de features consume como máximo \SI{6.9831}{\milli\second}, aproximadamente un 2.7% del presupuesto de \SI{256}{\milli\second}. Incluso el replay completo con hop real, que incluye entrada de bloques, cálculo de features, diagnóstico de calidad y adaptación de sonificación, requiere alrededor de \SI{12.56}{\milli\second} por ciclo, aproximadamente un 4.9% del margen disponible. Por tanto, el bloque Python/Linux no constituye un cuello de botella temporal en la configuración evaluada.
 
-En el firmware se conservaron las métricas impresas por el Monitor/App Lab mediante bloques \texttt{[BENCH] EEG\_MIDI}. Para no alterar el transporte real, no se añadió ningún evento \texttt{Bridge.notify} adicional; el log del monitor se copió y se parseó después con una herramienta específica. Las métricas del MCU se agrupan en tres aspectos: el coste de filtrado por muestra, el coste de publicación de cada bloque por Bridge y el estado de la cola de transmisión. Los sufijos \texttt{avg}, \texttt{max}, \texttt{win} y \texttt{global} indican respectivamente valores medios, máximos, por ventana de monitor o acumulados de toda la prueba.
+En el firmware se conservaron las métricas impresas por el Monitor/App Lab mediante bloques \texttt{[BENCH] EEG\_MIDI}. Las métricas del MCU se agrupan en tres aspectos: el coste de filtrado por muestra, el coste de publicación de cada bloque por Bridge y el estado de la cola de transmisión. Los sufijos \texttt{avg}, \texttt{max}, \texttt{win} y \texttt{global} indican respectivamente valores medios, máximos, por ventana de monitor o acumulados de toda la prueba.
 
 \begin{table}[htbp]
-    \centering
-    \caption{Resumen de benchmarks del firmware/MCU.}
-    \label{tab:validacion_bench_mcu}
-    \begin{tabular}{p{0.25\textwidth} p{0.34\textwidth} c p{0.24\textwidth}}
-        \hline
-        \textbf{Métrica MCU} & \textbf{Qué mide} & \textbf{Resultado} & \textbf{Lectura} \\
-        \hline
-        \texttt{filt\_avg\_us} mediano & Tiempo medio de filtrado y operaciones de muestra en el MCU. & \SI{5.050}{\micro\second} & Coste muy bajo frente a \SI{4}{\milli\second}/muestra. \\
-        \texttt{notify\_avg\_us} mediano & Tiempo medio para publicar un bloque \texttt{eeg\_block\_uV} mediante Bridge. & \SI{3367.250}{\micro\second} & Publicación asumible frente a \SI{32}{\milli\second}/bloque. \\
-        \texttt{notify\_max\_us\_win} máximo & Mayor tiempo de publicación observado dentro de una ventana del monitor. & \SI{11528}{\micro\second} & Pico inferior al periodo de bloque. \\
-        \texttt{loop\_max\_us\_win} máximo & Mayor duración del bucle principal del firmware en las ventanas analizadas. & \SI{12886}{\micro\second} & Bucle con margen frente a \SI{32}{\milli\second}. \\
-        \texttt{qmax\_global} & Máximo número de bloques pendientes en la cola TX durante la prueba. & 1 & Sin acumulación significativa. \\
-        \texttt{drops\_total} & Número total de bloques descartados por saturación o falta de salida. & 0 & Sin pérdidas por cola TX. \\
-        \hline
-    \end{tabular}
+\centering
+\caption{Resumen de benchmarks del firmware/MCU.}
+\label{tab:validacion_bench_mcu}
+\begin{tabular}{p{0.25\textwidth} p{0.34\textwidth} c p{0.24\textwidth}}
+\hline
+\textbf{Métrica MCU} & \textbf{Qué mide} & \textbf{Resultado} & \textbf{Lectura} \\
+\hline
+\texttt{filt\_avg\_us} mediano & Tiempo medio de filtrado y operaciones de muestra en el MCU. & \SI{5.050}{\micro\second} & Coste muy bajo frente a \SI{4}{\milli\second}/muestra. \\
+\texttt{notify\_avg\_us} mediano & Tiempo medio para publicar un bloque \texttt{eeg\_block\_uV} mediante Bridge. & \SI{3367.250}{\micro\second} & Publicación asumible frente a \SI{32}{\milli\second}/bloque. \\
+\texttt{notify\_max\_us\_win} máximo & Mayor tiempo de publicación observado dentro de una ventana del monitor. & \SI{11528}{\micro\second} & Pico inferior al periodo de bloque. \\
+\texttt{loop\_max\_us\_win} máximo & Mayor duración del bucle principal del firmware en las ventanas analizadas. & \SI{12886}{\micro\second} & Bucle con margen frente a \SI{32}{\milli\second}. \\
+\texttt{qmax\_global} & Máximo número de bloques pendientes en la cola TX durante la prueba. & 1 & Sin acumulación significativa. \\
+\texttt{drops\_total} & Número total de bloques descartados por saturación o falta de salida. & 0 & Sin pérdidas por cola TX. \\
+\hline
+\end{tabular}
 \end{table}
 
 La lectura conjunta de estas métricas es que el filtrado apenas consume tiempo de CPU; el elemento más costoso es la llamada de publicación por Bridge, y aun así sus máximos permanecen por debajo del periodo de bloque. Las métricas de cola son especialmente importantes porque indican si el firmware se atrasa respecto al flujo de adquisición: \texttt{qmax\_global = 1} muestra que no se acumuló backlog relevante y \texttt{drops\_total = 0} confirma que no se descartaron bloques durante la prueba.
@@ -481,6 +481,7 @@ La lectura conjunta de estas métricas es que el filtrado apenas consume tiempo 
 Como limitación, estos benchmarks no miden la latencia física completa EEG--MIDI OUT ni el coste del navegador WebUI. Tampoco sustituyen a la validación experimental de la señal ni a las capturas finales de laboratorio. Su función dentro de la memoria es demostrar que, con la configuración evaluada, los procesos ya validados disponen de margen temporal suficiente para ejecutarse en tiempo real.
 
 En conjunto, los resultados muestran que el cuello de botella principal del prototipo no se encuentra en el cálculo DSP/sonificación de Python ni en el filtrado del MCU. Los aspectos más críticos para interpretar los resultados finales son la calidad de señal, la presencia de artefactos, la estabilidad del montaje bioeléctrico y la ausencia de una medida física completa de latencia extremo a extremo. Esta validación temporal permite introducir la siguiente fase: la sesión final de laboratorio, donde se analiza la sonificación producida a partir de capturas reales.
+
 
 \subsection{Sonificación y resultados}
 \label{subsec:validacion_sonificacion_resultados}
