@@ -456,27 +456,27 @@ En Python/Linux se midieron el parser, la recepción de bloques, la inserción e
 
 Los resultados de la Tabla~\ref{tab:validacion_bench_python} muestran que el cálculo principal de features consume como máximo \SI{6.9831}{\milli\second}, aproximadamente un 2.7\% del presupuesto de \SI{256}{\milli\second}. Incluso el replay completo con hop real, que incluye entrada de bloques, cálculo de features, diagnóstico de calidad y adaptación de sonificación, requiere alrededor de \SI{12.56}{\milli\second} por ciclo, aproximadamente un 4.9\% del margen disponible. Por tanto, el bloque Python/Linux no constituye un cuello de botella temporal en la configuración evaluada.
 
-En el firmware se conservaron las métricas impresas por el Monitor/App Lab mediante bloques \texttt{[BENCH] EEG\_MIDI}. Para no alterar el transporte real, no se añadió ningún evento \texttt{Bridge.notify} adicional; el log del monitor se copió y se parseó después con una herramienta específica. Las métricas principales se resumen en la Tabla~\ref{tab:validacion_bench_mcu}.
+En el firmware se conservaron las métricas impresas por el Monitor/App Lab mediante bloques \texttt{[BENCH] EEG\_MIDI}. Para no alterar el transporte real, no se añadió ningún evento \texttt{Bridge.notify} adicional; el log del monitor se copió y se parseó después con una herramienta específica. Las métricas del MCU se agrupan en tres aspectos: el coste de filtrado por muestra, el coste de publicación de cada bloque por Bridge y el estado de la cola de transmisión. Los sufijos \texttt{avg}, \texttt{max}, \texttt{win} y \texttt{global} indican respectivamente valores medios, máximos, por ventana de monitor o acumulados de toda la prueba.
 
 \begin{table}[htbp]
     \centering
     \caption{Resumen de benchmarks del firmware/MCU.}
     \label{tab:validacion_bench_mcu}
-    \begin{tabular}{p{0.32\textwidth} c c p{0.29\textwidth}}
+    \begin{tabular}{p{0.25\textwidth} p{0.34\textwidth} c p{0.24\textwidth}}
         \hline
-        \textbf{Métrica MCU} & \textbf{Valor} & \textbf{Referencia} & \textbf{Lectura} \\
+        \textbf{Métrica MCU} & \textbf{Qué mide} & \textbf{Resultado} & \textbf{Lectura} \\
         \hline
-        \texttt{filt\_avg\_us} mediano & \SI{5.050}{\micro\second} & \SI{4}{\milli\second}/muestra & Filtrado despreciable frente al periodo de muestreo. \\
-        \texttt{notify\_avg\_us} mediano & \SI{3367.250}{\micro\second} & \SI{32}{\milli\second}/bloque & Publicación Bridge asumible. \\
-        \texttt{notify\_max\_us\_win} máximo & \SI{11528}{\micro\second} & \SI{32}{\milli\second}/bloque & Pico inferior al periodo de bloque. \\
-        \texttt{loop\_max\_us\_win} máximo & \SI{12886}{\micro\second} & \SI{32}{\milli\second}/bloque & Bucle con margen en las ventanas analizadas. \\
-        \texttt{qmax\_global} & 1 & Cola estable & Sin acumulación significativa de bloques. \\
-        \texttt{drops\_total} & 0 & 0 esperado & Sin pérdidas por cola TX. \\
+        \texttt{filt\_avg\_us} mediano & Tiempo medio de filtrado y operaciones de muestra en el MCU. & \SI{5.050}{\micro\second} & Coste muy bajo frente a \SI{4}{\milli\second}/muestra. \\
+        \texttt{notify\_avg\_us} mediano & Tiempo medio para publicar un bloque \texttt{eeg\_block\_uV} mediante Bridge. & \SI{3367.250}{\micro\second} & Publicación asumible frente a \SI{32}{\milli\second}/bloque. \\
+        \texttt{notify\_max\_us\_win} máximo & Mayor tiempo de publicación observado dentro de una ventana del monitor. & \SI{11528}{\micro\second} & Pico inferior al periodo de bloque. \\
+        \texttt{loop\_max\_us\_win} máximo & Mayor duración del bucle principal del firmware en las ventanas analizadas. & \SI{12886}{\micro\second} & Bucle con margen frente a \SI{32}{\milli\second}. \\
+        \texttt{qmax\_global} & Máximo número de bloques pendientes en la cola TX durante la prueba. & 1 & Sin acumulación significativa. \\
+        \texttt{drops\_total} & Número total de bloques descartados por saturación o falta de salida. & 0 & Sin pérdidas por cola TX. \\
         \hline
     \end{tabular}
 \end{table}
 
-En el MCU, el coste dominante no fue el filtrado, sino la publicación de bloques por Bridge. Aun así, el máximo de \texttt{notify} por ventana fue de \SI{11.528}{\milli\second} y el máximo de \texttt{loop} por ventana fue de \SI{12.886}{\milli\second}, ambos por debajo del periodo de bloque de \SI{32}{\milli\second}. Además, la cola TX permaneció controlada, con \texttt{qmax\_global = 1} y \texttt{drops\_total = 0}.
+La lectura conjunta de estas métricas es que el filtrado apenas consume tiempo de CPU; el elemento más costoso es la llamada de publicación por Bridge, y aun así sus máximos permanecen por debajo del periodo de bloque. Las métricas de cola son especialmente importantes porque indican si el firmware se atrasa respecto al flujo de adquisición: \texttt{qmax\_global = 1} muestra que no se acumuló backlog relevante y \texttt{drops\_total = 0} confirma que no se descartaron bloques durante la prueba.
 
 Como limitación, estos benchmarks no miden la latencia física completa EEG--MIDI OUT ni el coste del navegador WebUI. Tampoco sustituyen a la validación experimental de la señal ni a las capturas finales de laboratorio. Su función dentro de la memoria es demostrar que, con la configuración evaluada, los procesos ya validados disponen de margen temporal suficiente para ejecutarse en tiempo real.
 
