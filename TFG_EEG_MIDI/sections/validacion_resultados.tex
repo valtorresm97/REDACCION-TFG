@@ -53,8 +53,7 @@ Como prueba diagnóstica de la ruta ADC y del transporte digital se utilizó una
         Discontinuidades temporales & 0 \\
         Estados ADS inválidos & 0 \\
         RMS & \SI{0.115}{\micro\volt} \\
-        Pico a pico & \SI{4.000}{\micro\volt} \\
-        Diagnóstico & Válida como prueba diagnóstica \\
+        Diagnóstico & Prueba válida  \\
         \hline
     \end{tabular}
 \end{table}
@@ -72,15 +71,15 @@ La configuración final quedó fijada como \texttt{ADS\_DIAGNOSTIC\_MODE=5}, mod
 
 Para justificar esta elección no se utilizó una única métrica, sino un conjunto de indicadores complementarios. El RMS permite comparar la amplitud típica de la señal; el pico a pico permite detectar transitorios grandes; la componente relativa de 50 Hz indica sensibilidad al ruido de red; la fracción de artefactos resume la proporción de ventanas contaminadas; y el \textit{quality score} integra varios de estos criterios en una puntuación de calidad útil para decidir si una ventana puede alimentar la sonificación.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
-    \begin{minipage}{0.49\textwidth}
+    \begin{minipage}{0.90\textwidth}
         \centering
         \validacioninclude{width=\textwidth}{images/validacion/fig_02_mounting_rms_comparison.png}
         \small (a) RMS mediano
     \end{minipage}
     \hfill
-    \begin{minipage}{0.49\textwidth}
+    \begin{minipage}{0.90\textwidth}
         \centering
         \validacioninclude{width=\textwidth}{images/validacion/fig_02_mounting_ptp_comparison.png}
         \small (b) Amplitud pico a pico
@@ -141,12 +140,12 @@ Para validar esta lógica se utilizó la captura \texttt{20260524-122200\_final\
         \hline
         \textbf{Estado} & \textbf{RMS med.} & \textbf{PTP med.} & \textbf{50 Hz} & \textbf{Calidad} & \textbf{Diagnóstico} \\
         \hline
-        Ojos abiertos & 76,76 & 1272 & 0,259 & 0,987 & Usable con artefactos leves \\
+        Ojos abiertos & 76,76 & 1272 & 0,259 & 0,987 & Usable con artefactos  \\
         Ojos cerrados 1 & 80,01 & 1226 & 0,268 & 0,922 & Artefactos moderados \\
-        Mandíbula & 69,72 & 1217 & 0,322 & 0,893 & Usable con artefactos leves \\
+        Mandíbula & 69,72 & 1217 & 0,322 & 0,893 & Usable con artefactos  \\
         Recuperación 1 & 80,44 & 1275 & 0,226 & 1,000 & Estable \\
-        Parpadeo/frente & 94,22 & 1558 & 0,364 & 0,823 & Usable con artefactos leves \\
-        Recuperación 2 & 109,8 & 1701 & 0,346 & 0,856 & Usable con artefactos leves \\
+        Parpadeo/frente & 94,22 & 1558 & 0,364 & 0,823 & Usable con artefactos  \\
+        Recuperación 2 & 109,8 & 1701 & 0,346 & 0,856 & Usable con artefactos  \\
         Ojos cerrados 2 & 175,4 & 1725 & 0,188 & 0,621 & Artefacto dominante \\
         \hline
     \end{tabular}
@@ -156,16 +155,18 @@ La Tabla~\ref{tab:validacion_calidad_estados} muestra que la calidad no puede de
 
 \begin{figure}[htbp]
     \centering
-    \begin{minipage}{0.49\textwidth}
+    \begin{minipage}{0.80\textwidth}
         \centering
-        \validacioninclude{width=\textwidth}{images/validacion/fig_00_final_capture_rms_timeline.png}
         \small (a) RMS por ventanas
+        \validacioninclude{width=\textwidth}{images/validacion/fig_00_final_capture_rms_timeline.png}
+
     \end{minipage}
     \hfill
-    \begin{minipage}{0.49\textwidth}
+    \begin{minipage}{0.80\textwidth}
         \centering
-        \validacioninclude{width=\textwidth}{images/validacion/fig_00_final_capture_quality_timeline.png}
         \small (b) Índice de calidad por ventanas
+        \validacioninclude{width=\textwidth}{images/validacion/fig_00_final_capture_quality_timeline.png}
+
     \end{minipage}
     \caption{Evolución temporal de la amplitud RMS y del índice de calidad en la captura de estados mixtos. La comparación muestra que la calidad de la señal varía a lo largo de la adquisición y que no todas las ventanas deben tratarse de la misma forma.}
     \label{fig:validacion_calidad_timeline}
@@ -180,7 +181,7 @@ La Figura~\ref{fig:validacion_calidad_timeline} resume el comportamiento global 
     \label{fig:validacion_quality_states}
 \end{figure}
 
-Para comprobar visualmente el comportamiento de las métricas, se generaron además figuras homogéneas por estado. Todas las señales temporales se representaron con la misma escala vertical, de \(-750\) a \(+750~\si{\micro\volt}\), lo que permite comparar la amplitud relativa y la presencia de transitorios entre estados sin que el autoescalado oculte las diferencias.
+Para comprobar visualmente el comportamiento de las métricas, se generaron además figuras homogéneas por estado. Todas las señales temporales se representaron con la misma escala vertical, de \(-750\) a \(+750~\si{\micro\volt}\).
 
 \begin{figure}[htbp]
     \centering
@@ -203,7 +204,7 @@ Para comprobar visualmente el comportamiento de las métricas, se generaron adem
     \centering
     \begin{minipage}{0.49\textwidth}
         \centering
-        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_mandibula_timeseries.png}
+        \validacioninclude{width=\textwidth}{images/validacion/fig_09_jaw_movement_timeseries.png}
         \small (a) Mandíbula
     \end{minipage}
     \hfill
