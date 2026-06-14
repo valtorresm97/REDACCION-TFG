@@ -1,0 +1,53 @@
+\subsection{Sonificación y resultados}
+\label{subsec:validacion_sonificacion_resultados}
+
+Una vez comprobado que la adquisición, el procesado espectral y los benchmarks temporales cumplían los requisitos del sistema, se realizó una sesión final de laboratorio para validar la integración completa EEG--MIDI con señal real. Esta sesión se identificó como \texttt{s01\_20260528} y se llevó a cabo con el montaje final \texttt{ear\_eeg\_ch1\_only}, el modo ADS \texttt{bias\_ch1\_only\_loff\_off}, \texttt{ADS\_DIAGNOSTIC\_MODE=5} y el modelo musical \texttt{modelo\_captura\_final}. El objetivo no fue obtener un registro EEG clínicamente limpio, sino comprobar que el sistema era capaz de adquirir señal real, calcular características, aplicar el \textit{quality gate}, generar controles de sonificación y registrar notas musicales durante la adquisición.
+
+La sesión estuvo formada por capturas de precomprobación, ojos abiertos, ojos cerrados, reposo quieto, parpadeo y repetición de ojos abiertos. Todas las capturas revisadas mantuvieron una frecuencia efectiva de \SI{250}{\hertz}, sin \textit{sample gaps} y sin estados ADS1299 inválidos. Por tanto, la sesión valida la continuidad técnica de la ruta:
+
+\begin{center}
+\texttt{ADS1299 $\rightarrow$ firmware $\rightarrow$ Bridge $\rightarrow$ Python $\rightarrow$ DSP $\rightarrow$ quality gate $\rightarrow$ sonificación $\rightarrow$ notas}
+\end{center}
+
+La Tabla~\ref{tab:validacion_sesion_final_musica} resume las condiciones principales y la evidencia musical registrada. Todas las capturas conservaron ficheros de sonificación, incluyendo \texttt{music\_snapshots.jsonl}, \texttt{music\_notes.csv} y \texttt{music\_capture\_summary.json}. Esto permite analizar a posteriori la relación entre señal EEG, características espectrales, controles musicales y notas generadas.
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \caption{Resumen de la sesión final de laboratorio y notas musicales registradas.}
+    \label{tab:validacion_sesion_final_musica}
+    \begin{tabular}{p{0.34\textwidth} c c p{0.32\textwidth}}
+        \hline
+        \textbf{Condición} & \textbf{Duración} & \textbf{Notas} & \textbf{Lectura para validación} \\
+        \hline
+        \texttt{precheck\_10s} & \SI{10}{\second} & 12 / 22 & Comprobación técnica previa; no se interpreta como estado fisiológico. \\
+        \texttt{eyes\_open\_rest\_60s} & \SI{60}{\second} & 45 & Sonificación registrada, aunque con artefacto transitorio de gran amplitud. \\
+        \texttt{eyes\_closed\_rest\_60s} & \SI{60}{\second} & 80 & Captura de reposo con contaminación de 50 Hz; útil con cautela. \\
+        \texttt{quiet\_rest\_60s} & \SI{60}{\second} & 72 & Evidencia de sonificación sostenida durante reposo. \\
+        \texttt{blink\_artifact\_30s} & \SI{30}{\second} & 34 & Control de artefacto fisiológico por parpadeo. \\
+        \texttt{eyes\_open\_repeat\_30s} & \SI{30}{\second} & 65 & Mejor candidata para la figura principal de resultados. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+La captura seleccionada como evidencia principal fue \texttt{06\_eyes\_open\_repeat\_30s}. Esta captura presenta el diagnóstico automático más favorable de la sesión y, además, dispone de una figura combinada reajustada que permite visualizar de forma conjunta la señal temporal, las características espectrales, los controles de sonificación y las notas generadas. La figura no se utiliza para afirmar que toda la señal sea EEG limpia, sino para demostrar la trazabilidad completa del sistema: a partir de una señal real se obtienen variables de control y una salida musical registrada.
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.96\textwidth}{images/validacion/06_figura_combinada_reajustada_300uv.png}
+    \caption{Figura combinada de la captura \texttt{06\_eyes\_open\_repeat\_30s}. La representación agrupa señal EEG, características derivadas, controles de sonificación y notas musicales registradas, mostrando la trazabilidad de la cadena EEG--MIDI durante una captura real de laboratorio.}
+    \label{fig:validacion_sonificacion_combinada_06}
+\end{figure}
+
+El comportamiento de la sonificación se basa en controles reportables derivados de las características validadas en la Subsección~\ref{subsec:validacion_espectral}: \texttt{alpha\_drive}, \texttt{beta\_gamma\_drive}, \texttt{rms\_beta\_activity}, \texttt{band\_driven\_density}, \texttt{spectral\_register}, \texttt{alpha\_stability}, \texttt{rms\_band\_velocity} y \texttt{band\_note\_probability}. Estos controles no traducen directamente una banda EEG en una nota musical, sino que combinan potencias relativas, amplitud, relaciones espectrales, suavizado temporal y calidad de ventana. De esta forma, la música generada queda vinculada a la dinámica de la señal, pero condicionada por el \textit{quality gate} para evitar que artefactos puntuales dominen la salida.
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.82\textwidth}{images/validacion/06_quality_score_gate.png}
+    \caption{Evolución del índice de calidad y aplicación del \textit{quality gate} en la captura \texttt{06\_eyes\_open\_repeat\_30s}. Esta lógica permite atenuar o limitar la respuesta musical cuando las ventanas presentan baja fiabilidad.}
+    \label{fig:validacion_sonificacion_quality_gate_06}
+\end{figure}
+
+La interpretación de los resultados debe mantenerse prudente. La diferencia en el número de notas entre condiciones no demuestra por sí sola un cambio neurofisiológico, ya que la señal real estuvo condicionada por ruido de red, contacto de electrodos y artefactos fisiológicos. Sin embargo, sí constituye una evidencia técnica relevante: durante la sesión final, el sistema mantuvo la adquisición a \SI{250}{\hertz}, calculó características espectrales, aplicó criterios de calidad, generó controles musicales y guardó notas durante capturas reales.
+
+En conclusión, la validación de sonificación confirma que el prototipo no se limita a adquirir y analizar señal EEG de forma aislada, sino que completa la cadena funcional hasta una salida musical persistida. La sesión \texttt{s01\_20260528} demuestra integración real del sistema EEG--MIDI con trazabilidad desde CSV EEG hasta controles de sonificación y notas registradas. Su valor principal no es validar una interpretación clínica de las bandas EEG, sino demostrar que el pipeline completo funciona en condiciones reales y que sus salidas musicales pueden analizarse posteriormente junto con las métricas de calidad y las características espectrales.
