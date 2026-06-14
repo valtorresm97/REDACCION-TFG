@@ -61,7 +61,7 @@ Como prueba diagnóstica de la ruta ADC y del transporte digital se utilizó una
 
 \begin{figure}[htbp]
     \centering
-    \validacioninclude{width=0.88\textwidth}{images/validacion/val_shorted_inputs_timeseries.jpg}
+    \validacioninclude{width=0.88\textwidth}{images/validacion/fig_01_shorted_inputs_timeseries.png}
     \caption{Señal temporal registrada en la prueba diagnóstica con entradas cortocircuitadas. La amplitud reducida y la ausencia de discontinuidades permiten verificar que la ruta ADS1299--firmware--Python funciona correctamente antes de conectar el montaje experimental.}
     \label{fig:validacion_shorted_inputs}
 \end{figure}
@@ -74,14 +74,41 @@ Para justificar esta elección no se utilizó una única métrica, sino un conju
 
 \begin{figure}[htbp]
     \centering
-    \validacioninclude{width=0.96\textwidth}{images/validacion/val_mounting_metrics_grid.jpg}
-    \caption{Comparación de montajes mediante métricas de amplitud, transitorios, ruido de red y artefactos: (a) RMS mediano, (b) amplitud pico a pico, (c) componente de 50 Hz y (d) fracción de ventanas artefactadas. Estas métricas permiten valorar la estabilidad del montaje y su sensibilidad a ventanas contaminadas.}
-    \label{fig:validacion_montaje_metricas}
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_02_mounting_rms_comparison.png}
+        \small (a) RMS mediano
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_02_mounting_ptp_comparison.png}
+        \small (b) Amplitud pico a pico
+    \end{minipage}
+    \caption{Comparación de montajes mediante métricas de amplitud. El RMS resume la amplitud típica de cada condición, mientras que el pico a pico permite identificar configuraciones con transitorios elevados.}
+    \label{fig:validacion_montaje_amplitud}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
-    \validacioninclude{width=0.82\textwidth}{images/validacion/val_mounting_quality_score.jpg}
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_02_mounting_50hz_comparison.png}
+        \small (a) Componente de 50 Hz
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_02_mounting_artifact_fraction.png}
+        \small (b) Fracción de artefactos
+    \end{minipage}
+    \caption{Comparación de montajes mediante ruido de red y fracción de ventanas artefactadas. Estas métricas permiten valorar la sensibilidad de cada configuración a ruido común y ventanas contaminadas.}
+    \label{fig:validacion_montaje_ruido_artefactos}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.90\textwidth}{images/validacion/fig_02_mounting_quality_score.png}
     \caption{Comparación del \textit{quality score} entre montajes y condiciones. La configuración \texttt{ear\_eeg\_ch1\_only} con \texttt{bias\_ch1\_only\_loff\_off} se seleccionó como montaje final porque ofreció una base más estable para obtener ventanas útiles y aplicar posteriormente el \textit{quality gate}.}
     \label{fig:validacion_montaje_quality_score}
 \end{figure}
@@ -129,7 +156,17 @@ La Tabla~\ref{tab:validacion_calidad_estados} muestra que la calidad no puede de
 
 \begin{figure}[htbp]
     \centering
-    \validacioninclude{width=0.96\textwidth}{images/validacion/val_quality_timeline_grid.jpg}
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_00_final_capture_rms_timeline.png}
+        \small (a) RMS por ventanas
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_00_final_capture_quality_timeline.png}
+        \small (b) Índice de calidad por ventanas
+    \end{minipage}
     \caption{Evolución temporal de la amplitud RMS y del índice de calidad en la captura de estados mixtos. La comparación muestra que la calidad de la señal varía a lo largo de la adquisición y que no todas las ventanas deben tratarse de la misma forma.}
     \label{fig:validacion_calidad_timeline}
 \end{figure}
@@ -138,7 +175,7 @@ La Figura~\ref{fig:validacion_calidad_timeline} resume el comportamiento global 
 
 \begin{figure}[htbp]
     \centering
-    \validacioninclude{width=0.76\textwidth}{images/validacion/val_quality_state_distribution.jpg}
+    \validacioninclude{width=0.82\textwidth}{images/validacion/fig_11_quality_state_distribution.png}
     \caption{Distribución de estados de calidad en la captura de validación. La presencia de varios estados confirma que el sistema puede separar ventanas utilizables, ventanas dudosas y ventanas afectadas por artefactos.}
     \label{fig:validacion_quality_states}
 \end{figure}
@@ -147,16 +184,53 @@ Para comprobar visualmente el comportamiento de las métricas, se generaron adem
 
 \begin{figure}[htbp]
     \centering
-    \validacioninclude{width=0.96\textwidth}{images/validacion/val_state_timeseries_grid.jpg}
-    \caption{Comparación temporal de estados representativos de la captura \texttt{mixed\_states}: (a) ojos abiertos/reposo, (b) recuperación, (c) mandíbula y (d) parpadeo/frente. La escala común permite observar diferencias de amplitud y transitorios entre reposo, recuperación y estados con mayor presencia de artefactos.}
-    \label{fig:validacion_estados_temporales_1}
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_ojos_abiertos_reposo_timeseries.png}
+        \small (a) Ojos abiertos / reposo
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_recuperacion_1_timeseries.png}
+        \small (b) Recuperación 1
+    \end{minipage}
+    \caption{Comparación temporal de estados de reposo y recuperación en la captura \texttt{mixed\_states}. La escala común permite observar tramos con dinámica más contenida y sin transitorios dominantes.}
+    \label{fig:validacion_estados_temporales_reposo}
 \end{figure}
-
-La Figura~\ref{fig:validacion_estados_temporales_1} muestra que los estados de reposo y recuperación presentan una dinámica más contenida, mientras que los estados asociados a mandíbula o parpadeo/frente introducen cambios de mayor amplitud y morfología distinta. Estos tramos son útiles para validar que el sistema no debe interpretar todos los cambios de la señal como variaciones EEG útiles para la sonificación.
 
 \begin{figure}[htbp]
     \centering
-    \validacioninclude{width=0.96\textwidth}{images/validacion/val_eyes_closed_timeseries_grid.jpg}
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_mandibula_timeseries.png}
+        \small (a) Mandíbula
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_parpadeo_frente_timeseries.png}
+        \small (b) Parpadeo / frente
+    \end{minipage}
+    \caption{Comparación temporal de estados con mayor presencia de artefactos. Los tramos de mandíbula y parpadeo/frente introducen cambios de amplitud y morfología que justifican no tratar todas las ventanas como señal EEG útil.}
+    \label{fig:validacion_estados_temporales_artefactos}
+\end{figure}
+
+Las Figuras~\ref{fig:validacion_estados_temporales_reposo} y~\ref{fig:validacion_estados_temporales_artefactos} muestran que los estados de reposo y recuperación presentan una dinámica más contenida, mientras que los estados asociados a mandíbula o parpadeo/frente introducen cambios de mayor amplitud y morfología distinta. Estos tramos son útiles para validar que el sistema no debe interpretar todos los cambios de la señal como variaciones EEG útiles para la sonificación.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_ojos_cerrados_reposo_1_timeseries.png}
+        \small (a) Ojos cerrados / reposo 1
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_ojos_cerrados_reposo_2_timeseries.png}
+        \small (b) Ojos cerrados / reposo 2
+    \end{minipage}
     \caption{Comparación temporal entre dos tramos etiquetados como ojos cerrados. Aunque ambos pertenecen al mismo tipo de condición experimental, el segundo presenta mayor amplitud y peor puntuación de calidad, lo que evidencia la necesidad de evaluar la señal por ventanas y no solo por condición.}
     \label{fig:validacion_ojos_cerrados_comparacion}
 \end{figure}
@@ -165,16 +239,53 @@ Además del comportamiento temporal, la validación de calidad se apoyó en una 
 
 \begin{figure}[htbp]
     \centering
-    \validacioninclude{width=0.96\textwidth}{images/validacion/val_state_psd_grid.jpg}
-    \caption{Densidad espectral de potencia estimada para varios estados representativos de la captura \texttt{mixed\_states}. Los estados de reposo y recuperación presentan un contenido más compatible con una ventana útil, mientras que los estados asociados a mandíbula o parpadeo/frente muestran una modificación del espectro coherente con la presencia de artefactos.}
-    \label{fig:validacion_estados_psd_1}
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_ojos_abiertos_reposo_psd.png}
+        \small (a) Ojos abiertos / reposo
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_recuperacion_1_psd.png}
+        \small (b) Recuperación 1
+    \end{minipage}
+    \caption{Densidad espectral de potencia en estados de reposo y recuperación. Estos tramos presentan un contenido más compatible con ventanas útiles para el análisis espectral del sistema.}
+    \label{fig:validacion_estados_psd_reposo}
 \end{figure}
-
-La Figura~\ref{fig:validacion_estados_psd_1} muestra que la evaluación de calidad no depende únicamente de la amplitud temporal, sino también del comportamiento espectral. En los tramos más estables, el espectro mantiene una forma más consistente con una señal útil para análisis; en cambio, en mandíbula o parpadeo/frente aparecen cambios compatibles con contaminación por movimiento o actividad muscular.
 
 \begin{figure}[htbp]
     \centering
-    \validacioninclude{width=0.96\textwidth}{images/validacion/val_eyes_closed_psd_grid.jpg}
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_mandibula_psd.png}
+        \small (a) Mandíbula
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_parpadeo_frente_psd.png}
+        \small (b) Parpadeo / frente
+    \end{minipage}
+    \caption{Densidad espectral de potencia en estados asociados a artefactos. La modificación del contenido espectral es coherente con contaminación por movimiento, actividad muscular o artefactos frontales.}
+    \label{fig:validacion_estados_psd_artefactos}
+\end{figure}
+
+Las Figuras~\ref{fig:validacion_estados_psd_reposo} y~\ref{fig:validacion_estados_psd_artefactos} muestran que la evaluación de calidad no depende únicamente de la amplitud temporal, sino también del comportamiento espectral. En los tramos más estables, el espectro mantiene una forma más consistente con una señal útil para análisis; en cambio, en mandíbula o parpadeo/frente aparecen cambios compatibles con contaminación por movimiento o actividad muscular.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_ojos_cerrados_reposo_1_psd.png}
+        \small (a) Ojos cerrados / reposo 1
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_ojos_cerrados_reposo_2_psd.png}
+        \small (b) Ojos cerrados / reposo 2
+    \end{minipage}
     \caption{Comparación espectral entre dos tramos etiquetados como ojos cerrados. Aunque pertenecen a la misma condición experimental, el segundo presenta un espectro menos compatible con una ventana limpia, en concordancia con su peor diagnóstico de calidad.}
     \label{fig:validacion_ojos_cerrados_psd}
 \end{figure}
@@ -200,18 +311,25 @@ La configuración final emplea CH1 como canal principal, una frecuencia de muest
 
 \begin{figure}[htbp]
     \centering
-    \validacioninclude{width=0.96\textwidth}{images/validacion/val_periodogram_multitaper_global_grid.jpg}
-    \caption{Comparación global entre periodograma y PSD multitaper en la captura de estados mixtos. El periodograma conserva mayor variabilidad entre segmentos, mientras que la estimación multitaper proporciona curvas más estables para calcular potencia por bandas.}
-    \label{fig:validacion_periodograma_multitaper_global}
+    \validacioninclude{width=0.88\textwidth}{images/validacion/fig_04_periodogram_by_state.png}
+    \caption{Periodograma superpuesto por estados en la captura de estados mixtos. El periodograma se conserva como referencia directa, aunque presenta mayor variabilidad entre segmentos.}
+    \label{fig:validacion_periodograma_por_estado}
 \end{figure}
 
-La Figura~\ref{fig:validacion_periodograma_multitaper_global} resume la razón principal para emplear multitaper en el pipeline final. El periodograma resulta útil como referencia directa, pero presenta mayor variabilidad. La estimación multitaper suaviza la estimación espectral y permite obtener bandpowers más robustos para la generación musical. Las comparaciones individuales por estado se conservan como material auxiliar, pero no se incluyen en el cuerpo principal para evitar una sección excesivamente repetitiva.
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.88\textwidth}{images/validacion/fig_04_multitaper_psd_by_state.png}
+    \caption{PSD multitaper superpuesta por estados en la captura de estados mixtos. La estimación multitaper proporciona curvas más estables para calcular potencia por bandas y alimentar la sonificación.}
+    \label{fig:validacion_multitaper_por_estado}
+\end{figure}
+
+Las Figuras~\ref{fig:validacion_periodograma_por_estado} y~\ref{fig:validacion_multitaper_por_estado} resumen la razón principal para emplear multitaper en el pipeline final. El periodograma resulta útil como referencia directa, pero presenta mayor variabilidad. La estimación multitaper suaviza la estimación espectral y permite obtener bandpowers más robustos para la generación musical. Las comparaciones individuales por estado se conservan como material auxiliar, pero no se incluyen en el cuerpo principal para evitar una sección excesivamente repetitiva.
 
 Para comprobar el comportamiento tiempo--frecuencia se analizó también el espectrograma de la captura \texttt{mixed\_states}. Esta representación permite localizar cambios espectrales asociados a transiciones entre condiciones o a ventanas con mayor presencia de artefactos.
 
 \begin{figure}[htbp]
     \centering
-    \validacioninclude{width=0.90\textwidth}{images/validacion/val_spectrogram_state_bar.jpg}
+    \validacioninclude{width=0.90\textwidth}{images/validacion/fig_04_spectrogram_with_state_bar.png}
     \caption{Espectrograma de la captura de estados mixtos con barra de estados. La figura muestra la evolución temporal del contenido espectral y ayuda a relacionar cambios de frecuencia con reposo, recuperación y estados contaminados por artefactos.}
     \label{fig:validacion_spectrogram_state_bar}
 \end{figure}
@@ -220,7 +338,7 @@ A partir de la PSD, el sistema integra la potencia en las bandas delta, theta, a
 
 \begin{figure}[htbp]
     \centering
-    \validacioninclude{width=0.90\textwidth}{images/validacion/val_windowed_bandpowers.jpg}
+    \validacioninclude{width=0.90\textwidth}{images/validacion/fig_08_windowed_bandpowers.png}
     \caption{Evolución temporal de las potencias relativas por bandas en la captura de estados mixtos. La figura muestra que las características espectrales cambian por ventanas, lo que justifica su uso como entrada dinámica para la sonificación.}
     \label{fig:validacion_windowed_bandpowers}
 \end{figure}
@@ -231,7 +349,17 @@ También se compararon montajes y condiciones para identificar qué bandas resul
 
 \begin{figure}[htbp]
     \centering
-    \validacioninclude{width=0.90\textwidth}{images/validacion/val_alpha_alpha_beta_grid.jpg}
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_07_eyes_open_vs_closed_alpha.png}
+        \small (a) Alpha en ojos abiertos/cerrados
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_05_alpha_beta_ratio_comparison.png}
+        \small (b) Relación alpha/beta
+    \end{minipage}
     \caption{Comparación de la banda alpha y de la relación alpha/beta entre condiciones y montajes. La respuesta alpha fue más clara en el montaje ear-EEG que en Fp1--Fp2, por lo que se utiliza como modulador relativo de reposo y no como indicador clínico directo.}
     \label{fig:validacion_alpha_alpha_beta}
 \end{figure}
@@ -240,12 +368,19 @@ Los resultados resumidos muestran que, en ear-EEG, la potencia relativa alpha au
 
 \begin{figure}[htbp]
     \centering
-    \validacioninclude{width=0.90\textwidth}{images/validacion/val_bands_robustness_grid.jpg}
-    \caption{Comparación de bandas y robustez de características espectrales. Las diferencias entre montaje, condición y presencia de artefactos justifican el uso de normalización, suavizado temporal y \textit{quality gate} antes de transformar las bandas en controles musicales.}
-    \label{fig:validacion_bandas_robustez}
+    \validacioninclude{width=0.90\textwidth}{images/validacion/fig_05_relative_bandpowers_by_mounting.png}
+    \caption{Potencias relativas por bandas, montaje y condición. Las diferencias entre montajes y estados muestran que las bandas EEG aportan información útil, pero deben interpretarse como moduladores relativos condicionados por la calidad de la señal.}
+    \label{fig:validacion_bandas_por_montaje}
 \end{figure}
 
-La Figura~\ref{fig:validacion_bandas_robustez} resume la idea central de la validación espectral: las bandas EEG son medibles y aportan información útil para modular la sonificación, pero no todas tienen la misma robustez ni la misma sensibilidad a artefactos. Delta y theta se emplean como apoyo contextual, alpha es la banda más defendible para reposo relativo en el montaje ear-EEG, beta puede aportar actividad rápida, y gamma debe tratarse con especial cautela por su sensibilidad a EMG y movimiento.
+\begin{figure}[htbp]
+    \centering
+    \validacioninclude{width=0.86\textwidth}{images/validacion/fig_05_feature_robustness_heatmap.png}
+    \caption{Mapa comparativo de robustez de características espectrales. La sensibilidad de algunas bandas a artefactos justifica el uso de normalización, suavizado temporal y \textit{quality gate} antes de transformar las características en controles musicales.}
+    \label{fig:validacion_robustez_features}
+\end{figure}
+
+Las Figuras~\ref{fig:validacion_bandas_por_montaje} y~\ref{fig:validacion_robustez_features} resumen la idea central de la validación espectral: las bandas EEG son medibles y aportan información útil para modular la sonificación, pero no todas tienen la misma robustez ni la misma sensibilidad a artefactos. Delta y theta se emplean como apoyo contextual, alpha es la banda más defendible para reposo relativo en el montaje ear-EEG, beta puede aportar actividad rápida, y gamma debe tratarse con especial cautela por su sensibilidad a EMG y movimiento.
 
 \begin{table}[htbp]
     \centering
