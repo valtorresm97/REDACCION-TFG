@@ -1,0 +1,123 @@
+\subsection{Validación de la adquisición y del montaje experimental}
+\label{subsec:validacion_adquisicion_montaje}
+
+La primera parte de la validación se centró en comprobar que la cadena baja de adquisición funcionaba de forma continua antes de interpretar la señal desde el punto de vista espectral o musical. La ruta validada fue:
+
+\begin{center}
+\texttt{ADS1299 $\rightarrow$ SPI/RDATAC $\rightarrow$ firmware $\rightarrow$ Bridge $\rightarrow$ Python $\rightarrow$ CSV}
+\end{center}
+
+El firmware reconstruye las tramas RDATAC de 24 bits, valida el prefijo de estado del ADS1299, convierte las cuentas del ADC a microvoltios y envía al backend bloques \texttt{eeg\_block\_uV} de 8 muestras. Con una frecuencia de muestreo de \SI{250}{\hertz}, cada bloque representa \SI{32}{\milli\second} de señal. Esta comprobación permite separar los problemas propios de adquisición y transporte de los problemas asociados al montaje bioeléctrico, como ruido de red, movimiento de electrodos, impedancia de contacto o artefactos fisiológicos.
+
+Como prueba diagnóstica de la ruta ADC y del transporte digital se utilizó una captura con entradas cortocircuitadas, identificada como \texttt{20260523-175959\_post\_configfix\_shorted\_inputs}. Esta prueba pretende aislar el comportamiento del ADS1299 y del flujo de datos, sin representar una señal EEG real. El resultado fue una frecuencia efectiva de \SI{250}{\hertz}, sin discontinuidades temporales y sin estados ADS inválidos. Además, la señal presentó un valor RMS de \SI{0.115}{\micro\volt}, coherente con una entrada cortocircuitada y con bajo ruido interno.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Resultado de la prueba diagnóstica de adquisición con entradas cortocircuitadas.}
+    \label{tab:validacion_shorted_inputs}
+    \begin{tabular}{l c}
+        \hline
+        \textbf{Métrica} & \textbf{Valor} \\
+        \hline
+        Frecuencia efectiva & \SI{250.0}{\hertz} \\
+        Discontinuidades temporales & 0 \\
+        Estados ADS inválidos & 0 \\
+        RMS & \SI{0.115}{\micro\volt} \\
+        Diagnóstico & Prueba válida \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \validacioninclude{width=0.88\textwidth}{images/validacion/fig_01_shorted_inputs_timeseries.png}
+    \caption{Señal temporal registrada en la prueba diagnóstica con entradas cortocircuitadas. La amplitud reducida y la ausencia de discontinuidades permiten verificar que la ruta ADS1299--firmware--Python funciona correctamente antes de conectar el montaje experimental.}
+    \label{fig:validacion_shorted_inputs}
+\end{figure}
+
+Una vez comprobada la ruta de adquisición, se compararon diferentes configuraciones físicas de electrodos y modos de operación del ADS1299. Para esta validación se utilizaron ocho capturas específicas, agrupadas en dos montajes: \texttt{ear\_eeg\_ch1\_only} y \texttt{fp1\_fp2\_ch1\_only}. Las capturas empleadas se resumen en la Tabla~\ref{tab:validacion_capturas_montaje}.
+
+\begin{table}[H]
+    \centering
+    \small
+    \caption{Capturas utilizadas para validar el montaje experimental.}
+    \label{tab:validacion_capturas_montaje}
+    \begin{tabular}{p{0.26\textwidth} p{0.28\textwidth} p{0.34\textwidth}}
+        \hline
+        \textbf{Montaje} & \textbf{Condición} & \textbf{Captura} \\
+        \hline
+        Ear-EEG CH1 & Reposo quieto & \texttt{20260523-195752\_ear\_eeg\_ch1\_only\_still\_30s} \\
+        Ear-EEG CH1 & Ojos abiertos & \texttt{20260523-200925\_ear\_eeg\_ch1\_only\_eyes\_open\_60s} \\
+        Ear-EEG CH1 & Ojos cerrados & \texttt{20260523-201055\_ear\_eeg\_ch1\_only\_eyes\_closed\_60s} \\
+        Ear-EEG CH1 & Mandíbula & \texttt{20260523-201321\_ear\_eeg\_ch1\_only\_jaw\_movement\_30s} \\
+        Fp1--Fp2 CH1 & Reposo quieto & \texttt{20260523-202120\_fp1\_fp2\_ch1\_only\_quiet\_30s} \\
+        Fp1--Fp2 CH1 & Ojos abiertos & \texttt{20260523-202208\_fp1\_fp2\_ch1\_only\_eyes\_open\_60s} \\
+        Fp1--Fp2 CH1 & Ojos cerrados & \texttt{20260523-202323\_fp1\_fp2\_ch1\_only\_eyes\_closed\_60s} \\
+        Fp1--Fp2 CH1 & Parpadeo/frente & \texttt{20260523-202451\_fp1\_fp2\_ch1\_only\_forehead\_blink\_artifact\_30s} \\
+        \hline
+    \end{tabular}
+\end{table}
+
+La primera lectura de estas capturas se realizó en el dominio temporal. El objetivo fue comprobar que las señales quedaban registradas de forma continua en todas las condiciones y que las diferencias observadas procedían del montaje o del estado experimental, no de fallos de transporte. La Figura~\ref{fig:validacion_montaje_temporales_grid} resume las señales temporales de las ocho capturas usadas para comparar montajes.
+
+\begin{figure}[H]
+    \centering
+    \validacioninclude{width=0.98\textwidth}{images/validacion/fig_02_mounting_timeseries_grid.png}
+    \caption{Comparación temporal de las capturas empleadas para validar el montaje experimental. La figura agrupa las condiciones realizadas con montaje \texttt{ear\_eeg\_ch1\_only} y con montaje \texttt{fp1\_fp2\_ch1\_only}, permitiendo comprobar la continuidad de adquisición y la presencia de diferencias asociadas al montaje, a la condición experimental y a los artefactos.}
+    \label{fig:validacion_montaje_temporales_grid}
+\end{figure}
+
+El montaje frontal Fp1--Fp2 permitió observar actividad y artefactos claros, especialmente asociados a parpadeos y movimiento frontal, pero mostró mayor sensibilidad al contacto, al movimiento y al ruido común. Por el contrario, el montaje ear-EEG centrado en CH1 proporcionó una base más estable para obtener ventanas útiles, reduciendo la influencia de canales no usados y facilitando la aplicación posterior del \textit{quality gate}.
+
+La configuración final quedó fijada como \texttt{ADS\_DIAGNOSTIC\_MODE=5}, modo \texttt{bias\_ch1\_only\_loff\_off} y montaje \texttt{ear\_eeg\_ch1\_only}. En este modo, CH1 permanece como canal principal de análisis, el BIAS se deriva de CH1P y CH1N, la detección \textit{lead-off} se mantiene desactivada y los canales CH2--CH4 se conservan por compatibilidad con el contrato de datos, pero no se emplean como canales activos para la cadena de sonificación.
+
+Para justificar esta elección no se utilizó una única métrica, sino un conjunto de indicadores complementarios. El RMS permite comparar la amplitud típica de la señal; el pico a pico permite detectar transitorios grandes; la componente relativa de 50 Hz indica sensibilidad al ruido de red; la fracción de artefactos resume la proporción de ventanas contaminadas; y el \textit{quality score} integra varios de estos criterios en una puntuación de calidad útil para decidir si una ventana puede alimentar la sonificación.
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.90\textwidth}
+        \centering
+        \small (a) RMS mediano
+        \validacioninclude{width=0.90\textwidth}{images/validacion/fig_02_mounting_rms_comparison.png}
+    \end{minipage}
+
+    \vspace{0.4cm}
+
+    \begin{minipage}{0.90\textwidth}
+        \centering
+        \small (b) Amplitud pico a pico
+        \validacioninclude{width=0.90\textwidth}{images/validacion/fig_02_mounting_ptp_comparison.png}
+    \end{minipage}
+    \caption{Comparación de montajes mediante métricas de amplitud. El RMS resume la amplitud típica de cada condición, mientras que el pico a pico permite identificar configuraciones con transitorios elevados.}
+    \label{fig:validacion_montaje_amplitud}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.90\textwidth}
+        \centering
+        \small (a) Componente relativa de 50 Hz
+        \validacioninclude{width=0.90\textwidth}{images/validacion/fig_02_mounting_50hz_comparison.png}
+    \end{minipage}
+
+    \vspace{0.4cm}
+
+    \begin{minipage}{0.90\textwidth}
+        \centering
+        \small (b) Fracción de artefactos
+        \validacioninclude{width=0.90\textwidth}{images/validacion/fig_02_mounting_artifact_fraction.png}
+    \end{minipage}
+    \caption{Comparación de montajes mediante ruido de red y fracción de ventanas artefactadas. Estas métricas permiten valorar la sensibilidad de cada configuración a ruido común y ventanas contaminadas.}
+    \label{fig:validacion_montaje_ruido_artefactos}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \validacioninclude{width=0.90\textwidth}{images/validacion/fig_02_mounting_quality_score.png}
+    \caption{Comparación del \textit{quality score} entre montajes y condiciones. La puntuación resume la validez relativa de las ventanas para alimentar el análisis espectral y la sonificación.}
+    \label{fig:validacion_montaje_quality_score}
+\end{figure}
+
+La configuración \texttt{ear\_eeg\_ch1\_only} con \texttt{bias\_ch1\_only\_loff\_off} se seleccionó como montaje final porque ofreció una base más estable para obtener ventanas útiles y aplicar posteriormente el \textit{quality gate}. Los resultados no implican que el montaje final elimine todos los artefactos biológicos o ambientales. Su utilidad reside en que proporciona una señal suficientemente estable para trabajar con ventanas útiles y permite que el sistema de calidad descarte o atenúe las ventanas contaminadas antes de la sonificación, sin actuar de manera constante ni brusca.
+
+Por tanto, la elección del montaje final se justifica por la estabilidad temporal, la ausencia de discontinuidades, el estado ADS válido, la menor influencia de canales no usados y su compatibilidad con el \textit{quality gate} utilizado en la validación final. La sesión final de laboratorio, analizada posteriormente en la subsección de sonificación y resultados, se realizó con esta configuración. En consecuencia, las limitaciones observadas en la señal real no se atribuyen a pérdidas de transporte ni a fallos de estado del ADS1299, sino principalmente al montaje bioeléctrico, al contacto de electrodos, al ruido de red y a artefactos fisiológicos o externos.
