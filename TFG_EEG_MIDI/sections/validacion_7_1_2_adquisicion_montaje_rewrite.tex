@@ -60,13 +60,20 @@ Una vez comprobada la ruta de adquisición, se compararon diferentes configuraci
 
 Las carpetas completas asociadas a estos identificadores son, respectivamente: \texttt{ear\_eeg\_ch1\_only\_still\_30s}, \texttt{ear\_eeg\_ch1\_only\_eyes\_open\_60s}, \texttt{ear\_eeg\_ch1\_only\_eyes\_closed\_60s}, \texttt{ear\_eeg\_ch1\_only\_jaw\_movement\_30s}, \texttt{fp1\_fp2\_ch1\_only\_quiet\_30s}, \texttt{fp1\_fp2\_ch1\_only\_eyes\_open\_60s}, \texttt{fp1\_fp2\_ch1\_only\_eyes\_closed\_60s} y \texttt{fp1\_fp2\_ch1\_only\_forehead\_blink\_artifact\_30s}. De este modo, la tabla conserva la trazabilidad de las capturas sin comprometer la legibilidad de la página.
 
-La primera lectura de estas capturas se realizó en el dominio temporal. El objetivo fue comprobar que las señales quedaban registradas de forma continua en todas las condiciones y que las diferencias observadas procedían del montaje o del estado experimental, no de fallos de transporte. La Figura~\ref{fig:validacion_montaje_temporales_grid} resume las señales temporales de las ocho capturas usadas para comparar montajes.
+La primera lectura de estas capturas se realizó en el dominio temporal. El objetivo fue comprobar que las señales quedaban registradas de forma continua en todas las condiciones y que las diferencias observadas procedían del montaje o del estado experimental, no de fallos de transporte. Las Figuras~\ref{fig:validacion_montaje_temporales_ear} y~\ref{fig:validacion_montaje_temporales_fp1fp2} resumen las señales temporales de las ocho capturas usadas para comparar montajes, separando el montaje auricular y el montaje frontal para mejorar la legibilidad.
 
 \begin{figure}[!htbp]
     \centering
-    \validacioninclude{width=0.96\textwidth}{images/validacion/fig_02_mounting_timeseries_grid.png}
-    \caption{Comparación temporal de las capturas empleadas para validar el montaje experimental. La figura agrupa las condiciones realizadas con montaje \texttt{ear\_eeg\_ch1\_only} y con montaje \texttt{fp1\_fp2\_ch1\_only}, permitiendo comprobar la continuidad de adquisición y la presencia de diferencias asociadas al montaje, a la condición experimental y a los artefactos.}
-    \label{fig:validacion_montaje_temporales_grid}
+    \validacioninclude{width=0.96\textwidth}{images/validacion/fig_02_mounting_timeseries_grid_ear.png}
+    \caption{Comparación temporal de las capturas realizadas con el montaje \texttt{ear\_eeg\_ch1\_only}. La figura agrupa reposo, ojos abiertos, ojos cerrados y movimiento de mandíbula, permitiendo comprobar la continuidad de adquisición y la respuesta del montaje ante distintas condiciones.}
+    \label{fig:validacion_montaje_temporales_ear}
+\end{figure}
+
+\begin{figure}[!htbp]
+    \centering
+    \validacioninclude{width=0.96\textwidth}{images/validacion/fig_02_mounting_timeseries_grid_fp1fp2.png}
+    \caption{Comparación temporal de las capturas realizadas con el montaje \texttt{fp1\_fp2\_ch1\_only}. La figura agrupa reposo, ojos abiertos, ojos cerrados y parpadeo/frente, mostrando una mayor sensibilidad a artefactos frontales y de contacto.}
+    \label{fig:validacion_montaje_temporales_fp1fp2}
 \end{figure}
 
 El montaje frontal Fp1--Fp2 permitió observar actividad y artefactos claros, especialmente asociados a parpadeos y movimiento frontal, pero mostró mayor sensibilidad al contacto, al movimiento y al ruido común. Por el contrario, el montaje ear-EEG centrado en CH1 proporcionó una base más estable para obtener ventanas útiles, reduciendo la influencia de canales no usados y facilitando la aplicación posterior del \textit{quality gate}.
