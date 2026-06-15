@@ -156,8 +156,69 @@ Por último, la salida principal se define como MIDI físico. La interfaz web, l
 
 \subsection{Arquitectura general del sistema}
 
-% Pendiente de redacción propia.
-% Describir el flujo global: electrodos -> ADS1299 -> Arduino UNO Q -> backend Python -> sonificación -> salida MIDI / interfaz web.
+La arquitectura general del sistema se diseña como una cadena modular que transforma una señal EEG real en mensajes MIDI enviados por una salida física. La finalidad de esta subsección es describir la organización global del sistema y las responsabilidades de cada bloque, sin entrar todavía en los detalles de código de la solución aplicada. Los nombres de clases, funciones, estructuras de datos y parámetros concretos se desarrollan en el capítulo de Implementación.
+
+El flujo principal comienza en el bloque de adquisición EEG. Los electrodos de superficie captan señales bioeléctricas de baja amplitud, que son acondicionadas y digitalizadas por el \textit{front-end} de adquisición. Esta etapa constituye la frontera entre el dominio analógico, asociado al contacto con el usuario y a las señales de biopotencial, y el dominio digital, donde la señal puede transmitirse, almacenarse y procesarse.
+
+A continuación, el microcontrolador actúa como capa embebida de adquisición y preparación de datos. Su responsabilidad de diseño es mantener una lectura coherente de la señal, aplicar el acondicionamiento digital básico necesario y entregar la información al entorno de procesamiento con una estructura estable. Esta separación permite que las tareas más próximas al hardware no dependan de la lógica musical ni de la interfaz de visualización.
+
+El siguiente bloque es la comunicación entre el microcontrolador y el entorno Linux. En esta frontera, la arquitectura se basa en el intercambio de bloques de datos y no en una dependencia directa entre rutinas internas de ambos lados. El objetivo es que el backend reciba una señal ya organizada temporalmente, con una estructura conocida y suficiente información para comprobar su continuidad. La forma concreta de este contrato se detalla en la implementación.
+
+En el entorno Linux se sitúa el backend de procesamiento. Este bloque recibe la señal, la almacena temporalmente y extrae ventanas recientes sobre las que calcula características representativas. Desde el punto de vista de diseño, el backend no debe limitarse a reenviar muestras hacia la sonificación, sino transformar la señal cruda en una representación intermedia formada por características temporales, espectrales y métricas de estado.
+
+Sobre esa representación se introduce una etapa de evaluación de calidad. Esta decisión es importante porque la señal EEG es sensible a ruido, artefactos, saturación, mala conexión de electrodos y discontinuidades de transporte. Por ello, antes de que las características modifiquen la música, el sistema debe valorar si la ventana analizada es fiable. La calidad actúa así como una frontera entre el análisis de señal y la generación musical.
+
+El bloque de sonificación recibe características EEG ya interpretables y una valoración de calidad. Su función no es convertir cada muestra en una nota, sino mapear el estado reciente de la señal a controles musicales de alto nivel. Estos controles modifican aspectos como actividad, densidad, registro, estabilidad, dinámica o probabilidad de generación de notas. El marco musical general, como escala o nota principal, se considera una configuración musical separada de la señal EEG.
+
+La generación musical se organiza de forma jerárquica. Primero se obtiene un estado musical, después se estructura el compás, se generan notas y finalmente se programan eventos MIDI. Esta jerarquía evita una respuesta excesivamente irregular ante pequeñas variaciones de la señal y permite producir una salida musical más estable y comprensible.
+
+La salida principal del sistema es el puerto MIDI físico. Los eventos generados por el backend se convierten en mensajes MIDI y se entregan al bloque de salida, encargado de transmitirlos hacia un dispositivo externo compatible. De este modo, la cadena completa no termina en una visualización, sino en una interfaz musical estándar y operativa.
+
+Además de la ruta principal EEG--MIDI, la arquitectura incorpora herramientas auxiliares de observación y validación. La WebUI, las capturas, las métricas, los registros y las visualizaciones de notas permiten comprobar el estado del sistema durante las pruebas. Estos elementos no sustituyen a la ruta principal ni recalculan la señal, sino que consumen información ya publicada por el backend para facilitar supervisión, depuración y documentación.
+
+La Figura~\ref{fig:arquitectura_general_sistema} resume esta organización general. Se distinguen la ruta principal, encargada de transformar EEG en MIDI físico, y las rutas auxiliares, orientadas a monitorización y validación.
+
+\begin{figure}[H]
+    \centering
+    \resizebox{0.98\textwidth}{!}{%
+    \begin{tikzpicture}[
+        block/.style={draw, rounded corners, align=center, minimum width=2.6cm, minimum height=0.95cm, font=\small},
+        aux/.style={draw, rounded corners, dashed, align=center, minimum width=2.6cm, minimum height=0.95cm, font=\small},
+        arrow/.style={-{Latex[length=3mm]}, thick},
+        auxarrow/.style={-{Latex[length=2.5mm]}, dashed, thick},
+        node distance=0.8cm and 0.55cm
+    ]
+        \node[block] (electrodos) {Electrodos\\EEG};
+        \node[block, right=of electrodos] (afe) {Front-end\\de adquisición};
+        \node[block, right=of afe] (mcu) {Capa embebida\\microcontrolador};
+        \node[block, right=of mcu] (comm) {Contrato de\\comunicación};
+
+        \node[block, below=1.15cm of comm] (backend) {Backend\\de procesamiento};
+        \node[block, left=of backend] (quality) {Evaluación\\de calidad};
+        \node[block, left=of quality] (sonif) {Sonificación\\EEG--MIDI};
+        \node[block, left=of sonif] (midi) {Salida MIDI\\física};
+
+        \node[aux, below=1.15cm of backend] (webui) {WebUI\\monitorización};
+        \node[aux, below=1.15cm of quality] (validacion) {Capturas y\\validación};
+        \node[aux, below=1.15cm of sonif] (visual) {Visualización\\de notas};
+
+        \draw[arrow] (electrodos) -- (afe);
+        \draw[arrow] (afe) -- (mcu);
+        \draw[arrow] (mcu) -- (comm);
+        \draw[arrow] (comm) -- (backend);
+        \draw[arrow] (backend) -- (quality);
+        \draw[arrow] (quality) -- (sonif);
+        \draw[arrow] (sonif) -- (midi);
+
+        \draw[auxarrow] (backend) -- (webui);
+        \draw[auxarrow] (backend) -- (validacion);
+        \draw[auxarrow] (sonif) -- (visual);
+    \end{tikzpicture}}
+    \caption{Arquitectura general del sistema EEG--MIDI. La ruta principal transforma la señal EEG en mensajes MIDI físicos, mientras que las rutas auxiliares permiten monitorización, captura, visualización y validación.}
+    \label{fig:arquitectura_general_sistema}
+\end{figure}
+
+En conjunto, la arquitectura se divide en tres niveles. El primer nivel corresponde a la adquisición y preparación de la señal, donde predominan las restricciones de hardware y continuidad temporal. El segundo nivel corresponde al procesamiento, evaluación de calidad y sonificación, donde la señal se transforma en controles musicales y eventos MIDI. El tercer nivel corresponde a las herramientas auxiliares de observación y validación, que permiten estudiar el comportamiento del sistema sin alterar la ruta principal de funcionamiento.
 
 \subsection{Bloque de adquisición EEG}
 
