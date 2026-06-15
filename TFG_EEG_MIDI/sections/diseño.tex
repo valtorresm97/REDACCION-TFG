@@ -6,89 +6,85 @@
 
 \subsection{Requisitos del sistema}
 
-En esta subsección se definen los requisitos que guían el diseño del sistema de sonificación EEG--MIDI. Estos requisitos delimitan qué debe hacer el prototipo, bajo qué condiciones debe operar y qué decisiones arquitectónicas se adoptan para transformar una señal EEG real en eventos musicales enviados mediante una salida MIDI física.
+En esta subsección se definen los requisitos que guían el diseño del sistema de sonificación EEG--MIDI. El propósito no es describir todavía la solución implementada a nivel de código, sino delimitar qué capacidades debe ofrecer el prototipo y qué condiciones generales debe respetar la arquitectura. La concreción de estos requisitos en módulos, contratos, parámetros y funciones se desarrolla posteriormente en el capítulo de Implementación.
 
-El sistema se plantea como un prototipo experimental y no clínico. Su objetivo no es realizar diagnóstico médico ni interpretar patologías neurológicas, sino adquirir señales EEG reales, procesarlas en tiempo de ejecución, extraer características representativas y utilizarlas como entrada para una generación musical controlada. La solución concreta empleada para satisfacer estos requisitos se desarrolla posteriormente en el capítulo de Implementación.
+El sistema se plantea como un prototipo experimental y no clínico. Su objetivo no es realizar diagnóstico médico ni interpretar patologías neurológicas, sino adquirir señales EEG reales, procesarlas durante la ejecución y utilizarlas como entrada para una generación musical enviada mediante una salida MIDI física.
 
-Desde el punto de vista de diseño, se busca una arquitectura modular. La adquisición, el transporte de datos, el procesamiento digital, la evaluación de calidad, la sonificación, la salida MIDI y la visualización auxiliar se tratan como bloques diferenciados. Esta separación permite razonar sobre las responsabilidades de cada etapa sin depender todavía de nombres de archivos, funciones o clases concretas, que se describen en la sección de implementación.
+Desde el punto de vista de diseño, se busca una arquitectura modular. La adquisición, el transporte de datos, el procesamiento digital, la evaluación de calidad, la sonificación, la salida MIDI y la visualización auxiliar se consideran bloques diferenciados. Esta separación permite razonar sobre la función de cada etapa sin introducir todavía los detalles internos de la implementación.
 
 \subsubsection{Requisitos funcionales}
 
-Los requisitos funcionales definen las capacidades principales que debe ofrecer el sistema a lo largo de la cadena EEG--MIDI.
+Los requisitos funcionales definen las capacidades que debe ofrecer el sistema a lo largo de la cadena EEG--MIDI.
 
 \begin{description}[leftmargin=!,labelwidth=2cm]
 
-    \item[RF-1] \textbf{Adquisición EEG en vivo.} El sistema debe permitir la adquisición de señales EEG reales procedentes de un usuario durante una sesión de funcionamiento.
+    \item[RF-1] \textbf{Adquisición EEG en vivo.} El sistema debe adquirir señales EEG reales procedentes de un usuario durante una sesión de funcionamiento.
 
-    La señal utilizada por la sonificación debe proceder de una captura en vivo y no de la reproducción \textit{offline} de bases de datos o registros previamente almacenados. Este requisito responde al objetivo principal del proyecto: transformar actividad EEG real en eventos musicales durante la ejecución del prototipo.
+    La señal utilizada por la sonificación debe proceder de una captura en vivo y no de la reproducción \textit{offline} de registros previamente almacenados. Este requisito responde al objetivo principal del proyecto: transformar actividad EEG real en eventos musicales durante la ejecución del prototipo.
 
-    \item[RF-2] \textbf{Adquisición multicanal estructural.} El sistema debe contemplar una estructura de adquisición multicanal, aunque la validación final se centre en un canal principal.
+    \item[RF-2] \textbf{Adquisición multicanal ampliable.} El sistema debe contemplar una adquisición estructurada en varios canales, aunque una configuración concreta de validación pueda utilizar solo un canal principal.
 
-    Esta decisión permite conservar compatibilidad entre adquisición, transporte, capturas, procesamiento y monitorización. La implementación concreta mantiene una estructura de cuatro canales y utiliza CH1 como canal principal de análisis y sonificación, pero el requisito de diseño se formula como capacidad multicanal ampliable.
+    Este requisito permite que la arquitectura no quede limitada a un único montaje experimental y facilita futuras ampliaciones del sistema.
 
-    \item[RF-3] \textbf{Coherencia temporal de adquisición.} El sistema debe trabajar con una frecuencia de muestreo definida y coherente en toda la cadena de datos.
+    \item[RF-3] \textbf{Coherencia temporal de la señal.} El sistema debe conservar una referencia temporal coherente entre adquisición, transmisión, procesamiento y validación.
 
-    La frecuencia de adquisición debe ser conocida por el firmware, el backend, las ventanas de análisis, las capturas y las herramientas de validación. En la implementación se adopta \SI{250}{\hertz} como configuración final de trabajo.
+    La frecuencia de muestreo, la organización temporal de las muestras y las ventanas de análisis deben mantenerse de forma consistente en toda la cadena.
 
-    \item[RF-4] \textbf{Compatibilidad con electrodos de superficie.} El sistema debe permitir la conexión de electrodos de superficie en configuraciones experimentales compatibles con EEG.
+    \item[RF-4] \textbf{Compatibilidad con electrodos de superficie.} El sistema debe permitir el uso de electrodos de superficie en un entorno experimental controlado.
 
-    El montaje físico empleado para la validación se considera una decisión experimental concreta. El diseño debe evitar cerrar la arquitectura a un único montaje, siempre que se respeten las condiciones eléctricas y de seguridad del prototipo.
+    El diseño debe admitir configuraciones compatibles con la adquisición EEG, dejando el montaje físico concreto como una decisión experimental desarrollada en la implementación y la validación.
 
-    \item[RF-5] \textbf{Transmisión continua de muestras.} El sistema debe transportar de forma continua las muestras digitalizadas desde el bloque de adquisición hacia el entorno de procesamiento.
+    \item[RF-5] \textbf{Transporte continuo de datos.} El sistema debe transportar de forma continua las muestras digitalizadas desde el bloque de adquisición hacia el entorno de procesamiento.
 
-    La transmisión debe conservar la continuidad temporal de la señal y permitir detectar pérdidas, saltos o datos incoherentes antes de utilizar la información en el análisis espectral o en la sonificación.
+    El transporte debe permitir mantener el flujo de señal durante la sesión y detectar posibles pérdidas, discontinuidades o datos incoherentes.
 
-    \item[RF-6] \textbf{Contrato de comunicación entre microcontrolador y Linux.} El sistema debe definir un contrato de datos estable entre la adquisición embebida y el backend Python.
+    \item[RF-6] \textbf{Contrato estable entre bloques.} El sistema debe definir formatos de intercambio estables entre adquisición, procesamiento, sonificación, visualización y salida MIDI.
 
-    Este contrato debe incluir las muestras, su organización temporal y la información mínima necesaria para comprobar su coherencia. En la implementación, esta frontera se concreta mediante bloques EEG enviados por el evento \texttt{eeg\_block\_uV}.
+    Estos contratos deben permitir que cada bloque consuma la información necesaria sin depender de los detalles internos de los demás. Los nombres y formatos concretos de dichos contratos se detallan en el capítulo de Implementación.
 
-    \item[RF-7] \textbf{Validación de la recepción.} El backend debe validar los datos recibidos antes de incorporarlos al procesamiento digital.
+    \item[RF-7] \textbf{Procesamiento por ventanas temporales.} El sistema debe procesar la señal EEG a partir de ventanas temporales recientes.
 
-    Esta validación debe comprobar que los bloques tienen el formato esperado, que los índices temporales son coherentes y que no existen errores evidentes de transporte o desalineación.
+    Esta decisión evita basar la sonificación en muestras aisladas y permite obtener una representación más estable de la actividad registrada.
 
-    \item[RF-8] \textbf{Almacenamiento temporal de señal.} El sistema debe mantener una memoria temporal de la señal EEG recibida.
+    \item[RF-8] \textbf{Extracción de características EEG.} El sistema debe extraer características temporales y espectrales de la señal adquirida.
 
-    Esta memoria debe permitir extraer ventanas recientes de análisis y evitar que el procesamiento dependa únicamente del último bloque recibido. De este modo, el análisis se realiza sobre tramos temporales de señal y no sobre muestras aisladas.
+    Estas características deben resumir la información relevante de la señal para que pueda utilizarse como entrada de la sonificación, sin que el motor musical dependa directamente de la forma de onda cruda.
 
-    \item[RF-9] \textbf{Extracción de características EEG.} El sistema debe extraer características temporales y espectrales de la señal EEG adquirida.
+    \item[RF-9] \textbf{Análisis por bandas EEG.} El sistema debe obtener información asociada a bandas EEG de interés.
 
-    Entre las características de interés se incluyen amplitud eficaz, potencia por bandas, potencias relativas, frecuencias pico y descriptores derivados. Estas variables actúan como representación intermedia entre la señal cruda y la generación musical.
+    El análisis por bandas permite describir la distribución espectral de la señal y utilizarla como base para modular parámetros musicales de alto nivel. La definición concreta de las bandas y de las variables calculadas se desarrolla en la implementación.
 
-    \item[RF-10] \textbf{Análisis por bandas EEG.} El sistema debe obtener información asociada a bandas EEG de interés, como delta, theta, alfa, beta y gamma.
+    \item[RF-10] \textbf{Evaluación de calidad de señal.} El sistema debe valorar la fiabilidad de la señal antes de utilizarla en la sonificación.
 
-    El análisis por bandas permite resumir la distribución espectral de la señal y utilizarla como base para modular parámetros musicales de alto nivel.
+    Esta evaluación debe permitir distinguir ventanas utilizables de ventanas afectadas por ruido, artefactos, saturación, mala conexión o problemas de transporte.
 
-    \item[RF-11] \textbf{Evaluación de calidad de señal.} El sistema debe evaluar la fiabilidad de la ventana EEG analizada antes de utilizarla en la sonificación.
+    \item[RF-11] \textbf{Sonificación condicionada por la calidad.} El sistema debe evitar que una ventana de señal no fiable tenga la misma influencia musical que una ventana válida.
 
-    Esta evaluación debe considerar tanto características espectrales como métricas observacionales de la señal y del transporte de datos. El objetivo es distinguir ventanas fiables de ventanas dominadas por ruido, artefactos, pérdidas o problemas de adquisición.
+    La calidad de la señal debe poder dejar pasar, atenuar o bloquear la influencia de las características EEG sobre la generación musical. El mecanismo concreto empleado para ello se describe en la implementación.
 
-    \item[RF-12] \textbf{Control de sonificación mediante calidad.} El sistema debe incorporar un mecanismo que module la influencia de la señal EEG sobre la música en función de la calidad estimada.
+    \item[RF-12] \textbf{Generación musical a partir de características EEG.} El sistema debe transformar las características extraídas de la señal en parámetros musicales.
 
-    Si la ventana es fiable, las características pueden usarse con normalidad. Si la calidad es dudosa, su efecto puede atenuarse. Si la ventana no es fiable, el sistema debe evitar generar nuevo material musical a partir de esa información.
+    Estos parámetros no deben interpretarse como variables clínicas, sino como controles musicales que modifican aspectos como actividad, densidad, registro, estabilidad, dinámica o probabilidad de generación de notas.
 
-    \item[RF-13] \textbf{Generación de controles musicales.} El sistema debe transformar las características EEG en controles musicales de alto nivel.
+    \item[RF-13] \textbf{Organización musical estructurada.} El sistema debe generar música mediante una estructura organizada y no mediante una conversión directa de muestra a nota.
 
-    Estos controles no deben interpretarse como variables clínicas. Su función es modular aspectos musicales como actividad, densidad rítmica, registro, estabilidad, tensión, dinámica y probabilidad de generación de notas.
+    La señal EEG debe influir en decisiones musicales de alto nivel que posteriormente se concreten en compases, notas y eventos MIDI. La estructura concreta de generación se desarrolla en el capítulo de Implementación.
 
-    \item[RF-14] \textbf{Sonificación jerárquica.} El sistema debe organizar la generación musical mediante una estructura jerárquica.
+    \item[RF-14] \textbf{Salida MIDI física.} El sistema debe emitir la salida musical mediante una interfaz MIDI física.
 
-    En lugar de convertir directamente una muestra o una banda EEG en una nota concreta, el sistema debe generar primero un estado musical, después una estructura de compás y finalmente eventos de nota. Esta decisión busca una salida musical más estable y menos sensible a fluctuaciones instantáneas.
+    La salida principal del prototipo debe ser una secuencia real de mensajes MIDI enviada hacia un dispositivo externo compatible, no únicamente una visualización en pantalla.
 
-    \item[RF-15] \textbf{Salida MIDI física.} El sistema debe emitir los eventos musicales mediante una salida MIDI física.
+    \item[RF-15] \textbf{Eventos MIDI completos y seguros.} El sistema debe generar eventos MIDI con inicio y finalización definidos.
 
-    La salida principal del prototipo no debe ser una representación gráfica ni una simulación en pantalla, sino una secuencia real de mensajes MIDI enviados hacia un conector MIDI OUT operativo.
+    Esta condición evita notas incompletas o sostenidas indefinidamente y permite incluir acciones de seguridad para liberar la salida musical cuando sea necesario.
 
-    \item[RF-16] \textbf{Generación de eventos MIDI válidos.} El sistema debe producir eventos MIDI completos y seguros.
+    \item[RF-16] \textbf{Monitorización auxiliar.} El sistema debe disponer de una interfaz auxiliar para observar el estado del prototipo.
 
-    Cada nota debe tener inicio, duración y finalización definidos para evitar notas colgadas. Además, el sistema debe contemplar una acción de seguridad que permita liberar notas activas cuando sea necesario.
+    Esta interfaz debe facilitar la supervisión de adquisición, procesamiento, calidad, sonificación y salida MIDI, sin sustituir a la ruta principal EEG--MIDI ni duplicar los cálculos críticos.
 
-    \item[RF-17] \textbf{Monitorización auxiliar.} El sistema debe disponer de una interfaz auxiliar para observar el estado del prototipo durante su funcionamiento.
+    \item[RF-17] \textbf{Registro y trazabilidad.} El sistema debe permitir registrar información útil para validación, depuración y análisis posterior.
 
-    Esta interfaz debe permitir supervisar adquisición, recepción, procesamiento, calidad, sonificación, estado MIDI y notas recientes. No obstante, no debe sustituir a la salida MIDI física ni duplicar los cálculos críticos del backend.
-
-    \item[RF-18] \textbf{Captura y trazabilidad.} El sistema debe permitir registrar información útil para validación, depuración y análisis posterior.
-
-    Las capturas, métricas, \textit{snapshots} y registros deben facilitar la comprobación de la continuidad de datos, la calidad de señal, el rendimiento temporal y el comportamiento de la sonificación.
+    Las capturas, métricas y estados publicados deben ayudar a reconstruir el comportamiento del sistema durante las pruebas.
 
 \end{description}
 
@@ -100,23 +96,23 @@ Los requisitos no funcionales recogen las condiciones de calidad, seguridad, ope
 
     \item[RNF-1] \textbf{Funcionamiento en tiempo real experimental.} La cadena de adquisición, procesamiento, sonificación y salida MIDI debe operar de forma continua durante la sesión.
 
-    El sistema no busca certificación clínica ni garantías de latencia propias de un dispositivo médico, pero sí debe disponer de margen temporal suficiente para funcionar de forma fluida en el contexto del prototipo.
+    El sistema no busca certificación clínica ni garantías propias de un dispositivo médico, pero sí debe disponer de margen temporal suficiente para funcionar de forma fluida en el contexto del prototipo.
 
-    \item[RNF-2] \textbf{Uso no clínico y seguridad básica.} El sistema debe orientarse a un uso experimental, educativo y de investigación no clínica.
+    \item[RNF-2] \textbf{Uso no clínico.} El sistema debe orientarse a un uso experimental, educativo y de investigación no clínica.
 
-    No debe presentarse como dispositivo médico ni como herramienta diagnóstica. Las decisiones de conexión, alimentación y uso de electrodos deben entenderse dentro de un entorno controlado de prototipado.
+    No debe presentarse como dispositivo médico ni como herramienta diagnóstica. La interpretación de la señal se limita al contexto de la sonificación y la validación técnica del prototipo.
 
-    \item[RNF-3] \textbf{Robustez frente al ruido y artefactos.} El diseño debe considerar la baja amplitud del EEG y su sensibilidad a interferencias eléctricas, actividad muscular, movimiento, saturación y problemas de contacto electrodo--piel.
+    \item[RNF-3] \textbf{Seguridad básica del montaje.} El diseño debe considerar las precauciones necesarias para trabajar con señales biopotenciales en un entorno controlado.
 
-    Esta robustez debe abordarse tanto desde la adquisición como desde la evaluación de calidad y la decisión de no utilizar ventanas no fiables para generar nuevo material musical.
+    Las decisiones de conexión de electrodos, alimentación y uso del prototipo deben plantearse desde una perspectiva de baja tensión, aislamiento razonable y uso experimental supervisado.
 
-    \item[RNF-4] \textbf{Modularidad.} El sistema debe separarse en bloques funcionales diferenciados y con responsabilidades claras.
+    \item[RNF-4] \textbf{Robustez frente al ruido y artefactos.} El diseño debe tener en cuenta la baja amplitud de la señal EEG y su sensibilidad a interferencias eléctricas, movimiento, actividad muscular y problemas de contacto electrodo--piel.
+
+    Esta robustez debe abordarse tanto desde la adquisición como desde la evaluación de calidad y la monitorización del sistema.
+
+    \item[RNF-5] \textbf{Modularidad.} El sistema debe separarse en bloques funcionales diferenciados y con responsabilidades claras.
 
     Esta modularidad facilita el análisis de cada etapa y permite evolucionar adquisición, procesamiento, sonificación, MIDI o visualización sin rediseñar toda la arquitectura.
-
-    \item[RNF-5] \textbf{Estabilidad de contratos.} Los contratos de datos entre módulos deben mantenerse estables durante la ejecución y durante la validación.
-
-    Deben conservarse de forma coherente el formato de bloques EEG, la estructura multicanal, los índices temporales, el formato de capturas, el \textit{snapshot} público y el contrato de envío MIDI.
 
     \item[RNF-6] \textbf{Escalabilidad.} La arquitectura debe permitir futuras ampliaciones.
 
@@ -132,31 +128,31 @@ Los requisitos no funcionales recogen las condiciones de calidad, seguridad, ope
 
     \item[RNF-9] \textbf{Mantenibilidad.} El código y la arquitectura deben organizarse de forma clara, reduciendo dependencias innecesarias entre módulos.
 
-    El sistema debe facilitar ajustes posteriores en el procesamiento, la sonificación, la WebUI o las herramientas de validación sin comprometer la ruta principal EEG--MIDI.
+    El sistema debe facilitar ajustes posteriores en el procesamiento, la sonificación, la interfaz auxiliar o las herramientas de validación sin comprometer la ruta principal EEG--MIDI.
 
     \item[RNF-10] \textbf{Observabilidad.} El sistema debe exponer suficiente información interna para facilitar depuración, validación y análisis posterior.
 
-    La WebUI, los \textit{snapshots}, las capturas y los registros de rendimiento permiten observar el comportamiento del sistema sin alterar la ruta principal de adquisición, procesamiento y salida MIDI.
+    La visualización auxiliar, las capturas, los estados publicados y los registros de rendimiento permiten observar el comportamiento del sistema sin alterar la ruta principal de adquisición, procesamiento y salida MIDI.
 
     \item[RNF-11] \textbf{Portabilidad del prototipo.} El sistema debe poder utilizarse como prototipo compacto y transportable en un entorno experimental controlado.
 
-    Esta portabilidad se refiere tanto al montaje físico como a la ejecución integrada en la Arduino UNO Q, donde conviven la adquisición embebida y el backend Linux/Python.
+    Esta portabilidad se refiere tanto al montaje físico como a la ejecución integrada de las capas embebida y de procesamiento.
 
 \end{description}
 
 \subsubsection{Decisiones de diseño derivadas}
 
-A partir de los requisitos anteriores se adoptan varias decisiones de diseño que condicionan el resto de la arquitectura. En primer lugar, se separa la adquisición embebida del procesamiento en Python. El microcontrolador se encarga de las tareas cercanas al hardware y el backend trabaja con bloques de señal ya estructurados.
+A partir de los requisitos anteriores se adoptan varias decisiones de diseño que condicionan el resto de la arquitectura. En primer lugar, se separa la adquisición embebida del procesamiento de alto nivel. La capa cercana al hardware se encarga de obtener y preparar la señal, mientras que la capa de procesamiento trabaja con datos ya estructurados.
 
-En segundo lugar, la comunicación se plantea por bloques de muestras y no por muestras individuales. Esta decisión reduce la sobrecarga de transporte, permite asociar índices temporales a cada bloque y facilita la detección de discontinuidades.
+En segundo lugar, el sistema se organiza mediante contratos de intercambio entre bloques. El diseño no exige que cada etapa conozca la implementación interna de las demás, sino que reciba y entregue información con una estructura definida. Los contratos concretos y sus campos se detallan en el capítulo de Implementación.
 
-En tercer lugar, el procesamiento digital se realiza sobre ventanas temporales de señal. Esta elección permite obtener características espectrales más estables que las que se obtendrían con una conversión directa muestra--nota.
+En tercer lugar, el procesamiento se basa en ventanas temporales de señal y no en muestras aisladas. Esta elección permite obtener características más estables y evita una traducción excesivamente directa entre señal instantánea y salida musical.
 
-En cuarto lugar, la calidad de la señal se incorpora como parte del flujo de diseño. La sonificación no utiliza todas las ventanas con la misma confianza: las ventanas fiables se usan con normalidad, las dudosas pueden atenuarse y las no fiables pueden bloquear la generación de nuevo material musical.
+En cuarto lugar, la calidad de la señal se incorpora como criterio de diseño. La sonificación debe depender no solo de las características extraídas, sino también de la confianza que el sistema tenga en la ventana analizada.
 
-En quinto lugar, la generación musical se diseña de forma jerárquica. Las características EEG se transforman primero en controles musicales y solo después en segmentos, compases, notas y eventos MIDI. La salida principal se define como MIDI físico, mientras que la WebUI, el piano roll, la matriz LED, las capturas y los benchmarks se consideran herramientas auxiliares de observación y validación.
+En quinto lugar, la generación musical se concibe como una estructura jerárquica. Las características EEG se transforman primero en controles musicales y después en elementos musicales concretos. Esta organización favorece una salida más coherente que un mapeo directo entre bandas EEG y notas aisladas.
 
-La concreción de estas decisiones, incluyendo los nombres de módulos, contratos concretos, parámetros temporales y funciones utilizadas, se desarrolla en el capítulo de Implementación.
+Por último, la salida principal se define como MIDI físico. La interfaz web, la visualización de notas, las capturas y las métricas se consideran herramientas auxiliares de observación, validación y depuración. La concreción de estas decisiones, incluyendo módulos, parámetros temporales, contratos y funciones, se desarrolla en el capítulo de Implementación.
 
 \subsection{Arquitectura general del sistema}
 
