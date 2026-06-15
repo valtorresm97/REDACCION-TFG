@@ -1,11 +1,11 @@
 \subsection{Validación de calidad de señal}
 \label{subsec:validacion_calidad_senal}
 
-Una vez validada la adquisición y seleccionado el montaje experimental, se evaluó la calidad de la señal real. Esta etapa es necesaria porque una captura puede ser correcta desde el punto de vista temporal, manteniendo \SI{250}{\hertz}, sin \textit{sample gaps} y sin estados ADS1299 inválidos, pero contener ventanas contaminadas por ruido de red, transitorios de contacto, movimiento de electrodos, parpadeos o actividad muscular.
+Una vez validada la adquisición y seleccionado el montaje experimental, se evaluó la calidad de la señal real. Esta comprobación es necesaria porque una captura puede ser correcta desde el punto de vista de adquisición, manteniendo \SI{250}{\hertz}, sin \textit{sample gaps} y sin estados ADS1299 inválidos, pero contener ventanas contaminadas por ruido de red, movimiento de electrodos, parpadeos, actividad muscular o transitorios de contacto.
 
-La validación de calidad se realizó sobre la captura \texttt{20260524-122200\_final\_atenuacion\_artefactos\_mixed\_states}. Esta captura fue tomada con el montaje \texttt{ear\_eeg\_ch1\_only}, con \texttt{ADS\_DIAGNOSTIC\_MODE=5} y con la configuración final \texttt{bias\_ch1\_only\_loff\_off}. A diferencia de las capturas de comparación de montajes, esta prueba contiene varios estados dentro de una misma adquisición: ojos abiertos, ojos cerrados, movimiento de mandíbula, recuperación, parpadeo/frente y un segundo tramo de ojos cerrados. Por ello, resulta especialmente adecuada para comprobar si el sistema de calidad responde de forma coherente ante tramos más estables y tramos contaminados.
+La validación se realizó sobre la captura \texttt{20260524-122200\_final\_atenuacion\_artefactos\_mixed\_states}, tomada con el montaje final \texttt{ear\_eeg\_ch1\_only}, \texttt{ADS\_DIAGNOSTIC\_MODE=5} y configuración \texttt{bias\_ch1\_only\_loff\_off}. Esta prueba es útil porque contiene varios estados dentro de una misma adquisición: ojos abiertos, ojos cerrados, mandíbula, recuperación y parpadeo/frente. Por tanto, permite comprobar si el sistema distingue tramos relativamente estables de tramos contaminados sin aceptar o rechazar toda la captura como un único bloque.
 
-La idea principal de esta subsección es que la calidad se decide por ventanas de análisis, no por la etiqueta global de la captura. Una condición etiquetada como reposo, ojos cerrados o mandíbula puede contener tramos útiles y tramos contaminados; por ello, antes de transformar las características espectrales en controles musicales, el sistema calcula métricas globales y métricas locales que alimentan el \textit{quality gate}. La cadena usada en la versión final es:
+La calidad se evalúa por ventanas de análisis. Antes de transformar las características espectrales en parámetros musicales, el backend calcula métricas temporales y espectrales que alimentan el \textit{quality gate}:
 
 \begin{center}
 \texttt{compute\_quality\_diagnostics() $\rightarrow$ compute\_spectral\_quality() $\rightarrow$ quality gate}
@@ -18,9 +18,9 @@ La idea principal de esta subsección es que la calidad se decide por ventanas d
     \label{fig:validacion_mixed_states_temporal_global}
 \end{figure}
 
-La Figura~\ref{fig:validacion_mixed_states_temporal_global} permite observar que la adquisición se mantiene continua durante toda la prueba, pero que la calidad de la señal no es homogénea. Algunos tramos presentan una dinámica contenida alrededor de la línea base, mientras que otros muestran picos impulsivos, incrementos de amplitud o actividad compatible con artefactos fisiológicos. Esta diferencia justifica que la señal no se acepte o rechace como un bloque único, sino que sea evaluada por ventanas.
+La Figura~\ref{fig:validacion_mixed_states_temporal_global} muestra que la adquisición se mantiene continua, pero que la calidad no es homogénea. Algunos tramos presentan amplitudes contenidas y otros muestran picos impulsivos o incrementos compatibles con artefactos. Esta diferencia justifica que la señal se analice por ventanas y no como una captura indivisible.
 
-Los criterios principales utilizados fueron la frecuencia efectiva, la presencia de discontinuidades, los estados ADS1299 inválidos, el RMS, la amplitud pico a pico, la componente relativa de 50 Hz, la fracción de ventanas artefactadas y el índice de calidad espectral. La combinación de estos indicadores permite distinguir ventanas útiles, dudosas o claramente contaminadas dentro de una misma adquisición.
+Para resumir la calidad se utilizaron varias métricas: RMS, amplitud pico a pico, componente relativa de \SI{50}{\hertz}, fracción de artefactos e índice de calidad espectral. Estas magnitudes no se interpretan de forma aislada, sino como indicadores complementarios de la validez de cada tramo.
 
 \begin{table}[!htbp]
     \centering
@@ -42,30 +42,38 @@ Los criterios principales utilizados fueron la frecuencia efectiva, la presencia
     \end{tabular}
 \end{table}
 
-La Tabla~\ref{tab:validacion_calidad_estados} muestra que la calidad no puede decidirse mediante una única magnitud. Algunos estados mantienen una frecuencia de adquisición correcta, pero presentan aumentos de amplitud, mayor componente de 50 Hz o una reducción del índice de calidad. El caso más claro es el segundo tramo de ojos cerrados, que comparte etiqueta experimental con el primer tramo, pero presenta mayor RMS, mayor pico a pico y una puntuación de calidad inferior. Esto confirma que la calidad debe evaluarse localmente y no únicamente a partir de la condición indicada durante la captura.
+La Tabla~\ref{tab:validacion_calidad_estados} muestra que una misma etiqueta experimental no garantiza una calidad constante. El segundo tramo de ojos cerrados presenta una puntuación de calidad claramente inferior al primer tramo, a pesar de tener una condición nominal parecida. Por ello, la decisión de aceptar, atenuar o descartar información debe realizarse sobre ventanas concretas.
 
 \begin{figure}[!htbp]
     \centering
-    \begin{minipage}{0.80\textwidth}
+    \begin{minipage}{0.78\textwidth}
         \centering
-        \small (a) RMS por ventanas
         \validacioninclude{width=\textwidth}{images/validacion/fig_00_final_capture_rms_timeline.png}
+        \small (a) RMS por ventanas
     \end{minipage}
 
-    \vspace{0.25cm}
+    \vspace{0.20cm}
 
-    \begin{minipage}{0.80\textwidth}
+    \begin{minipage}{0.78\textwidth}
         \centering
-        \small (b) Índice de calidad por ventanas
         \validacioninclude{width=\textwidth}{images/validacion/fig_00_final_capture_quality_timeline.png}
+        \small (b) Índice de calidad por ventanas
     \end{minipage}
-    \caption{Evolución temporal de la amplitud RMS y del índice de calidad en la captura de estados mixtos. La comparación muestra que la calidad de la señal varía a lo largo de la adquisición y que las ventanas contaminadas deben tratarse de forma diferente a las ventanas útiles.}
-    \label{fig:validacion_calidad_timeline}
+
+    \vspace{0.20cm}
+
+    \begin{minipage}{0.62\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_11_quality_state_distribution.png}
+        \small (c) Distribución de estados de calidad
+    \end{minipage}
+    \caption{Resumen del comportamiento de calidad en la captura de estados mixtos. El RMS permite detectar incrementos de amplitud, el índice de calidad resume la validez de cada ventana y la distribución final muestra la proporción de ventanas utilizables, dudosas o contaminadas.}
+    \label{fig:validacion_calidad_resumen}
 \end{figure}
 
-La Figura~\ref{fig:validacion_calidad_timeline} resume el comportamiento global por ventanas. El RMS permite detectar incrementos de amplitud asociados a movimiento o transitorios, mientras que el índice de calidad resume la validez espectral de cada ventana. Esta representación justifica que la sonificación utilice un factor de puerta o atenuación, en lugar de transformar toda la señal directamente en música.
+La Figura~\ref{fig:validacion_calidad_resumen} concentra la lectura principal de la validación: la señal real no es uniformemente limpia, pero tampoco debe descartarse por completo. El sistema identifica ventanas con distinta fiabilidad y utiliza esa información para evitar que los tramos contaminados influyan de forma brusca en la sonificación.
 
-Para comprobar visualmente el comportamiento de los distintos tramos, se agruparon en una misma figura las capturas temporales por estado ya generadas durante la validación. Todas ellas conservan una escala vertical común para que la comparación entre estados sea coherente. Los estados de reposo y recuperación permiten observar tramos relativamente estables, mientras que mandíbula, parpadeo/frente y el segundo tramo de ojos cerrados muestran mayor presencia de transitorios o amplitudes elevadas.
+Para completar la comprobación se revisaron las señales temporales de los estados principales. La Figura~\ref{fig:validacion_estados_temporales_grid} agrupa las capturas ya generadas durante la validación y permite comparar tramos estables con tramos afectados por artefactos.
 
 \begin{figure}[!htbp]
     \centering
@@ -85,7 +93,7 @@ Para comprobar visualmente el comportamiento de los distintos tramos, se agrupar
 
     \begin{minipage}{0.48\textwidth}
         \centering
-        \validacioninclude{width=\textwidth}{images/validacion/fig_09_jaw_movement_timeseries.png}
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_jaw_timeseries.png}
         \small (c) Mandíbula
     \end{minipage}
     \hfill
@@ -112,7 +120,7 @@ Para comprobar visualmente el comportamiento de los distintos tramos, se agrupar
     \label{fig:validacion_estados_temporales_grid}
 \end{figure}
 
-Además del comportamiento temporal, la validación de calidad se apoya en una inspección espectral básica por estados. Esta comprobación no sustituye a la validación DSP detallada de la Subsección~\ref{subsec:validacion_espectral}, pero sí verifica que la clasificación de ventanas útiles o contaminadas resulta coherente cuando se observa el contenido en frecuencia de la señal. En los tramos más estables, el espectro mantiene una forma más consistente con una señal utilizable para análisis; en cambio, en mandíbula o parpadeo/frente aparecen cambios compatibles con contaminación por movimiento, actividad muscular o artefactos frontales.
+La inspección temporal se complementó con una revisión espectral básica por estados. Esta comprobación no sustituye a la validación DSP de la Subsección~\ref{subsec:validacion_espectral}; su objetivo es confirmar que los tramos con peor calidad temporal también presentan cambios en frecuencia compatibles con contaminación de la señal.
 
 \begin{figure}[!htbp]
     \centering
@@ -159,15 +167,6 @@ Además del comportamiento temporal, la validación de calidad se apoya en una i
     \label{fig:validacion_estados_psd_grid}
 \end{figure}
 
-La comparación entre las Figuras~\ref{fig:validacion_estados_temporales_grid} y~\ref{fig:validacion_estados_psd_grid} permite relacionar la evaluación temporal con la evaluación espectral. La calidad de una ventana no depende únicamente de la amplitud instantánea, sino también de cómo esa contaminación modifica el contenido frecuencial que posteriormente se empleará para calcular bandpowers y características de sonificación. Por esta razón, el \textit{quality gate} se mantiene como un bloque independiente del pipeline y no como una comprobación meramente visual.
+La comparación entre las Figuras~\ref{fig:validacion_estados_temporales_grid} y~\ref{fig:validacion_estados_psd_grid} confirma que la calidad de una ventana no depende solo de la amplitud instantánea. También importa cómo la contaminación modifica el contenido frecuencial que después se usará para calcular bandas y características de sonificación.
 
-\begin{figure}[!htbp]
-    \centering
-    \validacioninclude{width=0.82\textwidth}{images/validacion/fig_11_quality_state_distribution.png}
-    \caption{Distribución de estados de calidad en la captura de validación. La presencia de varios estados confirma que el sistema puede separar ventanas utilizables, ventanas dudosas y ventanas afectadas por artefactos.}
-    \label{fig:validacion_quality_states}
-\end{figure}
-
-En la sesión final de laboratorio, identificada como \texttt{s01\_20260528}, se confirmó la misma lectura general. Las capturas mantuvieron adquisición estable a \SI{250}{\hertz}, sin \textit{sample gaps} y sin estados ADS1299 inválidos, pero la calidad fisiológica fue parcial. Varias condiciones fueron etiquetadas como \texttt{dudosa} por ruido de red, amplitudes elevadas o transitorios. Por tanto, la señal real no debe presentarse como EEG clínicamente limpio, sino como una señal experimental válida para demostrar adquisición, análisis espectral, control de calidad y sonificación.
-
-En conclusión, la validación de calidad confirma la necesidad de conservar el \textit{quality gate} como parte esencial del pipeline. Las métricas temporales y espectrales permiten identificar ventanas útiles o contaminadas antes de que sus características se transformen en controles musicales. La captura \texttt{20260524-122200\_final\_atenuacion\_artefactos\_mixed\_states} demuestra que el sistema no interpreta la señal de forma directa, sino que evalúa su fiabilidad por ventanas antes de alimentar las etapas de extracción espectral y sonificación.
+En conclusión, la captura de estados mixtos demuestra que el sistema no interpreta la señal de forma directa. Primero comprueba su fiabilidad mediante métricas de calidad y después permite que el \textit{quality gate} atenúe o descarte ventanas problemáticas antes de alimentar las etapas de extracción espectral y sonificación.
