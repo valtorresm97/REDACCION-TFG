@@ -226,7 +226,7 @@ El bloque de adquisición EEG constituye la entrada física de la cadena EEG--MI
 
 Para esta función se selecciona el ADS1299--4PAG como circuito de adquisición. Se trata de un convertidor analógico-digital de 24 bits orientado a biopotenciales, con entradas diferenciales, amplificador de ganancia programable, referencia interna, interfaz SPI, circuitería de BIAS y funciones de diagnóstico como \textit{lead-off} y señal de test interna, según la descripción funcional del fabricante \cite{TexasInstrumentsADS1299}. Desde el punto de vista de diseño, estas características permiten integrar en un único componente gran parte de las funciones necesarias para medir señales EEG de baja amplitud.
 
-El bloque de adquisición se sitúa entre dos dominios. En el dominio analógico se encuentran los electrodos, la referencia corporal, el par diferencial de medida y la realimentación de modo común. En el dominio digital se encuentran la lectura sincronizada, el firmware de adquisición y la entrega de muestras al bloque de comunicación. Esta separación ayuda a distinguir las decisiones relacionadas con el montaje físico de las decisiones relacionadas con la transmisión digital de datos.
+El bloque de adquisición se sitúa entre dos dominios. En el dominio analógico se encuentran los electrodos, la referencia corporal, el par diferencial de medida y la realimentación de modo común. En el dominio digital se encuentran la lectura sincronizada, el acondicionamiento digital inicial, el firmware de adquisición y la entrega de muestras al bloque de comunicación. Esta separación ayuda a distinguir las decisiones relacionadas con el montaje físico de las decisiones relacionadas con la preparación digital de la señal.
 
 La arquitectura contempla una adquisición multicanal, aunque la configuración aplicada en la validación pueda centrarse en un canal principal. Esta decisión permite mantener una estructura ampliable y evita que el diseño quede limitado a una única disposición de electrodos. La configuración concreta de canales, referencia y montaje experimental se detalla en la implementación y se evalúa posteriormente en la validación.
 
@@ -235,6 +235,8 @@ La referencia corporal y el control de modo común son aspectos relevantes en un
 La señal debe adquirirse con una frecuencia de muestreo coherente con las bandas EEG que se desean analizar y con la capacidad temporal del resto del sistema. Además, la lectura debe estar sincronizada con la disponibilidad real de nuevas conversiones del convertidor, evitando que el firmware genere muestras por una temporización arbitraria. En la solución implementada, esta idea se concreta mediante el modo de lectura continua y la señal hardware de dato disponible.
 
 Una vez digitalizada, la señal debe conservar una escala física interpretable. Por este motivo, el bloque de adquisición incluye la conversión desde el valor digital proporcionado por el convertidor hasta una magnitud eléctrica utilizable por el resto de la cadena. En la implementación, esa señal se entrega finalmente en microvoltios al bloque de comunicación.
+
+Además del escalado, el diseño incorpora un acondicionamiento digital inicial en la capa embebida. Su objetivo es entregar al backend una señal más estable, reduciendo componentes que dificultan el análisis posterior, como el desplazamiento de continua, la interferencia de red y el contenido fuera de la banda útil del prototipo. La implementación concreta de esta etapa se realiza mediante una cadena de filtrado básica en el microcontrolador, cuyos parámetros se detallan en el capítulo de Implementación.
 
 La Figura~\ref{fig:bloque_adquisicion_eeg} resume el papel del bloque de adquisición dentro de la arquitectura. El esquema muestra el recorrido desde los electrodos hasta la obtención de muestras EEG preparadas para su transmisión al entorno de procesamiento.
 
@@ -251,20 +253,22 @@ La Figura~\ref{fig:bloque_adquisicion_eeg} resume el papel del bloque de adquisi
         \node[block, right=of electrodos] (referencia) {Referencia corporal\\y BIAS/RLD};
         \node[block, right=of referencia] (afe) {ADS1299--4PAG\\front-end EEG};
         \node[block, right=of afe] (sync) {Lectura digital\\sincronizada};
-        \node[signal, below=1.15cm of sync] (muestras) {Muestras EEG\\en escala física};
+        \node[signal, below=1.15cm of sync] (filtros) {Acondicionamiento\\digital inicial};
+        \node[signal, left=of filtros] (muestras) {Muestras EEG\\en escala física};
         \node[signal, left=of muestras] (salida) {Señal preparada\\para comunicación};
 
         \draw[arrow] (electrodos) -- (referencia);
         \draw[arrow] (referencia) -- (afe);
         \draw[arrow] (afe) -- (sync);
-        \draw[arrow] (sync) -- (muestras);
+        \draw[arrow] (sync) -- (filtros);
+        \draw[arrow] (filtros) -- (muestras);
         \draw[arrow] (muestras) -- (salida);
     \end{tikzpicture}}
-    \caption{Bloque de adquisición EEG. La etapa conecta el montaje de electrodos con el \textit{front-end} de adquisición, digitaliza la señal de biopotencial y entrega muestras EEG preparadas para el bloque de comunicación.}
+    \caption{Bloque de adquisición EEG. La etapa conecta el montaje de electrodos con el \textit{front-end} de adquisición, digitaliza la señal de biopotencial, aplica un acondicionamiento digital inicial y entrega muestras EEG preparadas para el bloque de comunicación.}
     \label{fig:bloque_adquisicion_eeg}
 \end{figure}
 
-La salida de este bloque es una señal EEG digitalizada, sincronizada y expresada en unidades físicas, preparada para ser organizada por el bloque de comunicación microcontrolador--Linux. Los detalles concretos de configuración del ADS1299, lectura digital, escalado, filtrado inicial y formato de entrega se desarrollan en el capítulo de Implementación.
+La salida de este bloque es una señal EEG digitalizada, sincronizada, acondicionada de forma básica y expresada en unidades físicas, preparada para ser organizada por el bloque de comunicación microcontrolador--Linux. Los detalles concretos de configuración del ADS1299, lectura digital, escalado, filtrado inicial y formato de entrega se desarrollan en el capítulo de Implementación.
 
 \subsection{Bloque de comunicación microcontrolador--Linux}
 
