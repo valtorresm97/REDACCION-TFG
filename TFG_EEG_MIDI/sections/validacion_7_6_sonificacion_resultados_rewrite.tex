@@ -31,79 +31,135 @@ La sesión incluyó dos precomprobaciones y cinco condiciones principales: ojos 
     \end{tabular}
 \end{table}
 
-La columna de notas indica cuántos eventos MIDI quedaron registrados en \texttt{music\_notes.csv}. Este valor no debe entenderse como una medida fisiológica directa. Técnicamente, un mayor número de notas significa que el generador musical produjo más eventos durante esa captura; si la duración es menor, la densidad de eventos puede ser todavía más alta. Las notas más cortas indican eventos menos sostenidos, normalmente asociados a cambios rápidos en los controles de sonificación o a ventanas cuya calidad no se mantiene estable. El \textit{pitch} MIDI representa la altura musical: valores más altos corresponden a notas más agudas y valores más bajos a notas más graves. Por tanto, la gráfica MIDI permite comprobar tres aspectos de la salida: densidad de notas, duración de los eventos y registro musical.
+Antes de analizar cada estado, conviene aclarar cómo se interpretan las gráficas MIDI. El número de notas indica cuántos eventos quedaron registrados en \texttt{music\_notes.csv}; por tanto, una captura con más notas presenta mayor actividad musical. Si la duración de la captura es menor, la densidad de notas puede ser todavía mayor. Las notas más cortas indican eventos menos sostenidos, normalmente asociados a cambios rápidos en los controles de sonificación o a ventanas cuya calidad no se mantiene estable. El \textit{pitch} MIDI representa la altura musical: valores más altos corresponden a notas más agudas y valores más bajos a notas más graves. Por tanto, la salida musical se interpreta mediante tres aspectos principales: densidad de eventos, duración de las notas y registro musical.
 
-\newcommand{\resultadoSonificacionVertical}[4]{%
-\begin{figure}[p]
-    \centering
-    \validacioninclude{width=0.66\textwidth}{images/validacion/capturas_finales_s01_20260528/#1/eeg_ch1_temporal.png}
-    {\small (a) Señal temporal CH1\par}
-    \vspace{0.06cm}
-    \validacioninclude{width=0.66\textwidth}{images/validacion/capturas_finales_s01_20260528/#1/calidad_senal_quality_gate.png}
-    {\small (b) Calidad de señal y \textit{quality gate}\par}
-    \vspace{0.06cm}
-    \validacioninclude{width=0.66\textwidth}{images/validacion/capturas_finales_s01_20260528/#1/bandpowers_relativos.png}
-    {\small (c) Bandas relativas\par}
-    \vspace{0.06cm}
-    \validacioninclude{width=0.66\textwidth}{images/validacion/capturas_finales_s01_20260528/#1/controles_sonificacion.png}
-    {\small (d) Controles de sonificación\par}
-    \vspace{0.06cm}
-    \validacioninclude{width=0.66\textwidth}{images/validacion/capturas_finales_s01_20260528/#1/notas_musicales.png}
-    {\small (e) Notas MIDI registradas\par}
-    \caption{#2. #3}
-    \label{#4}
-\end{figure}
-}
-
-Para que las condiciones puedan compararse de forma directa, las figuras se presentan siempre con el mismo orden: señal temporal, calidad de señal, bandas relativas, controles de sonificación y notas MIDI. De este modo puede seguirse la relación entre lo que ocurre en la señal, cómo se evalúa su calidad, qué características se calculan, cómo se modifican los controles musicales y qué eventos MIDI se generan finalmente.
+En las figuras siguientes se mantiene siempre el mismo orden de lectura: señal temporal, calidad de señal, bandas relativas, controles de sonificación y notas MIDI. Así, cada estado puede leerse de arriba hacia abajo como una cadena de trazabilidad: primero se observa la señal adquirida, después su calidad, luego las características espectrales, a continuación los controles musicales derivados y, finalmente, las notas generadas.
 
 \paragraph{Ojos abiertos.}
-La condición \texttt{eyes\_open\_rest\_60s} sirve como primera prueba larga de integración con señal real. La Figura~\ref{fig:validacion_s01_01_resultado_vertical} muestra que la adquisición se mantiene, que existen ventanas con calidad variable y que la salida musical queda registrada. La captura generó 45 notas en \SI{60}{\second}. El transitorio visible en la señal temporal limita la interpretación fisiológica, pero permite comprobar que el sistema continúa funcionando y que la música debe leerse junto con el \textit{quality gate}.
+La condición \texttt{eyes\_open\_rest\_60s} se empleó como primera captura larga con señal real. La Figura~\ref{fig:validacion_s01_01_resultado_vertical} muestra que la adquisición se mantiene durante \SI{60}{\second}, pero también aparece un transitorio de amplitud que afecta a la interpretación de la señal. Por ese motivo, la salida musical de esta condición se considera evidencia de integración real, no una demostración de EEG limpio.
 
-\resultadoSonificacionVertical
-{01_eyes_open_rest_60s}
-{Resultado de la condición \texttt{eyes\_open\_rest\_60s}}
-{La figura organiza la evidencia desde la señal EEG hasta las notas MIDI. El transitorio de amplitud afecta a la lectura de las bandas y justifica interpretar la salida musical condicionada por la calidad de ventana.}
-{fig:validacion_s01_01_resultado_vertical}
+\begin{figure}[!htbp]
+    \centering
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/01_eyes_open_rest_60s/eeg_ch1_temporal.png}
+    {\small (a) Señal temporal CH1\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/01_eyes_open_rest_60s/calidad_senal_quality_gate.png}
+    {\small (b) Calidad de señal y \textit{quality gate}\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/01_eyes_open_rest_60s/bandpowers_relativos.png}
+    {\small (c) Bandas relativas\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/01_eyes_open_rest_60s/controles_sonificacion.png}
+    {\small (d) Controles de sonificación\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/01_eyes_open_rest_60s/notas_musicales.png}
+    {\small (e) Notas MIDI registradas\par}
+    \caption{Resultado de la condición \texttt{eyes\_open\_rest\_60s}. La figura muestra la cadena completa desde la señal temporal hasta las notas MIDI generadas.}
+    \label{fig:validacion_s01_01_resultado_vertical}
+\end{figure}
+
+En esta captura se registraron 45 notas en \SI{60}{\second}. La presencia de menos eventos que en otras condiciones no implica menor actividad cerebral, sino una respuesta musical distinta ante las características calculadas y la calidad de ventana. El transitorio observado puede modificar las bandas relativas y los controles, por lo que la música debe interpretarse junto con el \textit{quality gate}.
 
 \paragraph{Ojos cerrados.}
-La condición \texttt{eyes\_closed\_rest\_60s} permite comprobar si el sistema responde de forma distinta ante una condición de reposo diferente. La Figura~\ref{fig:validacion_s01_02_resultado_vertical} muestra una salida musical más densa, con 80 notas en \SI{60}{\second}. Esto indica que los controles calculados generaron más eventos MIDI, aunque el diagnóstico continúa siendo dudoso por ruido de red y artefactos. Por tanto, el resultado se interpreta como cambio funcional en la sonificación, no como demostración fisiológica concluyente.
+La condición \texttt{eyes\_closed\_rest\_60s} permitió observar el comportamiento del sistema en un reposo distinto. La Figura~\ref{fig:validacion_s01_02_resultado_vertical} muestra una salida musical más densa que en ojos abiertos, con 80 notas registradas en \SI{60}{\second}. Esta diferencia indica que los controles musicales cambiaron, aunque el diagnóstico continúa condicionado por ruido de red y artefactos.
 
-\resultadoSonificacionVertical
-{02_eyes_closed_rest_60s}
-{Resultado de la condición \texttt{eyes\_closed\_rest\_60s}}
-{La mayor densidad de notas muestra que la salida musical cambia respecto a ojos abiertos. La interpretación se mantiene prudente porque la calidad de señal condiciona la fiabilidad de las características.}
-{fig:validacion_s01_02_resultado_vertical}
+\begin{figure}[!htbp]
+    \centering
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/02_eyes_closed_rest_60s/eeg_ch1_temporal.png}
+    {\small (a) Señal temporal CH1\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/02_eyes_closed_rest_60s/calidad_senal_quality_gate.png}
+    {\small (b) Calidad de señal y \textit{quality gate}\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/02_eyes_closed_rest_60s/bandpowers_relativos.png}
+    {\small (c) Bandas relativas\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/02_eyes_closed_rest_60s/controles_sonificacion.png}
+    {\small (d) Controles de sonificación\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/02_eyes_closed_rest_60s/notas_musicales.png}
+    {\small (e) Notas MIDI registradas\par}
+    \caption{Resultado de la condición \texttt{eyes\_closed\_rest\_60s}. La figura muestra la relación entre calidad de señal, bandas relativas, controles de sonificación y eventos MIDI.}
+    \label{fig:validacion_s01_02_resultado_vertical}
+\end{figure}
+
+La mayor densidad de notas significa que el sistema produjo eventos MIDI con más frecuencia. No se interpreta como una prueba fisiológica concluyente de ojos cerrados frente a ojos abiertos, sino como evidencia de que la señal y las características calculadas inducen una salida musical diferente. Si además el \textit{pitch} se desplaza hacia valores más altos o más bajos, ese cambio representa una variación del registro musical generado.
 
 \paragraph{Reposo quieto.}
-La condición \texttt{quiet\_rest\_60s} se utilizó como estado basal de funcionamiento sostenido. Como se observa en la Figura~\ref{fig:validacion_s01_03_resultado_vertical}, el sistema mantuvo adquisición, cálculo de características, evaluación de calidad y salida musical durante toda la captura. Se registraron 72 notas, lo que confirma que la sonificación pudo mantenerse de forma continua en un estado prolongado.
+La condición \texttt{quiet\_rest\_60s} se planteó como estado basal de funcionamiento sostenido. La Figura~\ref{fig:validacion_s01_03_resultado_vertical} muestra que el sistema mantiene adquisición, análisis, control de calidad y salida musical durante toda la captura. Se registraron 72 notas, por lo que la sonificación se mantuvo activa de forma continuada.
 
-\resultadoSonificacionVertical
-{03_quiet_rest_60s}
-{Resultado de la condición \texttt{quiet\_rest\_60s}}
-{La figura muestra una sonificación sostenida durante una condición de reposo. Las agrupaciones de notas deben relacionarse con cambios locales en las características y con la calidad de ventana.}
-{fig:validacion_s01_03_resultado_vertical}
+\begin{figure}[!htbp]
+    \centering
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/03_quiet_rest_60s/eeg_ch1_temporal.png}
+    {\small (a) Señal temporal CH1\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/03_quiet_rest_60s/calidad_senal_quality_gate.png}
+    {\small (b) Calidad de señal y \textit{quality gate}\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/03_quiet_rest_60s/bandpowers_relativos.png}
+    {\small (c) Bandas relativas\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/03_quiet_rest_60s/controles_sonificacion.png}
+    {\small (d) Controles de sonificación\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/03_quiet_rest_60s/notas_musicales.png}
+    {\small (e) Notas MIDI registradas\par}
+    \caption{Resultado de la condición \texttt{quiet\_rest\_60s}. La figura resume una sonificación sostenida durante una condición de reposo.}
+    \label{fig:validacion_s01_03_resultado_vertical}
+\end{figure}
+
+En esta condición, la salida MIDI confirma la continuidad funcional del pipeline. Las agrupaciones de notas, las pausas o los cambios de altura musical deben relacionarse con variaciones locales de las características y con la calidad de ventana. El resultado no busca demostrar un estado cognitivo, sino verificar que un reposo mantenido produce una salida musical persistente y trazable.
 
 \paragraph{Parpadeo como artefacto controlado.}
-La condición \texttt{blink\_artifact\_30s} se incluyó para observar el comportamiento del pipeline ante una señal intencionadamente contaminada. La Figura~\ref{fig:validacion_s01_04_resultado_vertical} muestra cómo un artefacto fisiológico puede modificar la señal temporal, las bandas relativas y los controles de sonificación. Se registraron 34 notas en \SI{30}{\second}; la salida existe, pero debe interpretarse como respuesta del sistema ante una señal con artefacto, no como EEG limpio.
+La condición \texttt{blink\_artifact\_30s} se incluyó para comprobar la respuesta ante una señal intencionadamente contaminada. La Figura~\ref{fig:validacion_s01_04_resultado_vertical} permite observar cómo el artefacto afecta a la señal temporal, a la calidad, a las bandas relativas y a los controles de sonificación. Se registraron 34 notas en \SI{30}{\second}.
 
-\resultadoSonificacionVertical
-{04_blink_artifact_30s}
-{Resultado de la condición \texttt{blink\_artifact\_30s}}
-{La captura permite comprobar la trazabilidad de la salida musical en una condición contaminada. Los cambios de amplitud y de contenido espectral pueden inducir variaciones en densidad, duración y registro de las notas.}
-{fig:validacion_s01_04_resultado_vertical}
+\begin{figure}[!htbp]
+    \centering
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/04_blink_artifact_30s/eeg_ch1_temporal.png}
+    {\small (a) Señal temporal CH1\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/04_blink_artifact_30s/calidad_senal_quality_gate.png}
+    {\small (b) Calidad de señal y \textit{quality gate}\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/04_blink_artifact_30s/bandpowers_relativos.png}
+    {\small (c) Bandas relativas\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/04_blink_artifact_30s/controles_sonificacion.png}
+    {\small (d) Controles de sonificación\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/04_blink_artifact_30s/notas_musicales.png}
+    {\small (e) Notas MIDI registradas\par}
+    \caption{Resultado de la condición \texttt{blink\_artifact\_30s}. La figura muestra la respuesta del pipeline ante un artefacto fisiológico controlado.}
+    \label{fig:validacion_s01_04_resultado_vertical}
+\end{figure}
+
+Esta captura es importante porque muestra que el sistema no solo funciona en condiciones favorables. Ante un artefacto, la señal cambia, la calidad debe interpretarse con cautela y la salida musical puede variar en densidad, duración o \textit{pitch}. La música generada no se presenta como EEG limpio, sino como respuesta trazable del sistema ante una entrada contaminada.
 
 \paragraph{Repetición de ojos abiertos.}
-La captura \texttt{06\_eyes\_open\_repeat\_30s} fue la mejor evidencia final de integración. La Figura~\ref{fig:validacion_s01_06_resultado_vertical} muestra adquisición continua, diagnóstico \texttt{valida\_preliminar}, cálculo de características, aplicación del \textit{quality gate} y salida musical clara. En solo \SI{30}{\second} se registraron 65 notas, por lo que la densidad de eventos fue superior a la de las capturas de \SI{60}{\second}. Esta mayor densidad indica que el sistema produjo notas con más frecuencia, no que exista por sí sola una interpretación neurofisiológica directa.
+La captura \texttt{06\_eyes\_open\_repeat\_30s} fue la mejor evidencia final de integración. La Figura~\ref{fig:validacion_s01_06_resultado_vertical} muestra adquisición continua, diagnóstico \texttt{valida\_preliminar}, características espectrales, control de calidad y salida MIDI clara. Se registraron 65 notas en solo \SI{30}{\second}, por lo que la densidad de eventos fue elevada respecto a las capturas de \SI{60}{\second}.
 
-\resultadoSonificacionVertical
-{06_eyes_open_repeat_30s}
-{Resultado de la condición \texttt{06\_eyes\_open\_repeat\_30s}}
-{Esta captura sintetiza la cadena completa EEG--MIDI: señal real, calidad de ventana, bandas relativas, controles de sonificación y notas MIDI persistidas.}
-{fig:validacion_s01_06_resultado_vertical}
+\begin{figure}[!htbp]
+    \centering
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/06_eyes_open_repeat_30s/eeg_ch1_temporal.png}
+    {\small (a) Señal temporal CH1\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/06_eyes_open_repeat_30s/calidad_senal_quality_gate.png}
+    {\small (b) Calidad de señal y \textit{quality gate}\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/06_eyes_open_repeat_30s/bandpowers_relativos.png}
+    {\small (c) Bandas relativas\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/06_eyes_open_repeat_30s/controles_sonificacion.png}
+    {\small (d) Controles de sonificación\par}
+    \vspace{0.05cm}
+    \validacioninclude{width=0.64\textwidth}{images/validacion/capturas_finales_s01_20260528/06_eyes_open_repeat_30s/notas_musicales.png}
+    {\small (e) Notas MIDI registradas\par}
+    \caption{Resultado de la condición \texttt{06\_eyes\_open\_repeat\_30s}. La figura sintetiza la cadena completa EEG--MIDI con señal real, calidad de ventana, bandas relativas, controles musicales y notas persistidas.}
+    \label{fig:validacion_s01_06_resultado_vertical}
+\end{figure}
 
-La comparación entre condiciones muestra que los cambios en la señal inducen cambios observables en la música generada. Cuando varían la amplitud, la distribución relativa de bandas y la calidad de ventana, también cambian la densidad de notas, su duración y su \textit{pitch}. En ojos cerrados y reposo quieto se obtuvo una salida musical sostenida; en parpadeo se observó la respuesta ante una señal contaminada; y en la repetición de ojos abiertos se obtuvo la evidencia más clara de integración, con alta densidad de eventos y trazabilidad completa.
+Esta última captura permite cerrar la validación porque reúne continuidad de adquisición, calidad preliminar aceptable, generación de controles y salida musical persistida. La mayor densidad de notas indica que el sistema produjo eventos con más frecuencia; los cambios de duración muestran que algunos eventos fueron más sostenidos que otros; y el \textit{pitch} muestra cómo varió el registro musical. En conjunto, estos elementos evidencian que la dinámica de la señal y de sus características se trasladó a cambios audibles y medibles en la sonificación.
 
-Estos resultados deben interpretarse como una validación funcional del prototipo. El sistema no decodifica estados cerebrales de forma clínica, sino que convierte características extraídas de una señal EEG real en controles musicales, aplicando previamente criterios de calidad. El resultado final es una salida MIDI persistida y verificable, cuya evolución refleja cambios en la señal de entrada y en la calidad de las ventanas procesadas.
+La comparación entre condiciones muestra que los cambios en la señal registrada producen cambios observables en la música generada. Cuando varían la amplitud, la distribución relativa de bandas y la calidad de ventana, también cambian la densidad de notas, su duración y su registro. Esta relación no debe entenderse como una decodificación clínica del estado cerebral, sino como una validación funcional de la interfaz EEG--MIDI: el sistema transforma una señal real, con sus limitaciones experimentales, en una salida musical trazable y persistida.
 
 En conclusión, la validación de sonificación confirma que el prototipo completa la cadena funcional desde la adquisición EEG hasta la generación de notas MIDI. La sesión \texttt{s01\_20260528} demuestra integración real, continuidad temporal, cálculo de características, aplicación del \textit{quality gate} y persistencia de la salida musical. Su valor principal es mostrar que la dinámica de la señal produce cambios observables en la música generada, manteniendo una interpretación prudente frente al ruido, los artefactos y las limitaciones del montaje experimental.
