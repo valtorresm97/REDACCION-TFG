@@ -13,7 +13,7 @@ La idea principal de esta subsección es que la calidad se decide por ventanas d
 
 \begin{figure}[!htbp]
     \centering
-    \validacioninclude{width=0.98\textwidth}{images/validacion/fig_03_mixed_states_temporal_750uv.png}
+    \validacioninclude{width=0.98\textwidth}{images/validacion/eeg_ch1_temporal_750uv_estados.png}
     \caption{Captura temporal completa utilizada para validar la calidad de señal. La representación emplea una escala fija de \(\pm\SI{750}{\micro\volt}\), por lo que los valores que superan ese rango se recortan solo visualmente. Las bandas coloreadas indican los distintos estados experimentales presentes en la adquisición.}
     \label{fig:validacion_mixed_states_temporal_global}
 \end{figure}
@@ -27,7 +27,7 @@ Los criterios principales utilizados fueron la frecuencia efectiva, la presencia
     \small
     \caption{Resumen por estados de la captura utilizada para validar el análisis de calidad.}
     \label{tab:validacion_calidad_estados}
-    \begin{tabular}{p{0.24\textwidth} c c c c p{0.22\textwidth}}
+    \begin{tabular}{p{0.23\textwidth} c c c c p{0.23\textwidth}}
         \hline
         \textbf{Estado} & \textbf{RMS med.} & \textbf{PTP med.} & \textbf{50 Hz} & \textbf{Calidad} & \textbf{Diagnóstico} \\
         \hline
@@ -65,12 +65,50 @@ La Tabla~\ref{tab:validacion_calidad_estados} muestra que la calidad no puede de
 
 La Figura~\ref{fig:validacion_calidad_timeline} resume el comportamiento global por ventanas. El RMS permite detectar incrementos de amplitud asociados a movimiento o transitorios, mientras que el índice de calidad resume la validez espectral de cada ventana. Esta representación justifica que la sonificación utilice un factor de puerta o atenuación, en lugar de transformar toda la señal directamente en música.
 
-Para comprobar visualmente el comportamiento de los distintos tramos, se agruparon las señales temporales por estado en una figura recopilatoria. Esta figura conserva una escala vertical común para que la comparación sea honesta entre estados. Los estados de reposo y recuperación permiten observar tramos relativamente estables, mientras que mandíbula, parpadeo/frente y el segundo tramo de ojos cerrados muestran mayor presencia de transitorios o amplitudes elevadas.
+Para comprobar visualmente el comportamiento de los distintos tramos, se agruparon en una misma figura las capturas temporales por estado ya generadas durante la validación. Todas ellas conservan una escala vertical común para que la comparación entre estados sea coherente. Los estados de reposo y recuperación permiten observar tramos relativamente estables, mientras que mandíbula, parpadeo/frente y el segundo tramo de ojos cerrados muestran mayor presencia de transitorios o amplitudes elevadas.
 
 \begin{figure}[!htbp]
     \centering
-    \validacioninclude{width=0.96\textwidth}{images/validacion/fig_03_state_timeseries_grid.png}
-    \caption{Comparación temporal por estados en la captura de validación de calidad. Todas las subfiguras emplean la misma escala vertical para diferenciar tramos relativamente estables de tramos contaminados por movimiento, parpadeo, contacto o actividad muscular.}
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_ojos_abiertos_reposo_timeseries.png}
+        \small (a) Ojos abiertos / reposo
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_ojos_cerrados_reposo_1_timeseries.png}
+        \small (b) Ojos cerrados / reposo 1
+    \end{minipage}
+
+    \vspace{0.25cm}
+
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_09_jaw_movement_timeseries.png}
+        \small (c) Mandíbula
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_recuperacion_1_timeseries.png}
+        \small (d) Recuperación 1
+    \end{minipage}
+
+    \vspace{0.25cm}
+
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_parpadeo_frente_timeseries.png}
+        \small (e) Parpadeo / frente
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_ojos_cerrados_reposo_2_timeseries.png}
+        \small (f) Ojos cerrados / reposo 2
+    \end{minipage}
+    \caption{Comparación temporal por estados en la captura de validación de calidad. La agrupación permite diferenciar tramos relativamente estables de tramos contaminados por movimiento, parpadeo, contacto o actividad muscular.}
     \label{fig:validacion_estados_temporales_grid}
 \end{figure}
 
@@ -78,7 +116,45 @@ Además del comportamiento temporal, la validación de calidad se apoya en una i
 
 \begin{figure}[!htbp]
     \centering
-    \validacioninclude{width=0.96\textwidth}{images/validacion/fig_03_state_psd_grid.png}
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_ojos_abiertos_reposo_psd.png}
+        \small (a) Ojos abiertos / reposo
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_ojos_cerrados_reposo_1_psd.png}
+        \small (b) Ojos cerrados / reposo 1
+    \end{minipage}
+
+    \vspace{0.25cm}
+
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_mandibula_psd.png}
+        \small (c) Mandíbula
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_recuperacion_1_psd.png}
+        \small (d) Recuperación 1
+    \end{minipage}
+
+    \vspace{0.25cm}
+
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_parpadeo_frente_psd.png}
+        \small (e) Parpadeo / frente
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \validacioninclude{width=\textwidth}{images/validacion/fig_03_state_ojos_cerrados_reposo_2_psd.png}
+        \small (f) Ojos cerrados / reposo 2
+    \end{minipage}
     \caption{Comparación espectral por estados en la captura de validación de calidad. La figura no se utiliza para extraer conclusiones fisiológicas, sino para comprobar que los estados con peor calidad temporal también presentan cambios espectrales compatibles con artefactos o contaminación de la señal.}
     \label{fig:validacion_estados_psd_grid}
 \end{figure}
